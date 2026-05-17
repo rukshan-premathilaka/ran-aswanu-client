@@ -1,16 +1,41 @@
-# React + Vite
+# 🌱 Smart Farming & Crop Selling System - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern frontend application for the **Smart Farming Management & Crop Selling System**.  
+This project provides:
 
-Currently, two official plugins are available:
+- 🖥️ A web dashboard for buyers
+- 📱 A mobile-friendly application for farmers
+- 📡 Offline support for low or unstable internet connectivity
+- 🌾 Tools for managing farming activities and crop selling efficiently
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The system is designed to improve communication between farmers and buyers while ensuring accessibility in rural environments.
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+# ✨ Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 🌾 Farmer crop management
+- 🛒 Crop selling marketplace
+- 📱 Mobile-friendly user experience
+- 📡 Offline functionality using SQLite
+- 🔄 Data synchronization support
+- ⚡ Fast frontend performance with Vite
+- 🎨 Responsive UI with Tailwind CSS
+
+---
+
+# 🚀 Tech Stack
+
+The project is built using the following technologies:
+
+| Technology                                   | Description                       |
+|----------------------------------------------|-----------------------------------|
+| [React](https://react.dev/)                  | Frontend library for building UI  |
+| [Vite](https://vitejs.dev/)                  | Fast build and development tool   |
+| [Tailwind CSS](https://tailwindcss.com/docs) | Utility-first CSS framework       |
+| [Capacitor](https://capacitorjs.com/docs)    | Cross-platform mobile app support |
+| [SQLite](https://www.sqlite.org/docs.html)   | Offline local database storage    |
+| [Tailwind](https://tailwindcss.com/docs)     | For styling                       |
+
+---
