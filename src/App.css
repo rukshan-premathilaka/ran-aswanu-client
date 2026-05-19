@@ -1,1 +1,104 @@
 @import "tailwindcss";
+
+
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Main Theme Colors */
+        --color-primary: #87D941;
+        --color-primary-hover: #6BB32A;
+        --color-accent: #805533;
+
+        /* Backgrounds */
+        --color-bg: #F5FAF2;
+        --color-surface: #FFFFFF;
+
+        /* Typography */
+        --color-heading: #172617;
+        --color-subheading: #2C402C;
+        --color-text: #394039;
+        --color-highlight: #F2C333;
+
+        /* System Alerts */
+        --color-info: #45A3E6;
+        --color-success: #3DCC52;
+        --color-warning: #F29524;
+        --color-error: #E6392E;
+
+        /* Scrollbars */
+        --color-scrollbar: #BBE68A;
+        --color-scrollbar-hover: #87D941;
+    }
+
+    /* Apply the background color to the whole app */
+    body {
+        @apply bg-(--color-bg) text-(--color-text);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: var(--color-bg);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-scrollbar);
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-scrollbar-hover);
+    }
+}
+
+@layer utilities {
+    /* --- Typography Classes --- */
+    .heading-main {
+        @apply text-(--color-heading) text-3xl font-bold mb-4;
+    }
+
+    .heading-sub {
+        @apply text-(--color-subheading) text-xl font-semibold mb-2 mt-4;
+    }
+
+    .text-body {
+        @apply text-(--color-text) text-base leading-relaxed;
+    }
+
+    .text-highlight {
+        @apply bg-(--color-highlight) text-[#172617] px-1 font-medium rounded;
+    }
+
+    /* --- Button Classes --- */
+    .btn-primary {
+        @apply bg-(--color-primary) text-[#172617] font-bold py-2 px-6 rounded shadow-md transition-colors duration-200 hover:bg-(--color-primary-hover) hover:text-white;
+    }
+
+    .btn-accent {
+        @apply bg-(--color-accent) text-white font-bold py-2 px-6 rounded shadow-md transition-opacity duration-200 hover:opacity-90;
+    }
+
+    /* --- Alert Classes --- */
+    .alert-info {
+        @apply bg-(--color-info) text-white p-4 rounded-md shadow-sm border-l-4 border-blue-800 flex items-center;
+    }
+
+    .alert-success {
+        @apply bg-(--color-success) text-white p-4 rounded-md shadow-sm border-l-4 border-green-800 flex items-center;
+    }
+
+    .alert-warning {
+        @apply bg-(--color-warning) text-[#172617] p-4 rounded-md shadow-sm border-l-4 border-orange-800 flex items-center;
+    }
+
+    .alert-error {
+        @apply bg-(--color-error) text-white p-4 rounded-md shadow-sm border-l-4 border-red-900 flex items-center;
+    }
+
+    /* --- Other UI Elements --- */
+    .card {
+        @apply bg-(--color-surface) p-6 rounded-lg shadow-md border border-gray-100;
+    }
+}
