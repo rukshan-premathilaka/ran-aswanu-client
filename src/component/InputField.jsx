@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-const InputField = ({ label, type = 'text', placeholder, value, onChange }) => {
+/*Inputfield componnet*/
+const InputField = ({ label, type = 'text', placeholder, value, onChange ,name}) => {
     const [showPassword, setShowPassword] = useState(false);
 
 
@@ -12,6 +13,7 @@ const InputField = ({ label, type = 'text', placeholder, value, onChange }) => {
             <div className="relative">
                 <input
                     type={inputType}
+                    name={name}
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}

@@ -1,10 +1,11 @@
 import CustomButton from "@/component/CustomButton.jsx";
 import AuthLayout from "@/layouts/Authlayout.jsx";
+import Leftimg from "@/assets/LeftImg.jpg"
 
 
 const Welcome = () => {
     return (
-        <AuthLayout>
+        <AuthLayout imageSrc={Leftimg}>
             <div className="flex flex-col items-center mb-8 w-full">
                 <div className="w-24 h-24 bg-white p-2 rounded-xl shadow-sm mb-4 border border-blue-400">
                     <img
