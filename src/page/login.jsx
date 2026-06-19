@@ -46,7 +46,7 @@ const Login = () => {
                 </form>
 
                 <div className="text-center text-xs text-lime-400 mt-2">
-                    <a href="http://www.google.com">forget password ? </a>
+                    <a href="http://www.google.com" >forget password ? </a>
                 </div>
 
                 <div className="w-full flex items-center justify-center my-6 gap-3">

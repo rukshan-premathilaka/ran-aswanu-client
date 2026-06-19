@@ -2,7 +2,7 @@ import React from 'react';
 
 const AuthLayout = ({ children, imageSrc }) => {
     return (
-        <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-0 md:p-4">
+        <div className="min-h-screen w-full bg-gradient-to-br bg-slate-900 flex items-center justify-center p-0 md:p-4">
             <div className="w-full max-w-4xl min-h-screen md:min-h-[600px] bg-white md:rounded-3xl shadow-xl flex flex-col md:flex-row overflow-hidden relative">
 
 
