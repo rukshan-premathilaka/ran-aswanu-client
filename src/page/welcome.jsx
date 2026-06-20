@@ -1,9 +1,31 @@
+import { useNavigate } from "react-router-dom"; // 1. Import the hook
 import CustomButton from "@/component/CustomButton.jsx";
 import AuthLayout from "@/layouts/Authlayout.jsx";
-import Leftimg from "@/assets/LeftImg.jpg"
-
+import Leftimg from "@/assets/LeftImg.jpg";
 
 const Welcome = () => {
+    // 2. Initialize the navigate function
+    const navigate = useNavigate();
+
+    // 3. Create the handler function
+    const handleLanguageSelection = async (language) => {
+        try {
+            console.log(`Saving ${language} to database...`);
+
+            // TODO: YOUR DATABASE LOGIC GOES HERE
+
+            // Simulating a database delay so you can see it work right now
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // 4. Navigate to SignIn AFTER the database save is successful
+            navigate('/signin');
+
+        } catch (error) {
+            console.error("Error saving language:", error);
+            // Optional: Show an error message to the user here
+        }
+    };
+
     return (
         <AuthLayout imageSrc={Leftimg}>
             <div className="flex flex-col items-center mb-8 w-full">
@@ -28,22 +50,23 @@ const Welcome = () => {
                 </h2>
 
                 <div className="flex flex-col gap-4 px-4 w-full max-w-md mx-auto">
+                    {/* 5. Update the onClick handlers to use your new function */}
                     <CustomButton
                         text="Sinhala"
                         className="bg-btnSinhala text-gray-800 border border-yellow-200/50"
-                        onClick={() => console.log("Sinhala clicked!")}
+                        onClick={() => handleLanguageSelection("Sinhala")}
                     />
 
                     <CustomButton
                         text="English"
                         className="bg-btnEnglish text-gray-800 border border-blue-200/50"
-                        onClick={() => console.log("English clicked!")}
+                        onClick={() => handleLanguageSelection("English")}
                     />
 
                     <CustomButton
                         text="Tamil"
                         className="bg-btnTamil text-gray-800 border border-red-200/50"
-                        onClick={() => console.log("Tamil clicked!")}
+                        onClick={() => handleLanguageSelection("Tamil")}
                     />
                 </div>
             </div>

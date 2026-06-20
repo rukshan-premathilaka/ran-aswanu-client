@@ -68,7 +68,7 @@ const Login = () => {
                 />
 
                 <p className="text-center text-sm text-gray-400 text-lg mt-3">
-                    You already have an account? <a href="https://www.google.com" className="text-lime-400">Login</a>
+                    You already have an account? <a href="/signin" className="text-lime-400">Login</a>
                 </p>
 
 
