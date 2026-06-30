@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 /*Inputfield componnet*/
-const InputField = ({ label, type = 'text', placeholder, value, onChange ,name}) => {
+const InputField = ({ label, type = 'text', placeholder, value, onChange ,name, error}) => {
     const [showPassword, setShowPassword] = useState(false);
 
 
@@ -19,6 +19,10 @@ const InputField = ({ label, type = 'text', placeholder, value, onChange ,name})
                     onChange={onChange}
                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brandGreen/50 focus:border-brandGreen transition-all text-sm"
                 />
+
+                {error && (
+                    <p className="text-red-500 text-xs mt-1 ml-2">{error}</p>
+                )}
 
 
                 {type === 'password' && (
