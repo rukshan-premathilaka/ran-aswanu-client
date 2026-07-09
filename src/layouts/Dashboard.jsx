@@ -15,7 +15,7 @@ const DashboardLayout = ({ children }) => {
         { name: 'Weather', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" /></svg> }
     ];
     const ButtomMenuItem = [
-        {name: 'Setting',
+        {name: 'Settings',
             icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                        className="lucide lucide-settings-icon lucide-settings">
@@ -85,33 +85,34 @@ const DashboardLayout = ({ children }) => {
                             );
                         })}
 
-                    {/*Setting && Help buttons*/}
-                    <div className="mt-auto pt-4 border-t border-gray-100 space-y-1 ">
-                                {ButtomMenuItem.map((item) => {
-                                    const isActive = activeMenu === item.name;
-                                    return (
-                                        <button
-                                            key={item.name}
-                                            onClick={() => {
-                                                setActiveMenu(item.name);
-                                                setIsMobileOpen(false);
-                                            }}
-                                            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
-                                                isActive
-                                                    ? 'bg-[#D2E9C4] text-gray-800'
-                                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
-                                            }`}
-                                         >
+
+
+                </nav>
+                {/*Setting && Help buttons*/}
+                <div className="mt-auto pt-4 border-t border-gray-100 space-y-1 ">
+                    {ButtomMenuItem.map((item) => {
+                        const isActive = activeMenu === item.name;
+                        return (
+                            <button
+                                key={item.name}
+                                onClick={() => {
+                                    setActiveMenu(item.name);
+                                    setIsMobileOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                                    isActive
+                                        ? 'bg-[#D2E9C4] text-gray-800'
+                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                                }`}
+                            >
                                             <span className={isActive ? 'text-brandGreen' : 'text-gray-400'}>
                                                 {item.icon}
                                             </span>
-                                            {item.name}
-                                        </button>
-                                    );
-                                })}
-                    </div>
-
-                </nav>
+                                {item.name}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* 3. Rightside content */}
