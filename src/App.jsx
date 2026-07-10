@@ -6,21 +6,25 @@ import Login from "@/page/login.jsx";
 import Welcome from "@/page/welcome.jsx";
 import SignIn from "@/page/signIn.jsx";
 import DashboardLayout from "@/layouts/Dashboard.jsx";
+import ResetPasswordPage from "@/page/ResetPassword.jsx";
 
 function App() {
   return (
-      <DashboardLayout/>
+      /*<DashboardLayout/>*/
 
-      /*<Router>
+      <Router>
         <Routes>
-          {/!* The '/' path is home page *!/}
+          {/* The '/' path is home page */}
           <Route path="/" element={<Welcome/>} />
 
-          {/!* Other routes *!/}
+          {/* Other routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signin" element={<SignIn />} />
+
+          {/* Reset Password Routes */}
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Routes>
-      </Router>*/
+      </Router>
 
   );
 }
