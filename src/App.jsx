@@ -10,7 +10,7 @@ import ProductClick from "@/page/ProductClick.jsx";
 
 function App() {
   return (
-      <Login/>
+      <ProductClick/>
 
       /*<Router>
         <Routes>
