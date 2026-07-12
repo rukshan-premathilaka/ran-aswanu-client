@@ -6,10 +6,12 @@ import Login from "@/page/login.jsx";
 import Welcome from "@/page/welcome.jsx";
 import SignIn from "@/page/signIn.jsx";
 import DashboardLayout from "@/layouts/Dashboard.jsx";
+import ProductClick from "@/page/ProductClick.jsx";
+
 
 function App() {
   return (
-      <Login/>
+      <ProductClick/>
 
       /*<Router>
         <Routes>
