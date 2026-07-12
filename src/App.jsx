@@ -9,7 +9,7 @@ import DashboardLayout from "@/layouts/Dashboard.jsx";
 
 function App() {
   return (
-      <DashboardLayout/>
+      <SignIn/>
 
       /*<Router>
         <Routes>
