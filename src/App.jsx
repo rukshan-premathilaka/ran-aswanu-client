@@ -10,21 +10,21 @@ import AuthLayout from "@/layouts/Authlayout.jsx";
 
 function App() {
   return (
-      </>
-      /*<Router>
+
+      <Router>
         <Routes>
-          {/!* The '/' path is home page *!/}
+          {/* The '/' path is home page */}
           <Route path="/" element={<Welcome />} />
 
-          {/!* Other routes *!/}
+          {/* Other routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signin" element={<SignIn />} />
 
 
-            {/!* The '/' path is home page *!/}
+            {/* The '/' path is home page */}
             <Route path="/chat" element={<ChatPage />} />
         </Routes>
-      </Router>*/
+      </Router>
   );
 }
 
