@@ -143,7 +143,8 @@ function Login() {
                         type="submit"
                         text={loading ? "Logging in..." : "Login"}
                         disabled={loading}
-                        className="bg-brandGreen text-white rounded-full py-3 text-sm font-medium hover:bg-[#73b83f] mt-3"
+                        size="full"
+                        className="bg-brandGreen text-white hover:bg-[#73b83f] mt-3"
                     />
                 </form>
 
@@ -156,7 +157,8 @@ function Login() {
                 <CustomButton
                     type="button"
                     onClick={() => alert("button clicked")}
-                    className="text-center text-gray-500 font-semibold hover:bg-lime-200 flex items-center justify-center"
+                    size="full"
+                    className="text-gray-500 font-semibold hover:bg-lime-200 flex items-center justify-center border border-gray-200"
                     text={
                         <>
                             <img src={GoogleIcon} alt="Google" className="w-5 h-5 mr-4" />
