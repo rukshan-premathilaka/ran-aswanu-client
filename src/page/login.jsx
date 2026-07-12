@@ -4,92 +4,92 @@ import Leftimg from "@/assets/LeftImg.jpg"
 import InputField from "@/component/InputField.jsx";
 import CustomButton from "@/component/CustomButton.jsx";
 import GoogleIcon from "@/assets/GoogleIcon.svg";
+import { loginUser } from "@/api/authService.js";
 
-const API_BASE_URL = "http://localhost:8080/api";
-
-function SignIn() {
+function Login() {
     const [formData, setFormData] = useState({
-        name: "",
         email: "",
         password: "",
-        confirmPassword: "",
     });
 
-    // one slot per field, plus one for form-wide errors (like 409 conflict)
     const [fieldErrors, setFieldErrors] = useState({
-        username: "",
         email: "",
         password: "",
-        confirmPassword: "",
     });
     const [generalError, setGeneralError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-        // clear that field's error as soon as the user edits it
         if (fieldErrors[name]) {
             setFieldErrors((prev) => ({ ...prev, [name]: "" }));
         }
+        if (generalError) setGeneralError("");
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setGeneralError("");
-        setFieldErrors({ username: "", email: "", password: "", confirmPassword: "" });
-
-        if (formData.password !== formData.confirmPassword) {
-            setFieldErrors((prev) => ({ ...prev, confirmPassword: "Passwords do not match" }));
-            return;
-        }
-
+        setSuccessMessage("");
+        setFieldErrors({ email: "", password: "" });
         setLoading(true);
+
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: formData.name,
-                    email: formData.email,
-                    password: formData.password,
-                }),
+            const response = await loginUser({
+                email: formData.email,
+                password: formData.password,
             });
 
-            const data = await response.json().catch(() => ({}));
+            console.log("LOGIN RESPONSE:", response.data);
 
-            if (!response.ok) {
-                // Case 1: 409 conflict -> { timestamp, status, error }
-                // This is a whole-form error, not tied to one input
-                if (data.error && data.status) {
-                    setGeneralError(data.error);
-                    return;
-                }
-
-                // Case 2: 400 validation -> { username: "...", email: "...", password: "..." }
-                // Each key here IS a field name, so route it straight into fieldErrors
-                const newFieldErrors = { username: "", email: "", password: "", confirmPassword: "" };
-                let matchedAny = false;
-                for (const key of Object.keys(newFieldErrors)) {
-                    if (data[key]) {
-                        newFieldErrors[key] = data[key];
-                        matchedAny = true;
-                    }
-                }
-
-                if (matchedAny) {
-                    setFieldErrors(newFieldErrors);
-                } else {
-                    // fallback: something unexpected shaped-wise, just show it generally
-                    setGeneralError(data.message || "Registration failed. Please try again.");
-                }
-                return;
+            const { data } = response;
+            if (data.token) {
+                localStorage.setItem("token", data.token);
             }
 
-            console.log("Registered:", data);
-            window.location.href = "/login";
+            setSuccessMessage("Login successful! Redirecting...");
+            setTimeout(() => {
+                window.location.href = "/dashboard"; // change to your landing route
+            }, 1000);
         } catch (err) {
-            setGeneralError("Could not reach the server. Please try again.");
+            // Axios puts the server's error body in err.response.data
+            const data = err.response?.data || {};
+            console.log("LOGIN ERROR RESPONSE:", data);
+
+            const newFieldErrors = { email: "", password: "" };
+            let matchedAny = false;
+
+            // Shape A: flat validation map -> { email: "...", password: "..." }
+            for (const key of Object.keys(newFieldErrors)) {
+                if (typeof data[key] === "string") {
+                    newFieldErrors[key] = data[key];
+                    matchedAny = true;
+                }
+            }
+
+            // Shape B: Spring default -> { errors: [{ field, defaultMessage }] }
+            if (!matchedAny && Array.isArray(data.errors)) {
+                data.errors.forEach((fe) => {
+                    const field = fe.field;
+                    const message = fe.defaultMessage || fe.message;
+                    if (field && newFieldErrors.hasOwnProperty(field) && message) {
+                        newFieldErrors[field] = message;
+                        matchedAny = true;
+                    }
+                });
+            }
+
+            if (matchedAny) {
+                setFieldErrors(newFieldErrors);
+            } else if (err.response) {
+                // Server responded, but not with a field-shaped error (e.g. 401 invalid credentials)
+                setGeneralError(data.error || data.message || "Invalid email or password.");
+            } else {
+                // No response at all -> network/server-down issue
+                setGeneralError("Could not reach the server. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -98,12 +98,17 @@ function SignIn() {
     return (
         <div>
             <AuthLayout imageSrc={Leftimg}>
-                <h1 className="text-center font-bold text-gray-500 text-2xl">Create New Account</h1>
+                <h1 className="text-center font-bold text-gray-500 text-2xl">Welcome Back</h1>
                 <p className="text-center mt-3 text-gray-500 text-sm mb-5">
                     Flow is an AI filmmaking tool that lets you seamlessly create cinematic
                 </p>
 
-                {/* General/banner error - shows at the top, e.g. the 409 conflict */}
+                {successMessage && (
+                    <div className="bg-green-50 border border-green-300 text-green-600 text-sm rounded-md px-4 py-2 mb-4 text-center">
+                        {successMessage}
+                    </div>
+                )}
+
                 {generalError && (
                     <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-md px-4 py-2 mb-4 text-center">
                         {generalError}
@@ -111,65 +116,32 @@ function SignIn() {
                 )}
 
                 <form onSubmit={handleSubmit} noValidate>
-                    <div className="mb-1">
-                        {fieldErrors.username && (
-                            <p className="text-red-500 text-xs mb-1">{fieldErrors.username}</p>
-                        )}
-                        <InputField
-                            type="text"
-                            name="name"
-                            placeholder="Enter your Name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className={fieldErrors.username ? "border border-red-500" : ""}
-                        />
-                    </div>
+                    <InputField
+                        type="text"
+                        name="email"
+                        placeholder="Enter your email address"
+                        value={formData.email}
+                        onChange={handleChange}
+                        error={fieldErrors.email}
+                    />
+                    <InputField
+                        type="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        error={fieldErrors.password}
+                    />
 
-                    <div className="mb-1">
-                        {fieldErrors.email && (
-                            <p className="text-red-500 text-xs mb-1">{fieldErrors.email}</p>
-                        )}
-                        <InputField
-                            type="text"
-                            name="email"
-                            placeholder="Enter your email address"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className={fieldErrors.email ? "border border-red-500" : ""}
-                        />
-                    </div>
-
-                    <div className="mb-1">
-                        {fieldErrors.password && (
-                            <p className="text-red-500 text-xs mb-1">{fieldErrors.password}</p>
-                        )}
-                        <InputField
-                            type="password"
-                            name="password"
-                            placeholder="Enter your password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className={fieldErrors.password ? "border border-red-500" : ""}
-                        />
-                    </div>
-
-                    <div className="mb-1">
-                        {fieldErrors.confirmPassword && (
-                            <p className="text-red-500 text-xs mb-1">{fieldErrors.confirmPassword}</p>
-                        )}
-                        <InputField
-                            type="password"
-                            name="confirmPassword"
-                            placeholder="Re-enter your password"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className={fieldErrors.confirmPassword ? "border border-red-500" : ""}
-                        />
+                    <div className="text-right mb-3">
+                        <a href="/forgot-password" className="text-xs text-lime-400">
+                            Forgot password?
+                        </a>
                     </div>
 
                     <CustomButton
                         type="submit"
-                        text={loading ? "Creating..." : "Create Account"}
+                        text={loading ? "Logging in..." : "Login"}
                         disabled={loading}
                         className="bg-brandGreen text-white rounded-full py-3 text-sm font-medium hover:bg-[#73b83f] mt-3"
                     />
@@ -188,17 +160,17 @@ function SignIn() {
                     text={
                         <>
                             <img src={GoogleIcon} alt="Google" className="w-5 h-5 mr-4" />
-                            Signin with Google
+                            Login with Google
                         </>
                     }
                 />
 
                 <p className="text-center text-gray-500 mt-3 text-sm">
-                    You Already have an account{" "}
-                    <a href="/login" className="text-center text-xs text-lime-400 mt-2">Login</a>
+                    Don't have an account?{" "}
+                    <a href="/signup" className="text-center text-xs text-lime-400 mt-2">Sign up</a>
                 </p>
             </AuthLayout>
         </div>
     );
 }
-export default SignIn;
+export default Login;

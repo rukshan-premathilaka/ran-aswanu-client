@@ -14,20 +14,36 @@ function SignIn() {
         password: "",
         confirmPassword: "",
     });
-    const [error, setError] = useState("");
+
+    // one slot per field, for errors that belong under a specific input
+    const [fieldErrors, setFieldErrors] = useState({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
+
+    // whole-form errors (e.g. 409 duplicate username/email) shown as a banner
+    const [generalError, setGeneralError] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        // clear that field's error as soon as the user starts fixing it
+        if (fieldErrors[name]) {
+            setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+        if (generalError) setGeneralError("");
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault(); // stop the browser's default form POST/reload
-        setError("");
+        setGeneralError("");
+        setFieldErrors({ username: "", email: "", password: "", confirmPassword: "" });
 
         if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
+            setFieldErrors((prev) => ({ ...prev, confirmPassword: "Passwords do not match" }));
             return;
         }
 
@@ -43,17 +59,52 @@ function SignIn() {
                 }),
             });
 
+            const data = await response.json().catch(() => ({}));
+
             if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.message || "Registration failed");
+                const newFieldErrors = { username: "", email: "", password: "", confirmPassword: "" };
+                let matchedAny = false;
+
+                // Shape A: flat map -> { username: "...", email: "..." }
+                for (const key of Object.keys(newFieldErrors)) {
+                    if (typeof data[key] === "string") {
+                        newFieldErrors[key] = data[key];
+                        matchedAny = true;
+                    }
+                }
+
+                // Shape B: Spring default validation -> { errors: [{ field, defaultMessage }] }
+                if (!matchedAny && Array.isArray(data.errors)) {
+                    data.errors.forEach((err) => {
+                        const field = err.field;
+                        const message = err.defaultMessage || err.message;
+                        if (field && newFieldErrors.hasOwnProperty(field) && message) {
+                            newFieldErrors[field] = message;
+                            matchedAny = true;
+                        }
+                    });
+                }
+
+                if (matchedAny) {
+                    setFieldErrors(newFieldErrors);
+                    return;
+                }
+
+                // Shape C: whole-form error -> { error: "..." } e.g. your 409 conflict
+                if (data.error) {
+                    setGeneralError(data.error);
+                    return;
+                }
+
+                setGeneralError(data.message || "Registration failed. Please try again.");
+                return;
             }
 
-            const data = await response.json();
             console.log("Registered:", data);
-            // e.g. redirect to login page
             window.location.href = "/login";
         } catch (err) {
-            setError(err.message);
+            console.error("Network/fetch error:", err);
+            setGeneralError("Could not reach the server. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -67,11 +118,13 @@ function SignIn() {
                     Flow is an AI filmmaking tool that lets you seamlessly create cinematic
                 </p>
 
-                {error && (
-                    <p className="text-center text-red-500 text-sm mb-3">{error}</p>
+                {generalError && (
+                    <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-md px-4 py-2 mb-4 text-center">
+                        {generalError}
+                    </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <InputField
                         type="text"
                         name="name"
