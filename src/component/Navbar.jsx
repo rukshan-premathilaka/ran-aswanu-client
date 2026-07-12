@@ -4,7 +4,7 @@ import { Search, User, ShoppingCart } from 'lucide-react';
 
 function Navbar() {
     return (
-        <nav className="w-full h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 md:px-12 fixed top-0 left-0 z-50">
+        <nav className="w-full h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 md:px-12 sticky top-0 left-0 z-50">
 
             {/* 🌿 1. Logo & Site Name */}
             <div className="flex items-center gap-2.5 cursor-pointer">

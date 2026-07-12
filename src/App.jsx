@@ -8,10 +8,9 @@ import SignIn from "@/page/signIn.jsx";
 import DashboardLayout from "@/layouts/Dashboard.jsx";
 import ProductClick from "@/page/ProductClick.jsx";
 
-
 function App() {
   return (
-      <ProductClick/>
+      <ProductClick />
 
       /*<Router>
         <Routes>
