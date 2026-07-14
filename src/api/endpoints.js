@@ -1,26 +1,3 @@
-/**
- * endpoints.js
- * ------------------------------------------------------
- * WHAT: A single object listing every backend endpoint — its URL and
- *       HTTP method — organized by feature (matches your Postman
- *       collection's folder structure: Auth / Me / Other Users).
- *
- * WHY:  This is the ONE file to check or edit when the backend team adds,
- *       removes, or changes an endpoint. No need to hunt through
- *       components or service files.
- *
- * HOW TO ADD A NEW ENDPOINT:
- *   1. Find (or create) the relevant group below (e.g. AUTH, ME, USERS).
- *   2. Add a new key with { url, method }.
- *   3. If the URL needs a dynamic value (like a userId), make it a
- *      function that returns { url, method } — see USERS.GET_RATINGS below.
- *
- * Example — adding "DELETE /me" (delete my account):
- *   ME: {
- *     ...
- *     DELETE_ACCOUNT: { url: "/me", method: "DELETE" },
- *   }
- */
 
 const ENDPOINTS = {
     AUTH: {
@@ -38,9 +15,6 @@ const ENDPOINTS = {
     },
 
     USERS: {
-        // Dynamic endpoint: userId isn't known until called, so this is a
-        // function instead of a plain object. Call it like:
-        // ENDPOINTS.USERS.GET_RATINGS(5) -> { url: "/users/5/ratings", method: "GET" }
         GET_RATINGS: (userId) => ({ url: `/users/${userId}/ratings`, method: "GET" }),
     },
 };
