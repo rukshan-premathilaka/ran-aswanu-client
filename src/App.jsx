@@ -23,6 +23,8 @@ function App() {
 
             {/* The '/' path is home page */}
             <Route path="/chat" element={<ChatPage />} />
+
+
         </Routes>
       </Router>
   );
