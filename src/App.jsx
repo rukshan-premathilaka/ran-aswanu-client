@@ -1,56 +1,43 @@
-import './App.css'
-import {useState} from "react";
-import axios from 'axios'
+import './index.css';
+import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+
+// Your existing imports
+import Login from "@/page/login.jsx";
+import Welcome from "@/page/welcome.jsx";
+
+import RegisterPage from "@/page/RegisterPage.jsx";
+import {Suspense} from "react";
+import ForgotPasswordPage from "@/page/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "@/page/ResetPassword.jsx";
+
+const PageFallback = () => (
+	<div className="flex min-h-screen w-full items-center justify-center bg-white">
+		<div className="h-8 w-8 animate-spin rounded-full border-2 border-lime-600 border-t-transparent"/>
+	</div>
+);
 
 function App() {
+	return (
+		/* <ProductClick />*/
 
-  const [userdata, setUserData] = useState()
+		<Router>
+			<Suspense fallback={<PageFallback/>}>
+				<Routes>
+					{/* home page */}
+					<Route path="/" element={<Welcome/>}/>
 
-  const testApi = () => {
-    axios.get('http://localhost:8080/user')
-        .then(response => {
-          console.log(response)
-          setUserData(response.data)
-        })
-        .catch(error => {
-          console.error("There was an error fetching the data!", error)
-        })
-  }
+					{/* User */}
+					<Route path="/register" element={<RegisterPage/>}/>
+					<Route path="/login" element={<Login/>}/>
+					<Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+					<Route path="/reset-password" element={<ResetPasswordPage />} />
+
+				</Routes>
+			</Suspense>
+		</Router>
 
 
-  return (
-
-    <div
-        className="w-screen h-screen
-        bg-lime-500
-        flex flex-col items-center justify-center"
-    >
-
-      <header
-          className="text-8xl text-lime-100 font-bold "
-      >
-        RUN ASWANNA CLIENT
-      </header>
-      <button
-          className="p-5  bg-lime-50 text-lime-800 rounded-2xl font-medium cursor-pointer"
-          onClick={() => {testApi()}}
-      >API TEST</button>
-
-      <div>
-        {userdata ? (
-            <div className="font-medium text-lime-700 text-center mt-5">
-              <p>ID: {userdata.id}</p>
-              <p>Name: {userdata.name}</p>
-              <p>Email: {userdata.email}</p>
-            </div>
-        ) : (
-            <p className="font-medium text-lime-700 mt-5">No data yet. Click the button!</p>
-        )}
-      </div>
-
-    </div>
-
-  )
+	);
 }
 
-export default App
+export default App;

@@ -1,3 +1,29 @@
+
+@import "tailwindcss";
+@import "tailwindcss";
+@source "../src";
+
+
+@theme {
+    --color-brandGreen: #82CD47;
+    --color-brandLightBg: #F0F9ED;
+    --color-btnSinhala: #FEF6C7;
+    --color-btnEnglish: #B3E8F4;
+    --color-btnTamil: #FFBFA9;
+}
+
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', serif;
+}
+
+
 body {
     margin: 0;
     padding: 0;
