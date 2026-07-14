@@ -1,178 +1,160 @@
-import { useState } from "react";
-import AuthLayout from "@/layouts/Authlayout.jsx";
-import Leftimg from "@/assets/LeftImg.jpg"
-import InputField from "@/component/InputField.jsx";
-import CustomButton from "@/component/CustomButton.jsx";
-import GoogleIcon from "@/assets/GoogleIcon.svg";
-import { loginUser } from "@/api/authService.js";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import FormInput from "@/component/FormInput";
+import AuthShowcase from "@/component/AuthShowcase";
+import ApiService from "@/api/ApiService";
+import ENDPOINTS from "@/api/ENDPOINTS";
 
-function Login() {
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-    });
+const apiService = new ApiService();
 
-    const [fieldErrors, setFieldErrors] = useState({
-        email: "",
-        password: "",
-    });
-    const [generalError, setGeneralError] = useState("");
-    const [successMessage, setSuccessMessage] = useState("");
-    const [loading, setLoading] = useState(false);
+const INITIAL_FORM = {
+    email: "",
+    password: "",
+};
+
+function LoginPage() {
+    const navigate = useNavigate();
+
+    const [form, setForm] = useState(INITIAL_FORM);
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [formError, setFormError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setForm((prev) => ({ ...prev, [name]: value }));
+
         if (fieldErrors[name]) {
-            setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+            setFieldErrors((prev) => {
+                const next = { ...prev };
+                delete next[name];
+                return next;
+            });
         }
-        if (generalError) setGeneralError("");
+        if (formError) setFormError("");
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setGeneralError("");
-        setSuccessMessage("");
-        setFieldErrors({ email: "", password: "" });
-        setLoading(true);
+        setFieldErrors({});
+        setFormError("");
+        setIsSubmitting(true);
 
         try {
-            const response = await loginUser({
-                email: formData.email,
-                password: formData.password,
-            });
+            const data = await apiService.request(
+                ENDPOINTS.AUTH.LOGIN.method,
+                ENDPOINTS.AUTH.LOGIN.url,
+                form
+            );
 
-            console.log("LOGIN RESPONSE:", response.data);
-
-            const { data } = response;
-            if (data.token) {
-                localStorage.setItem("token", data.token);
+            // Adjust this key to match whatever field your backend
+            // actually returns the JWT under (e.g. data.accessToken).
+            if (data?.token) {
+                localStorage.setItem("my_app_token", data.token);
             }
 
-            setSuccessMessage("Login successful! Redirecting...");
-            setTimeout(() => {
-                window.location.href = "/dashboard"; // change to your landing route
-            }, 1000);
-        } catch (err) {
-            // Axios puts the server's error body in err.response.data
-            const data = err.response?.data || {};
-            console.log("LOGIN ERROR RESPONSE:", data);
+            navigate("/dashboard");
+        } catch (error) {
+            const status = error?.response?.status;
+            const data = error?.response?.data;
 
-            const newFieldErrors = { email: "", password: "" };
-            let matchedAny = false;
-
-            // Shape A: flat validation map -> { email: "...", password: "..." }
-            for (const key of Object.keys(newFieldErrors)) {
-                if (typeof data[key] === "string") {
-                    newFieldErrors[key] = data[key];
-                    matchedAny = true;
-                }
-            }
-
-            // Shape B: Spring default -> { errors: [{ field, defaultMessage }] }
-            if (!matchedAny && Array.isArray(data.errors)) {
-                data.errors.forEach((fe) => {
-                    const field = fe.field;
-                    const message = fe.defaultMessage || fe.message;
-                    if (field && newFieldErrors.hasOwnProperty(field) && message) {
-                        newFieldErrors[field] = message;
-                        matchedAny = true;
-                    }
-                });
-            }
-
-            if (matchedAny) {
-                setFieldErrors(newFieldErrors);
-            } else if (err.response) {
-                // Server responded, but not with a field-shaped error (e.g. 401 invalid credentials)
-                setGeneralError(data.error || data.message || "Invalid email or password.");
+            if (status === 400 && data && typeof data === "object") {
+                // Missing/blank field validation errors
+                setFieldErrors(data);
+            } else if (status === 404) {
+                // UsernameNotFoundException handler -> invalid credentials
+                setFormError(data?.error || "Invalid email or password.");
+            } else if (status === 401 || status === 403) {
+                setFormError("Invalid email or password.");
+            } else if (status) {
+                setFormError(
+                    data?.error || `Login failed (${status}). Please try again.`
+                );
             } else {
-                // No response at all -> network/server-down issue
-                setGeneralError("Could not reach the server. Please try again.");
+                setFormError("Could not reach the server. Please check your connection.");
             }
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div>
-            <AuthLayout imageSrc={Leftimg}>
-                <h1 className="text-center font-bold text-gray-500 text-2xl">Welcome Back</h1>
-                <p className="text-center mt-3 text-gray-500 text-sm mb-5">
-                    Flow is an AI filmmaking tool that lets you seamlessly create cinematic
-                </p>
+        <div className="flex min-h-screen w-full bg-white">
+            <AuthShowcase />
 
-                {successMessage && (
-                    <div className="bg-green-50 border border-green-300 text-green-600 text-sm rounded-md px-4 py-2 mb-4 text-center">
-                        {successMessage}
-                    </div>
-                )}
+            <div className="flex w-full flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:w-1/2 lg:px-16">
+                <div className="w-full max-w-sm">
+                    <h1 className="text-2xl font-semibold text-neutral-900">
+                        Welcome back
+                    </h1>
+                    <p className="mt-1.5 text-sm text-neutral-500">
+                        Log in to manage your farm on Ranaswanu.
+                    </p>
 
-                {generalError && (
-                    <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-md px-4 py-2 mb-4 text-center">
-                        {generalError}
-                    </div>
-                )}
+                    <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+                        {formError && (
+                            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                {formError}
+                            </div>
+                        )}
 
-                <form onSubmit={handleSubmit} noValidate>
-                    <InputField
-                        type="text"
-                        name="email"
-                        placeholder="Enter your email address"
-                        value={formData.email}
-                        onChange={handleChange}
-                        error={fieldErrors.email}
-                    />
-                    <InputField
-                        type="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        error={fieldErrors.password}
-                    />
+                        <FormInput
+                            id="email"
+                            name="email"
+                            label="Email"
+                            type="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            error={fieldErrors.email}
+                            placeholder="rukshan@example.com"
+                            autoComplete="email"
+                        />
 
-                    <div className="text-right mb-3">
-                        <a href="/forgot-password" className="text-xs text-lime-400">
-                            Forgot password?
-                        </a>
-                    </div>
+                        <FormInput
+                            id="password"
+                            name="password"
+                            label="Password"
+                            type="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            error={fieldErrors.password}
+                            placeholder="Enter your password"
+                            autoComplete="current-password"
+                        />
 
-                    <CustomButton
-                        type="submit"
-                        text={loading ? "Logging in..." : "Login"}
-                        disabled={loading}
-                        size="full"
-                        className="bg-brandGreen text-white hover:bg-[#73b83f] mt-3"
-                    />
-                </form>
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/forgot-password")}
+                                className="text-sm font-medium text-lime-700 hover:underline"
+                            >
+                                Forgot password?
+                            </button>
+                        </div>
 
-                <div className="w-full flex items-center justify-center my-6 gap-3">
-                    <div className="h-[1px] bg-gray-200 flex-1"></div>
-                    <span className="text-3xs text-gray-400 uppercase">or</span>
-                    <div className="h-[1px] bg-gray-200 flex-1"></div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full rounded-lg bg-lime-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-lime-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isSubmitting ? "Logging in…" : "Log in"}
+                        </button>
+
+                        <p className="text-center text-sm text-neutral-500">
+                            Don't have an account?{" "}
+                            <button
+                                type="button"
+                                onClick={() => navigate("/register")}
+                                className="font-medium text-lime-700 hover:underline"
+                            >
+                                Sign up
+                            </button>
+                        </p>
+                    </form>
                 </div>
-
-                <CustomButton
-                    type="button"
-                    onClick={() => alert("button clicked")}
-                    size="full"
-                    className="text-gray-500 font-semibold hover:bg-lime-200 flex items-center justify-center border border-gray-200"
-                    text={
-                        <>
-                            <img src={GoogleIcon} alt="Google" className="w-5 h-5 mr-4" />
-                            Login with Google
-                        </>
-                    }
-                />
-
-                <p className="text-center text-gray-500 mt-3 text-sm">
-                    Don't have an account?{" "}
-                    <a href="/signup" className="text-center text-xs text-lime-400 mt-2">Sign up</a>
-                </p>
-            </AuthLayout>
+            </div>
         </div>
     );
 }
-export default Login;
+
+export default LoginPage;
