@@ -7,10 +7,12 @@ import Welcome from "@/page/welcome.jsx";
 import SignIn from "@/page/signIn.jsx";
 import DashboardLayout from "@/layouts/Dashboard.jsx";
 import ProductClick from "@/page/ProductClick.jsx";
+import UserProfileSettings from "@/page/UserProfileSettings.jsx";
 
 function App() {
   return (
-      <ProductClick/>
+      <UserProfileSettings/>
+
 
       /*<Router>
         <Routes>

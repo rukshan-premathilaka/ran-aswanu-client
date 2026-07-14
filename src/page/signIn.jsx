@@ -1,197 +1,52 @@
-import { useState } from "react";
-import AuthLayout from "@/layouts/Authlayout.jsx";
-import Leftimg from "@/assets/LeftImg.jpg"
-import InputField from "@/component/InputField.jsx";
-import CustomButton from "@/component/CustomButton.jsx";
-import GoogleIcon from "@/assets/GoogleIcon.svg";
+import React from 'react';
+import Navbar from "@/component/Navbar.jsx";
+import { Settings, User, ShieldCheck } from 'lucide-react';
 
-const API_BASE_URL = "http://localhost:8080/api";
-
-function SignIn() {
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-    });
-
-    // one slot per field, for errors that belong under a specific input
-    const [fieldErrors, setFieldErrors] = useState({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-    });
-
-    // whole-form errors (e.g. 409 duplicate username/email) shown as a banner
-    const [generalError, setGeneralError] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        // clear that field's error as soon as the user starts fixing it
-        if (fieldErrors[name]) {
-            setFieldErrors((prev) => ({ ...prev, [name]: "" }));
-        }
-        if (generalError) setGeneralError("");
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // stop the browser's default form POST/reload
-        setGeneralError("");
-        setFieldErrors({ username: "", email: "", password: "", confirmPassword: "" });
-
-        if (formData.password !== formData.confirmPassword) {
-            setFieldErrors((prev) => ({ ...prev, confirmPassword: "Passwords do not match" }));
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: formData.name,
-                    email: formData.email,
-                    password: formData.password,
-                }),
-            });
-
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                const newFieldErrors = { username: "", email: "", password: "", confirmPassword: "" };
-                let matchedAny = false;
-
-                // Shape A: flat map -> { username: "...", email: "..." }
-                for (const key of Object.keys(newFieldErrors)) {
-                    if (typeof data[key] === "string") {
-                        newFieldErrors[key] = data[key];
-                        matchedAny = true;
-                    }
-                }
-
-                // Shape B: Spring default validation -> { errors: [{ field, defaultMessage }] }
-                if (!matchedAny && Array.isArray(data.errors)) {
-                    data.errors.forEach((err) => {
-                        const field = err.field;
-                        const message = err.defaultMessage || err.message;
-                        if (field && newFieldErrors.hasOwnProperty(field) && message) {
-                            newFieldErrors[field] = message;
-                            matchedAny = true;
-                        }
-                    });
-                }
-
-                if (matchedAny) {
-                    setFieldErrors(newFieldErrors);
-                    return;
-                }
-
-                // Shape C: whole-form error -> { error: "..." } e.g. your 409 conflict
-                if (data.error) {
-                    setGeneralError(data.error);
-                    return;
-                }
-
-                setGeneralError(data.message || "Registration failed. Please try again.");
-                return;
-            }
-
-            console.log("Registered:", data);
-            window.location.href = "/login";
-        } catch (err) {
-            console.error("Network/fetch error:", err);
-            setGeneralError("Could not reach the server. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
+// 🔘 Simple reusable button component
+// active={true} දුන්නොත් green color එක, නැත්නම් normal color එක
+function SidebarButton({ icon: Icon, label, active }) {
     return (
-        <div>
-            <AuthLayout imageSrc={Leftimg}>
-                <h1 className="text-center font-bold text-gray-500 text-2xl">Create New Account</h1>
-                <p className="text-center mt-3 text-gray-500 text-sm mb-5">
-                    Flow is an AI filmmaking tool that lets you seamlessly create cinematic
-                </p>
+        <button
+            className={
+                active
+                    ? "w-full flex items-center gap-3 px-4 py-3 bg-green-50 text-[#54B435] font-semibold rounded-xl border border-green-100 transition-all text-left group"
+                    : "w-full flex items-center gap-3 px-4 py-3 text-gray-650 hover:bg-gray-50 hover:text-gray-900 font-medium rounded-xl transition-all text-left"
+            }
+        >
+            <Icon size={20} className={active ? "transition-transform duration-700 group-hover:rotate-90" : ""} />
+            <span className="text-sm">{label}</span>
+        </button>
+    );
+}
 
-                {generalError && (
-                    <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-md px-4 py-2 mb-4 text-center">
-                        {generalError}
-                    </div>
-                )}
+function UserProfileSettings() {
+    return (
+        <div className="w-full min-h-screen flex flex-col bg-gray-50">
+            {/* 🌿 Top Navbar */}
+            <Navbar />
 
-                <form onSubmit={handleSubmit} noValidate>
-                    <InputField
-                        type="text"
-                        name="name"
-                        placeholder="Enter your Name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        error={fieldErrors.username}
-                    />
-                    <InputField
-                        type="text"
-                        name="email"
-                        placeholder="Enter your email address"
-                        value={formData.email}
-                        onChange={handleChange}
-                        error={fieldErrors.email}
-                    />
-                    <InputField
-                        type="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        error={fieldErrors.password}
-                    />
-                    <InputField
-                        type="password"
-                        name="confirmPassword"
-                        placeholder="Re-enter your password"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        error={fieldErrors.confirmPassword}
-                    />
+            <div className="w-full flex flex-1 pt-16">
 
-                    <CustomButton
-                        type="submit"
-                        text={loading ? "Creating..." : "Create Account"}
-                        disabled={loading}
-                        size="full"
-                        className="bg-brandGreen text-white hover:bg-[#73b83f] mt-3"
-                    />
-                </form>
-
-                <div className="w-full flex items-center justify-center my-6 gap-3">
-                    <div className="h-[1px] bg-gray-200 flex-1"></div>
-                    <span className="text-3xs text-gray-400 uppercase">or</span>
-                    <div className="h-[1px] bg-gray-200 flex-1"></div>
+                {/* 📂 LEFT SIDE - Sidebar */}
+                <div className="w-1/4 bg-white border-r border-gray-200 p-4 flex flex-col gap-1.5">
+                    <SidebarButton icon={Settings} label="Profile Settings" active={true} />
+                    <SidebarButton icon={User} label="Personal Info" active={false} />
+                    <SidebarButton icon={ShieldCheck} label="Password & Security" active={false} />
                 </div>
 
-                <CustomButton
-                    type="button"
-                    size="full"
-                    onClick={() => alert("button clicked")}
-                    className="text-gray-500 font-semibold hover:bg-lime-200 flex items-center justify-center border border-gray-200"
-                    text={
-                        <>
-                            <img src={GoogleIcon} alt="Google" className="w-5 h-5 mr-4" />
-                            Signin with Google
-                        </>
-                    }
-                />
+                {/* ⬜ RIGHT SIDE - Content */}
+                <div className="flex-1 p-8 bg-gray-50">
+                    <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm max-w-2xl">
+                        <h1 className="text-xl font-bold text-gray-850 mb-2">Hello World</h1>
+                        <p className="text-sm text-gray-500 leading-relaxed">
+                            {/* content මෙතනට */}
+                        </p>
+                    </div>
+                </div>
 
-                <p className="text-center text-gray-500 mt-3 text-sm">
-                    You Already have an account{" "}
-                    <a href="/login" className="text-center text-xs text-lime-400 mt-2">Login</a>
-                </p>
-            </AuthLayout>
+            </div>
         </div>
     );
 }
-export default SignIn;
+
+export default UserProfileSettings;
