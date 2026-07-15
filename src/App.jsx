@@ -1,29 +1,36 @@
-import './index.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-// Your existing imports
-import Login from "@/page/login.jsx";
-import Welcome from "@/page/welcome.jsx";
-import SignIn from "@/page/signIn.jsx";
-import DashboardLayout from "@/layouts/Dashboard.jsx";
-import ProductClick from "@/page/ProductClick.jsx";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import DashboardLayout from './layouts/FarmerDashboard.jsx';
+import FarmerHomePage from './page/FarmerHomePage.jsx';
+import FarmerAddHarvestPage from './page/FarmerAddHarvestPage.jsx';
+import FarmerManageHarvestPage from './page/FarmerManageHarvestPage.jsx';
+import FarmerCropManagementPage from './page/FarmerCropManagementPage.jsx';
+import CalendarPage from "@/page/FarmerCalenderPage.jsx";
+import FarmerWeatherPage from './page/FarmerWeatherPage.jsx';
+import FarmerSettingsPage from './page/FarmerSettingsPage.jsx'; // New Import
+import FarmerHelpSupportPage from './page/FarmerHelpSupportPage.jsx'; // New Import
 
 function App() {
-  return (
-      <ProductClick/>
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      /*<Router>
-        <Routes>
-          {/!* The '/' path is home page *!/}
-          <Route path="/" element={<Welcome/>} />
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<FarmerHomePage />} />
+                    <Route path="add-harvest" element={<FarmerAddHarvestPage />} />
+                    <Route path="manage-harvest" element={<FarmerManageHarvestPage />} />
+                    <Route path="crop-management" element={<FarmerCropManagementPage />} />
+                    <Route path="calendar" element={<CalendarPage />} />
+                    <Route path="weather" element={<FarmerWeatherPage />} />
 
-          {/!* Other routes *!/}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signin" element={<SignIn />} />
-        </Routes>
-      </Router>*/
-
-  );
+                    {/* New Routes for Settings and Help */}
+                    <Route path="settings" element={<FarmerSettingsPage />} />
+                    <Route path="help" element={<FarmerHelpSupportPage />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
 export default App;
