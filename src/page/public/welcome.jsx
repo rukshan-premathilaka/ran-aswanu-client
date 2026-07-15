@@ -22,7 +22,7 @@ const Welcome = () => {
 
         } catch (error) {
             console.error("Error saving language:", error);
-            // Optional: Show an error message to the user here
+            // Optional: Show an error message to the auth here
         }
     };
 
