@@ -20,11 +20,6 @@ function AppCopy() {
 							<Route key={path} path={path} element={<Element />} />
 						))}
 
-						{/* Dev-only index of every route above, so you can click
-                            through pages instead of typing URLs while building.
-                            import.meta.env.DEV is true for `npm run dev` and
-                            false in a production build, so this route (and its
-                            lazy chunk) is stripped out entirely when you ship. */}
 						{import.meta.env.DEV && (
 							<Route path="/dev-routes" element={<DevRouteList />} />
 						)}
