@@ -19,7 +19,7 @@ class RouteErrorBoundary extends React.Component {
 	componentDidCatch(error, info) {
 		// Still logs to console so you can see the real stack trace
 		console.error("Route crashed:", error, info);
-	}
+	}z
 
 	render() {
 		if (this.state.error) {

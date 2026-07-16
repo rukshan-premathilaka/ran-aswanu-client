@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SimpleCalendar from '../component/Calendar';
+import SimpleCalendar from '@/component/Calendar.jsx';
 
 function CalendarPage() {
     const [selectedDate, setSelectedDate] = useState(new Date());
