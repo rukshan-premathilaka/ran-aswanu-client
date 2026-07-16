@@ -1,4 +1,7 @@
 import {lazy} from "react";
+import MatchingDeliveriesPage from "@/page/delivery/MatchingDeliveriesPage.jsx";
+import DeliveryRequestPage from "@/page/delivery/DeliveryRequestPage.jsx";
+import DeliveryTrackingPage from "@/page/delivery/DeliveryTrackingPage.jsx";
 
 
 // Auth pages
@@ -47,7 +50,7 @@ const FarmerHelpSupportPage = lazy(() =>
 );
 
 // Common
-const ChatPage = lazy(() => import("@/page/coman/ChatPage.jsx"))
+const ChatPage = lazy(() => import("@/page/common/ChatPage.jsx"))
 
 const routes = [
 	// ---------------- Public ----------------
@@ -77,6 +80,12 @@ const routes = [
 
 	// ---------------- Common ----------------
 	{path: "/chat", label: "Chat", group: "Common", element: ChatPage},
+
+	// ---------------- Deliveries ----------------
+	{path: "/MatchineDeliveries", label: "Matchine Deliveries", group: "Deliveries", element: MatchingDeliveriesPage},
+	{path: "/DeliveryRequest", label: "Delivery Request", group: "Deliveries", element: DeliveryRequestPage},
+	{path: "/DeliveryTracking", label: "Delivery Tracking", group: "Deliveries", element: DeliveryTrackingPage},
+
 ];
 
 export default routes;
@@ -102,3 +111,6 @@ export default routes;
 		</Route>
 	</Routes>
 </BrowserRouter>*/
+
+
+

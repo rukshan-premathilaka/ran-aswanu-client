@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "../chatbox.css";
-import NotificationBell from "./NotificationBell.jsx";
+import "@/page/common/chatbox.css";
+import NotificationBell from "@/component/NotificationBell.jsx";
 
 // Sample contact data - passe backend eken enna one
 const chats = [
