@@ -2,6 +2,15 @@ import {lazy} from "react";
 import MatchingDeliveriesPage from "@/page/delivery/MatchingDeliveriesPage.jsx";
 import DeliveryRequestPage from "@/page/delivery/DeliveryRequestPage.jsx";
 import DeliveryTrackingPage from "@/page/delivery/DeliveryTrackingPage.jsx";
+import FarmerDashboard from "@/layouts/FarmerDashboard.jsx";
+import FarmerHomePage from "@/page/farmer/FarmerHomePage.jsx";
+import FarmerAddHarvestPage from "@/page/farmer/FarmerAddHarvestPage.jsx";
+import FarmerManageHarvestPage from "@/page/farmer/FarmerManageHarvestPage.jsx";
+import FarmerCropManagementPage from "@/page/farmer/FarmerCropManagementPage.jsx";
+import FarmerWeatherPage from "@/page/farmer/FarmerWeatherPage.jsx";
+import FarmerSettingsPage from "@/page/farmer/FarmerSettingsPage.jsx";
+import FarmerHelpSupportPage from "@/page/farmer/FarmerHelpSupportPage.jsx";
+import CalendarPage from "@/page/farmer/FarmerCalenderPage.jsx";
 
 
 // Auth pages
@@ -21,7 +30,7 @@ const ProductClick = lazy(() => import("@/page/public/ProductClick.jsx"));
 const UserProfileSettings = lazy(() => import("@/page/settings/UserProfileSettings.jsx"));
 
 // Farmer
-const FarmerDashboard = lazy(() =>
+/*const FarmerDashboard = lazy(() =>
 	import("@/page/farmer/FarmerDashboard.jsx").then((m) => ({default: m.FarmerDashboard}))
 );
 const FarmerHomePage = lazy(() =>
@@ -47,7 +56,7 @@ const FarmerSettingsPage = lazy(() =>
 );
 const FarmerHelpSupportPage = lazy(() =>
 	import("@/page/farmer/FarmerHelpSupportPage.jsx").then((m) => ({default: m.FarmerHelpSupportPage}))
-);
+);*/
 
 // Common
 const ChatPage = lazy(() => import("@/page/common/ChatPage.jsx"))
@@ -73,6 +82,7 @@ const routes = [
 	{path: "/farmer-add-harvest", label: "Add Harvest", group: "Farmer", element: FarmerAddHarvestPage},
 	{path: "/farmer-manage-harvest", label: "Manage Harvest", group: "Farmer", element: FarmerManageHarvestPage},
 	{path: "/farmer-crop-management", label: "Crop Management", group: "Farmer", element: FarmerCropManagementPage},
+	 
 	{path: "/farmer-calendar", label: "Calendar", group: "Farmer", element: CalendarPage},
 	{path: "/farmer-weather", label: "Weather", group: "Farmer", element: FarmerWeatherPage},
 	{path: "/farmer-settings", label: "Farmer Settings", group: "Farmer", element: FarmerSettingsPage},
