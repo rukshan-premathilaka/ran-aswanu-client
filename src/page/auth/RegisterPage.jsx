@@ -26,7 +26,7 @@ function RegisterPage() {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
 
-        // Clear that field's error the moment the user edits it
+        // Clear that field's error the moment the auth edits it
         if (fieldErrors[name]) {
             setFieldErrors((prev) => {
                 const next = { ...prev };
