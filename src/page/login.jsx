@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import FormInput from "@/component/FormInput";
 import AuthShowcase from "@/component/AuthShowcase";
 import ApiService from "@/api/ApiService";
-import ENDPOINTS from "@/api/ENDPOINTS";
+import ENDPOINTS from "@/api/endpoints.js";
 
 const apiService = new ApiService();
 
@@ -24,6 +24,7 @@ function LoginPage() {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
 
+        // Clear that field's error the moment the user edits it
         if (fieldErrors[name]) {
             setFieldErrors((prev) => {
                 const next = { ...prev };
@@ -47,25 +48,23 @@ function LoginPage() {
                 form
             );
 
-            // Adjust this key to match whatever field your backend
-            // actually returns the JWT under (e.g. data.accessToken).
+            // Save the JWT so ApiService's interceptor attaches it to
+            // future requests automatically.
             if (data?.token) {
                 localStorage.setItem("my_app_token", data.token);
             }
 
-            navigate("/dashboard");
+            navigate("/dashboard"); // change to wherever logged-in users land
         } catch (error) {
             const status = error?.response?.status;
             const data = error?.response?.data;
 
             if (status === 400 && data && typeof data === "object") {
-                // Missing/blank field validation errors
+                // Backend sends { fieldName: "message", ... }
                 setFieldErrors(data);
-            } else if (status === 404) {
-                // UsernameNotFoundException handler -> invalid credentials
+            } else if (status === 404 || status === 401) {
+                // Wrong email/password
                 setFormError(data?.error || "Invalid email or password.");
-            } else if (status === 401 || status === 403) {
-                setFormError("Invalid email or password.");
             } else if (status) {
                 setFormError(
                     data?.error || `Login failed (${status}). Please try again.`
@@ -79,7 +78,7 @@ function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen w-full bg-white">
+        <div className="flex flex-col sm:flex-row min-h-screen w-full bg-white">
             <AuthShowcase />
 
             <div className="flex w-full flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:w-1/2 lg:px-16">
@@ -122,7 +121,7 @@ function LoginPage() {
                             autoComplete="current-password"
                         />
 
-                        <div className="flex justify-end">
+                        <div className="text-right">
                             <button
                                 type="button"
                                 onClick={() => navigate("/forgot-password")}

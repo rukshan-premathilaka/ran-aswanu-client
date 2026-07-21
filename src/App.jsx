@@ -1,42 +1,15 @@
-import './index.css';
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
-
-// Your existing imports
-import Login from "@/page/login.jsx";
-import Welcome from "@/page/welcome.jsx";
-
-import RegisterPage from "@/page/RegisterPage.jsx";
-import {Suspense} from "react";
-import ForgotPasswordPage from "@/page/ForgotPasswordPage.jsx";
-import ResetPasswordPage from "@/page/ResetPassword.jsx";
-
-const PageFallback = () => (
-	<div className="flex min-h-screen w-full items-center justify-center bg-white">
-		<div className="h-8 w-8 animate-spin rounded-full border-2 border-lime-600 border-t-transparent"/>
-	</div>
-);
+// App.jsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "@/page/login.jsx";
+import RegisterPage from "@/page/RegisterPage";
 
 function App() {
 	return (
-		/* <ProductClick />*/
-
-		<Router>
-			<Suspense fallback={<PageFallback/>}>
-				<Routes>
-					{/* home page */}
-					<Route path="/" element={<Welcome/>}/>
-
-					{/* User */}
-					<Route path="/register" element={<RegisterPage/>}/>
-					<Route path="/login" element={<Login/>}/>
-					<Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
-					<Route path="/reset-password" element={<ResetPasswordPage />} />
-
-				</Routes>
-			</Suspense>
-		</Router>
-
-
+		<Routes>
+			<Route path="/" element={<Navigate to="/login" replace />} />
+			<Route path="/login" element={<LoginPage />} />
+			<Route path="/register" element={<RegisterPage />} />
+		</Routes>
 	);
 }
 
