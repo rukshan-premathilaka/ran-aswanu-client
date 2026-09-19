@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 class ApiService {
-
 	baseURL = 'http://localhost:8080/api';
 	client = null;
 
@@ -13,9 +12,9 @@ class ApiService {
 			}
 		});
 
-		// Attach the token fresh on every request, not just at construction time
+		// Attach JWT token fresh on every request
 		this.client.interceptors.request.use((config) => {
-			const token = localStorage.getItem('my_app_token');
+			const token = localStorage.getItem('my_app_token') || localStorage.getItem('token');
 			if (token) {
 				config.headers.Authorization = `Bearer ${token}`;
 			}
@@ -23,28 +22,17 @@ class ApiService {
 		});
 	}
 
-	async request(method, url, data = {}) {
+	async request(method, url, data = {}, config = {}) {
 		try {
 			let response;
+			const upperMethod = method.toUpperCase();
 
-			switch (method.toUpperCase()) {
-				case 'GET':
-					response = await this.client.get(url, { params: data });
-					break;
-				case 'POST':
-					response = await this.client.post(url, data);
-					break;
-				case 'PUT':
-					response = await this.client.put(url, data);
-					break;
-				case 'PATCH':
-					response = await this.client.patch(url, data);
-					break;
-				case 'DELETE':
-					response = await this.client.delete(url, { data });
-					break;
-				default:
-					throw new Error(`Invalid request method: ${method}`);
+			if (upperMethod === 'GET') {
+				response = await this.client.get(url, { params: data, ...config });
+			} else if (upperMethod === 'DELETE') {
+				response = await this.client.delete(url, { data, ...config });
+			} else {
+				response = await this.client[upperMethod.toLowerCase()](url, data, config);
 			}
 
 			return response.data;
@@ -53,6 +41,13 @@ class ApiService {
 			throw error;
 		}
 	}
+
+	get(url, params) { return this.request('GET', url, params); }
+	post(url, data, config) { return this.request('POST', url, data, config); }
+	put(url, data, config) { return this.request('PUT', url, data, config); }
+	patch(url, data, config) { return this.request('PATCH', url, data, config); }
+	delete(url, data, config) { return this.request('DELETE', url, data, config); }
 }
 
-export default ApiService;
+const apiService = new ApiService();
+export default apiService;

@@ -19,13 +19,16 @@ const ENDPOINTS = {
 
     FARMER_DASHBOARD: {
         GET_SUMMARY: { url: "/farmer/dashboard/summary", method: "GET" },
-        GET_RECENT_ORDERS: { url: "/farmer/orders/recent", method: "GET" },
         GET_RECENT_ACTIVITY: { url: "/farmer/activities/recent", method: "GET" },
 
         LIST_TASKS: { url: "/farmer/tasks", method: "GET" },
         CREATE_TASK: { url: "/farmer/tasks", method: "POST" },
         TOGGLE_TASK: (taskId) => ({ url: `/farmer/tasks/${taskId}/toggle`, method: "PATCH" }),
         DELETE_TASK: (taskId) => ({ url: `/farmer/tasks/${taskId}`, method: "DELETE" }),
+    },
+
+    FARMER_ORDERS: {
+        GET_RECENT: { url: "/farmer/orders/recent", method: "GET" }
     },
 
     FARMER_PRODUCTS: {
@@ -38,7 +41,6 @@ const ENDPOINTS = {
     },
 
     PRODUCTS: {
-        // Public browse — no auth required
         LIST_ALL: { url: "/products", method: "GET" },
         GET_BY_ID: (productId) => ({ url: `/products/${productId}`, method: "GET" }),
     },
@@ -61,6 +63,7 @@ const ENDPOINTS = {
     SUPPORT: {
         SEND_MESSAGE: { url: "/support/messages", method: "POST" },
         LIST_MY_MESSAGES: { url: "/support/messages", method: "GET" },
+        TRACK_FAQ: { url: "/support/faq-track", method: "POST" }
     },
 };
 

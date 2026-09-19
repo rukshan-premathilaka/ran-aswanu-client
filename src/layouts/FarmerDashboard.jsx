@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Home, Leaf, Calendar as CalendarIcon, Cloud, Settings, CircleHelp, Bell, Menu, X, Package, Plus, LogOut } from 'lucide-react';
-
+import imgLogo from '../assets/logo/logo.png';
 const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -35,7 +35,10 @@ const DashboardLayout = () => {
             <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col justify-between transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
                 <div>
                     <div className="h-20 flex items-center justify-between px-8">
-                        <h1 className="text-2xl font-bold text-[#8dc63f]">Ran Aswanna</h1>
+                        <div className="flex items-center gap-3">
+                            <img src={imgLogo} alt="Ran Aswanna Logo" className="w-8 h-8 object-contain" />
+                            <h1 className="text-2xl font-bold text-[#8dc63f]">Ran Aswanna</h1>
+                        </div>
                         <button className="lg:hidden p-2 text-gray-500 hover:text-gray-800" onClick={() => setIsMobileOpen(false)}>
                             <X className="w-6 h-6" />
                         </button>
