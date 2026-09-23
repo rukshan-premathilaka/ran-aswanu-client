@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FormInput from "@/component/FormInput";
 import AuthShowcase from "@/component/AuthShowcase";
-import ApiService from "@/api/ApiService";
-import ENDPOINTS from "@/api/ENDPOINTS";
+import apiService from "@/api/ApiService.js";
+import ENDPOINTS from "@/api/endpoints.js";
 
-const apiService = new ApiService();
 
 const INITIAL_FORM = {
     email: "",
