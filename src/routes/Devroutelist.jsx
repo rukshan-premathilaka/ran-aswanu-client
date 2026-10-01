@@ -1,15 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import routes from "@/routes/routes.config.js";
+import routes from "@/routes/Routes.config.js";
 
-/**
- * Dev-only index page: lists every route in routes.config.js as a clickable
- * link, grouped by section, so you can jump straight to any page while
- * building instead of typing URLs by hand.
- *
- * Only ever mounted when running in dev (see AppCopy.jsx), so it never
- * ships in a production build.
- */
 function DevRouteList() {
 	const grouped = routes.reduce((acc, route) => {
 		acc[route.group] = acc[route.group] || [];
@@ -36,12 +28,15 @@ function DevRouteList() {
 							<ul className="mt-3 divide-y divide-neutral-100 overflow-hidden rounded-lg border border-neutral-200">
 								{groupRoutes.map((route) => (
 									<li key={route.path}>
+										{/* link item */}
 										<Link
-											to={route.path}
+											to={route.devLink || route.path}
 											className="flex items-center justify-between px-4 py-3 text-sm text-neutral-700 transition-colors hover:bg-lime-50 hover:text-lime-800"
 										>
 											<span className="font-medium">{route.label}</span>
-											<span className="text-neutral-400">{route.path}</span>
+											<span className="text-neutral-400">
+												{route.devLink || route.path}
+											</span>
 										</Link>
 									</li>
 								))}

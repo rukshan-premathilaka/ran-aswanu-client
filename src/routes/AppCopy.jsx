@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import routes from "@/routes/routes.config.js";
+import routes from "@/routes/Routes.config.js";
 import DevRouteList from "@/routes/DevRouteList.jsx";
 import RouteErrorBoundary from "@/routes/RouteErrorBoundary.jsx";
 
