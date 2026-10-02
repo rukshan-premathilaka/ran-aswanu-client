@@ -8,6 +8,7 @@ function FarmerHomePage() {
     // 1. Dashboard Metrics from Real Database
     const [plotsCount, setPlotsCount] = useState(0);
     const [productsCount, setProductsCount] = useState(0);
+    const [totalExpenses, setTotalExpenses] = useState(0);
     const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
     // 2. Daily Farm Tasks (Activities)
@@ -15,26 +16,25 @@ function FarmerHomePage() {
     const [newTaskInput, setNewTaskInput] = useState("");
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
-    // 3. Customer Orders
+    // 3. Customer Orders & Delivery Status
     const [customerOrders, setCustomerOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+    const [updatingOrderId, setUpdatingOrderId] = useState(null);
+    const [actionMessage, setActionMessage] = useState("");
 
-    // 1. Load Live Metrics (Crops & Products) from Database
+    // 1. Load Live Metrics (Crops, Products, & Expenses) from Database
     const loadDashboardMetrics = async () => {
         setIsLoadingMetrics(true);
 
-        // A. Load Active Plots Count from Database
         try {
             const cropsData = await api.request('GET', '/farmer/crops');
             if (Array.isArray(cropsData)) {
                 setPlotsCount(cropsData.length);
             }
-        } catch (err) {
-            console.warn("Failed to fetch crops count:", err);
+        } catch {
             setPlotsCount(0);
         }
 
-        // B. Load Market Products Count from Database
         try {
             const productsData = await api.request('GET', '/farmer/products');
             if (Array.isArray(productsData)) {
@@ -42,15 +42,26 @@ function FarmerHomePage() {
             } else if (productsData && Array.isArray(productsData.content)) {
                 setProductsCount(productsData.content.length);
             }
-        } catch (err) {
-            console.warn("Failed to fetch products count:", err);
+        } catch {
             setProductsCount(0);
+        }
+
+        try {
+            const expensesData = await api.request('GET', '/farmer/expenses');
+            if (Array.isArray(expensesData)) {
+                const totalSum = expensesData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+                setTotalExpenses(totalSum);
+            } else {
+                setTotalExpenses(0);
+            }
+        } catch {
+            setTotalExpenses(0);
         }
 
         setIsLoadingMetrics(false);
     };
 
-    // 2. Load Daily Tasks (Farm Activities) from Backend
+    // 2. Load Daily Farm Tasks
     const loadTasks = async () => {
         setIsLoadingTasks(true);
         try {
@@ -60,8 +71,7 @@ function FarmerHomePage() {
             } else {
                 setTasks([]);
             }
-        } catch (err) {
-            console.warn("Activities endpoint not ready, loading local tasks:", err);
+        } catch {
             const savedTasks = localStorage.getItem('farmer_local_activities');
             if (savedTasks) {
                 setTasks(JSON.parse(savedTasks));
@@ -76,7 +86,7 @@ function FarmerHomePage() {
         }
     };
 
-    // 3. Load Customer Orders
+    // 3. Load Customer Orders directly from Database (GET /api/farmer/orders)
     const loadOrders = async () => {
         setIsLoadingOrders(true);
         try {
@@ -87,10 +97,26 @@ function FarmerHomePage() {
                 setCustomerOrders([]);
             }
         } catch (err) {
-            console.warn("Farmer orders endpoint not ready:", err);
+            console.warn("Farmer orders endpoint error, using demo orders:", err);
             setCustomerOrders([
-                { orderId: "ORD-101", customer: "Kamal Perera", item: "Organic Carrots", qty: "5 kg", total: "LKR 900", status: "Pending" },
-                { orderId: "ORD-102", customer: "Sunil Shantha", item: "Keeri Samba", qty: "20 kg", total: "LKR 4,800", status: "Delivered" }
+                {
+                    orderId: 101,
+                    buyerName: "Kamal Perera",
+                    firstItemName: "Organic Carrots",
+                    totalAmount: 1800,
+                    orderStatus: "PENDING",
+                    paymentMethod: "CASH_ON_DELIVERY",
+                    deliveryAddress: "No 12, Kandy Road, Peradeniya"
+                },
+                {
+                    orderId: 102,
+                    buyerName: "Sunil Shantha",
+                    firstItemName: "Keeri Samba Rice",
+                    totalAmount: 5750,
+                    orderStatus: "SHIPPED",
+                    paymentMethod: "CASH_ON_DELIVERY",
+                    deliveryAddress: "No 45, Temple Road, Badulla"
+                }
             ]);
         } finally {
             setIsLoadingOrders(false);
@@ -103,60 +129,53 @@ function FarmerHomePage() {
         loadOrders();
     }, []);
 
-    // Add New Farm Task
-    const handleAddTask = async () => {
-        if (!newTaskInput.trim()) return;
-
-        const payload = { activity: newTaskInput.trim() };
+    // 4. Update Order / Delivery Status (PATCH /api/farmer/orders/{orderId}/status)
+    const handleUpdateOrderStatus = async (orderId, newStatus) => {
+        setUpdatingOrderId(orderId);
+        setActionMessage("");
 
         try {
+            await api.request('PATCH', `/farmer/orders/${orderId}/status`, { status: newStatus });
+            setActionMessage(`Order #${orderId} marked as ${newStatus}!`);
+            await loadOrders();
+        } catch (err) {
+            console.error("Failed to update order status:", err);
+            // Local state fallback update for smooth UX
+            setCustomerOrders(prev => prev.map(o => (o.orderId === orderId ? { ...o, orderStatus: newStatus } : o)));
+            setActionMessage(`Order #${orderId} status updated locally to ${newStatus}`);
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
+
+    // Task Actions
+    const handleAddTask = async () => {
+        if (!newTaskInput.trim()) return;
+        const payload = { activity: newTaskInput.trim() };
+        try {
             const saved = await api.request('POST', '/farmer/activities', payload);
-            if (saved && saved.activityId) {
-                setTasks([...tasks, saved]);
-            } else {
-                const localItem = { activityId: Date.now(), activity: newTaskInput.trim(), activityStatus: false };
-                const updated = [...tasks, localItem];
-                setTasks(updated);
-                localStorage.setItem('farmer_local_activities', JSON.stringify(updated));
-            }
+            if (saved && saved.activityId) setTasks([...tasks, saved]);
         } catch {
             const localItem = { activityId: Date.now(), activity: newTaskInput.trim(), activityStatus: false };
-            const updated = [...tasks, localItem];
-            setTasks(updated);
-            localStorage.setItem('farmer_local_activities', JSON.stringify(updated));
+            setTasks([...tasks, localItem]);
         }
-
         setNewTaskInput("");
     };
 
-    // Delete Farm Task
     const handleDeleteTask = async (activityId, e) => {
         e.stopPropagation();
-
         try {
             await api.request('DELETE', `/farmer/activities/${activityId}`);
-        } catch {
-            // Local fallback
-        }
-
-        const updated = tasks.filter(t => t.activityId !== activityId);
-        setTasks(updated);
-        localStorage.setItem('farmer_local_activities', JSON.stringify(updated));
+        } catch {}
+        setTasks(tasks.filter(t => t.activityId !== activityId));
     };
 
-    // Toggle Task Complete Status
     const handleToggleTask = async (activityId, currentStatus) => {
         const newStatus = !currentStatus;
-
         try {
             await api.request('PATCH', `/farmer/activities/${activityId}/status`, { done: newStatus });
-        } catch {
-            // Local fallback
-        }
-
-        const updated = tasks.map(t => t.activityId === activityId ? { ...t, activityStatus: newStatus } : t);
-        setTasks(updated);
-        localStorage.setItem('farmer_local_activities', JSON.stringify(updated));
+        } catch {}
+        setTasks(tasks.map(t => t.activityId === activityId ? { ...t, activityStatus: newStatus } : t));
     };
 
     return (
@@ -165,14 +184,14 @@ function FarmerHomePage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-                    <p className="text-sm text-gray-500 mt-1">Live monitoring and central database analytics dashboard.</p>
+                    <p className="text-sm text-gray-500 mt-1">Live monitoring, orders tracking, and central farm analytics.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={loadDashboardMetrics}
+                        onClick={() => { loadDashboardMetrics(); loadOrders(); }}
                         className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-all cursor-pointer"
                     >
-                        Sync Database
+                        Sync Dashboard
                     </button>
                     <Link
                         to="/farmer/add-harvest"
@@ -183,9 +202,15 @@ function FarmerHomePage() {
                 </div>
             </div>
 
+            {/* Notification alert for Order action */}
+            {actionMessage && (
+                <div className="mb-6 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm font-semibold">
+                    {actionMessage}
+                </div>
+            )}
+
             {/* Metrics Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-                {/* Active Plots */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Plots</p>
                     <h3 className="text-3xl font-bold text-gray-800 mt-1">
@@ -193,7 +218,6 @@ function FarmerHomePage() {
                     </h3>
                 </div>
 
-                {/* Market Products */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Market Products</p>
                     <h3 className="text-3xl font-bold text-gray-800 mt-1">
@@ -201,24 +225,24 @@ function FarmerHomePage() {
                     </h3>
                 </div>
 
-                {/* Total Revenue */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Revenue</p>
                     <h3 className="text-3xl font-bold text-green-700 mt-1">LKR 45,200</h3>
                 </div>
 
-                {/* Field Alerts */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Field Alerts</p>
-                    <h3 className="text-3xl font-bold text-orange-600 mt-1">1 Issue</h3>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Expenses</p>
+                    <h3 className="text-3xl font-bold text-red-600 mt-1">
+                        {isLoadingMetrics ? "..." : `LKR ${totalExpenses.toLocaleString()}`}
+                    </h3>
                 </div>
             </div>
 
             {/* 2-Column Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
 
-                {/* Daily Farm Tasks (With Delete Button) */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[460px]">
+                {/* 1. Daily Farm Tasks */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[520px]">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-bold text-gray-700">Daily Farm Tasks</h3>
                         <span className="text-xs font-bold bg-green-50 text-green-700 px-2.5 py-1 rounded-lg">
@@ -249,13 +273,10 @@ function FarmerHomePage() {
                                             {item.activity}
                                         </span>
                                     </div>
-
-                                    {/* Task Delete Button */}
                                     <button
                                         type="button"
                                         onClick={(e) => handleDeleteTask(item.activityId, e)}
                                         className="text-xs text-red-500 hover:text-red-700 font-bold px-2 py-1 rounded hover:bg-red-50 cursor-pointer transition-colors"
-                                        title="Delete this task"
                                     >
                                         Delete
                                     </button>
@@ -283,39 +304,150 @@ function FarmerHomePage() {
                     </div>
                 </div>
 
-                {/* Recent Customer Orders */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[460px]">
+                {/* 2. Customer Orders & Delivery/Payment Tracker */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[520px]">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-700">Recent Customer Orders</h3>
-                        <span className="text-xs text-gray-400">Real-time status</span>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-700">Recent Customer Orders</h3>
+                            <p className="text-xs text-gray-400">Track delivery handover and cash collection status</p>
+                        </div>
+                        <button
+                            onClick={loadOrders}
+                            className="text-xs text-green-700 font-bold hover:underline cursor-pointer"
+                        >
+                            Refresh
+                        </button>
                     </div>
 
                     {isLoadingOrders ? (
-                        <div className="text-center py-12 text-gray-400 text-sm">Loading orders...</div>
+                        <div className="text-center py-12 text-gray-400 text-sm">Loading orders from database...</div>
+                    ) : customerOrders.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400 text-sm">No incoming customer orders found.</div>
                     ) : (
-                        <div className="space-y-3 flex-1 overflow-y-auto pr-1">
-                            {customerOrders.length === 0 ? (
-                                <div className="text-center py-12 text-gray-400 text-sm">No orders available.</div>
-                            ) : (
-                                customerOrders.map((order, idx) => (
-                                    <div key={order.orderId || idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                        <div>
-                                            <h4 className="font-bold text-gray-800 text-sm">
-                                                {order.customer || order.buyerName || `Order #${order.orderId}`}
-                                            </h4>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {order.item || order.firstItemName || "Farm Produce"} ({order.qty || `${order.itemCount || 1} items`})
-                                            </p>
-                                            <p className="text-sm font-bold text-green-600 mt-1">
-                                                {order.total || `LKR ${order.totalAmount || 0}`}
-                                            </p>
+                        <div className="space-y-4 flex-1 overflow-y-auto pr-1">
+                            {customerOrders.map((order, idx) => {
+                                const orderId = order.orderId || idx + 1;
+                                const status = (order.orderStatus || order.status || "PENDING").toUpperCase();
+                                const isBusy = updatingOrderId === orderId;
+
+                                return (
+                                    <div key={orderId} className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-3">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold bg-gray-200 text-gray-700 px-2 py-0.5 rounded">
+                                                        #{orderId}
+                                                    </span>
+                                                    <h4 className="font-bold text-gray-800 text-sm">
+                                                        {order.buyer?.username || order.buyerName || order.customer || "Buyer"}
+                                                    </h4>
+                                                </div>
+                                                <p className="text-xs text-gray-600 mt-1">
+                                                    Item: <span className="font-semibold text-gray-800">{order.firstItemName || order.item || "Farm Produce"}</span>
+                                                </p>
+                                                <p className="text-xs text-gray-400 mt-0.5">
+                                                    Address: {order.deliveryAddress || "Farm Pickup / Local Delivery"}
+                                                </p>
+                                            </div>
+
+                                            <div className="text-right">
+                                                <span className="text-sm font-bold text-green-700 block">
+                                                    LKR {Number(order.totalAmount || 0).toLocaleString()}
+                                                </span>
+                                                <span className="text-[10px] font-medium text-gray-500 block mt-0.5">
+                                                    Payment: {order.paymentMethod === 'CASH_ON_DELIVERY' ? 'Cash on Delivery (COD)' : (order.paymentMethod || 'COD')}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-100 text-green-700">
-                                            {order.status || order.orderStatus || "Pending"}
-                                        </span>
+
+                                        {/* Status Badge & Action Controls */}
+                                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200/60">
+                                            {/* Status Badge */}
+                                            <div>
+                                                {status === 'PENDING' && (
+                                                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-100 text-yellow-800">
+                                                        ⏳ Pending Farmer Acceptance
+                                                    </span>
+                                                )}
+                                                {status === 'ACCEPTED' && (
+                                                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800">
+                                                        🚜 Accepted (Preparing Harvest)
+                                                    </span>
+                                                )}
+                                                {status === 'SHIPPED' && (
+                                                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800">
+                                                        🚚 Handed to Delivery Boy
+                                                    </span>
+                                                )}
+                                                {status === 'COMPLETED' && (
+                                                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-100 text-green-800">
+                                                        ✅ Delivered & Cash Paid
+                                                    </span>
+                                                )}
+                                                {status === 'REJECTED' && (
+                                                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-100 text-red-700">
+                                                        ❌ Order Cancelled / Rejected
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Step-by-Step Action Buttons */}
+                                            <div className="flex items-center gap-1.5">
+                                                {status === 'PENDING' && (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            disabled={isBusy}
+                                                            onClick={() => handleUpdateOrderStatus(orderId, 'ACCEPTED')}
+                                                            className="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                                                        >
+                                                            Accept Order
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={isBusy}
+                                                            onClick={() => handleUpdateOrderStatus(orderId, 'REJECTED')}
+                                                            className="text-xs font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
+                                                        >
+                                                            Reject
+                                                        </button>
+                                                    </>
+                                                )}
+
+                                                {status === 'ACCEPTED' && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={isBusy}
+                                                        onClick={() => handleUpdateOrderStatus(orderId, 'SHIPPED')}
+                                                        className="text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                                                        title="Mark that the produce is given to delivery person"
+                                                    >
+                                                        Hand over to Delivery
+                                                    </button>
+                                                )}
+
+                                                {status === 'SHIPPED' && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={isBusy}
+                                                        onClick={() => handleUpdateOrderStatus(orderId, 'COMPLETED')}
+                                                        className="text-xs font-bold bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                                                        title="Confirm that delivery is done and cash collected"
+                                                    >
+                                                        Mark Delivered & Paid
+                                                    </button>
+                                                )}
+
+                                                {status === 'COMPLETED' && (
+                                                    <span className="text-xs font-bold text-green-700">
+                                                        Payment Settled 💰
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                ))
-                            )}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

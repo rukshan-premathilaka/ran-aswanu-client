@@ -202,8 +202,8 @@ function FarmerExpensesPage() {
                 </div>
             )}
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            {/* Summary Cards (Refined to 2 balanced columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Farm Expenses</p>
                     <h3 className="text-2xl md:text-3xl font-bold text-red-600 mt-1">
@@ -215,13 +215,6 @@ function FarmerExpensesPage() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Recorded Entries</p>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
                         {expenses.length} Records
-                    </h3>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Financial Status</p>
-                    <h3 className="text-2xl md:text-3xl font-bold text-green-700 mt-1">
-                        Database Live
                     </h3>
                 </div>
             </div>
