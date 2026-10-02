@@ -10,6 +10,8 @@ import CalendarPage from '@/page/farmer/FarmerCalenderPage.jsx';
 import FarmerWeatherPage from '@/page/farmer/FarmerWeatherPage.jsx';
 import FarmerSettingsPage from '@/page/farmer/FarmerSettingsPage.jsx';
 import FarmerHelpSupportPage from '@/page/farmer/FarmerHelpSupportPage.jsx';
+import FarmerExpensesPage from '@/page/farmer/FarmerExpensesPage.jsx';
+import FarmerLivestockPage from '@/page/farmer/FarmerLivestockPage.jsx';
 
 function FarmerRoutes() {
     return (
@@ -24,6 +26,10 @@ function FarmerRoutes() {
                 <Route path="weather" element={<FarmerWeatherPage />} />
                 <Route path="settings" element={<FarmerSettingsPage />} />
                 <Route path="help" element={<FarmerHelpSupportPage />} />
+
+                {/* නිවැරදි කරන ලද Relative Paths */}
+                <Route path="expenses" element={<FarmerExpensesPage />} />
+                <Route path="livestock" element={<FarmerLivestockPage />} />
             </Route>
         </Routes>
     );
