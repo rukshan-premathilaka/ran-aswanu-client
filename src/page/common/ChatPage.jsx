@@ -1,171 +1,164 @@
-import { useState } from "react";
-import "@/page/common/chatbox.css";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "@/api/ApiService.js";
+import ENDPOINTS from "@/api/endpoints.js";
+import { getApiError } from "@/api/apiError.js";
+import { createChatClient, subscribeToChat, sendChatMessage, closeChatClient } from "@/api/chatSocket.js";
+import MessageBox from "@/component/MessageBox.jsx";
 import NotificationBell from "@/component/NotificationBell.jsx";
-
-// Sample contact data - passe backend eken enna one
-const chats = [
-    {
-        id: 1,
-        name: "Rukshan (Ruka)",
-        phone: "+94 78 811 6854",
-        about: "Rasintha rukshan",
-        avatar: "https://i.pravatar.cc/150?img=12",
-    },
-    {
-        id: 2,
-        name: "Isuru",
-        phone: "+94 71 234 5678",
-        about: "Hey there! I am using WhatsApp",
-        avatar: "https://i.pravatar.cc/150?img=15",
-    },
-    {
-        id: 3,
-        name: "Samitha",
-        phone: "+94 77 987 6543",
-        about: "Busy",
-        avatar: "https://i.pravatar.cc/150?img=20",
-    },
-];
-
-// Sample messages, keyed by chat id - "them" = sender ewapu eka, "me" = api send karapu eka
-const initialMessages = {
-    1: [
-        { id: 1, sender: "them", text: "Api Friday deliver karamuda?" },
-        { id: 2, sender: "me", text: "Ow, hondai. Time eka confirm karannam." },
-    ],
-    2: [{ id: 1, sender: "them", text: "Order eka ready da?" }],
-    3: [],
-};
-
-// Sample notifications data - NotificationBell ekata data widihata pass karanawa
-const notifications = [
-    { id: 1, title: "Info...", description: "Use for inform something to user about system" },
-    { id: 2, title: "Info...", description: "Use for inform something to user about system" },
-    { id: 3, title: "Info...", description: "Use for inform something to user about system" },
-    { id: 4, title: "Info...", description: "Use for inform something to user about system" }
-];
+import ChatWindow from "@/component/ChatWindow.jsx";
 
 function ChatPage() {
+    const navigate = useNavigate();
+    const clientRef = useRef(null);
+
+    const [myUserId, setMyUserId] = useState(null);
+    const [chats, setChats] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorText, setErrorText] = useState("");
+
     const [selectedChatId, setSelectedChatId] = useState(null);
+    const [messages, setMessages] = useState([]);
     const [showProfile, setShowProfile] = useState(false);
-    const [messagesByChat, setMessagesByChat] = useState(initialMessages);
-    const [messageInput, setMessageInput] = useState("");
+    const [isConnected, setIsConnected] = useState(false);
 
-    const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-    const messages = selectedChatId ? messagesByChat[selectedChatId] || [] : [];
+    const selectedChat = chats.find((chat) => chat.chatId === selectedChatId);
 
-    // Contact list eken chat ekක select kalama
-    const handleSelectChat = (chat) => {
-        setSelectedChatId(chat.id);
-        setShowProfile(false); // chat wenas kalama profile panel eka close wenawa
+    // A 401 on a protected page means the login expired
+    const handleError = (error) => {
+        const err = getApiError(error);
+        if (err.status === 401) {
+            localStorage.removeItem("my_app_token");
+            navigate("/login");
+            return;
+        }
+        setErrorText(err.message);
     };
 
-    // Message send button ho Enter danapu welawe
-    const handleSend = () => {
-        if (messageInput.trim() === "" || !selectedChatId) return;
-
-        const newMessage = {
-            id: Date.now(),
-            sender: "me",
-            text: messageInput,
+    // 1. Load who I am (to know which messages are mine) and my chat list
+    useEffect(() => {
+        const loadChats = async () => {
+            setIsLoading(true);
+            setErrorText("");
+            try {
+                const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
+                setMyUserId(me.userId);
+                setChats(await api.call(ENDPOINTS.CHAT.LIST_CHATS));
+            } catch (error) {
+                handleError(error);
+            } finally {
+                setIsLoading(false);
+            }
         };
+        loadChats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        setMessagesByChat((prev) => ({
-            ...prev,
-            [selectedChatId]: [...(prev[selectedChatId] || []), newMessage],
-        }));
+    // 2. One socket connection for the whole page
+    useEffect(() => {
+        clientRef.current = createChatClient({
+            onConnected: () => setIsConnected(true),
+            onError: (text) => {
+                setIsConnected(false);
+                setErrorText(text);
+            },
+        });
+        return () => closeChatClient(clientRef.current);
+    }, []);
 
-        setMessageInput("");
-    };
+    // 3. Load history when a chat is selected
+    useEffect(() => {
+        if (!selectedChatId) return;
+        const loadMessages = async () => {
+            try {
+                setMessages(await api.call(ENDPOINTS.CHAT.LIST_MESSAGES(selectedChatId)));
+            } catch (error) {
+                handleError(error);
+            }
+        };
+        loadMessages();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChatId]);
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter") handleSend();
+    // 4. Listen for new messages in the selected chat
+    useEffect(() => {
+        if (!isConnected || !selectedChatId) return;
+        const subscription = subscribeToChat(clientRef.current, selectedChatId, (newMessage) => {
+            // The sender also gets their own message back here, so a message only shows after the server accepted it
+            setMessages((prev) =>
+                prev.some((m) => m.messageId === newMessage.messageId) ? prev : [...prev, newMessage]
+            );
+        });
+        return () => subscription.unsubscribe();
+    }, [isConnected, selectedChatId]);
+
+    const handleSelectChat = (chatId) => {
+        setSelectedChatId(chatId);
+        setMessages([]);
+        setShowProfile(false);
     };
 
     return (
-        <div className="chat-container">
-            {/* Left side - contact names + profile pictures */}
-            <div className="sidebar">
-                <div
-                    className="sidebar-header"
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
-                    <span>Chats</span>
-                    <NotificationBell notifications={notifications} />
+        <div className="h-screen flex bg-gray-50">
+            <div className="w-72 bg-white border-r border-gray-100 overflow-y-auto">
+                <div className="flex items-center justify-between px-4 py-4">
+                    <h1 className="text-2xl font-bold text-gray-800">Chats</h1>
+                    <NotificationBell />
                 </div>
 
+                <div className="px-4">
+                    <MessageBox type="error" text={errorText} />
+                </div>
+                {isLoading && <p className="px-4 text-sm text-gray-500">Loading...</p>}
+                {!isLoading && chats.length === 0 && !errorText && (
+                    <p className="px-4 text-sm text-gray-500">No chats yet.</p>
+                )}
+
                 {chats.map((chat) => (
-                    <div
-                        key={chat.id}
-                        className={`contact-item ${chat.id === selectedChatId ? "active" : ""}`}
-                        onClick={() => handleSelectChat(chat)}
+                    <button
+                        key={chat.chatId}
+                        onClick={() => handleSelectChat(chat.chatId)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 ${
+                            chat.chatId === selectedChatId ? "bg-green-50" : ""
+                        }`}
                     >
-                        <img src={chat.avatar} alt={chat.name} className="avatar" />
-                        <span className="contact-name">{chat.name}</span>
-                    </div>
+                        <div className="w-10 h-10 shrink-0 rounded-full bg-green-100 text-green-700 font-semibold flex items-center justify-center">
+                            {chat.otherUserName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-800">{chat.otherUserName}</p>
+                            <p className="text-xs text-gray-500 truncate">{chat.lastMessage}</p>
+                        </div>
+                    </button>
                 ))}
             </div>
 
-            {/* Right side - selected sender's inbox */}
             {selectedChat ? (
-                <div className="chat-window">
-                    {/* Top - sender name + photo, click kalama profile eka open wenawa */}
-                    <div className="chat-header" onClick={() => setShowProfile(true)}>
-                        <img src={selectedChat.avatar} alt={selectedChat.name} className="avatar" />
-                        <span className="chat-header-name">{selectedChat.name}</span>
-                    </div>
-
-                    {/* Middle - received (left) and sent (right) messages */}
-                    <div className="messages-area">
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`message-row ${msg.sender === "me" ? "sent" : "received"}`}
-                            >
-                                <div className={`message-bubble ${msg.sender === "me" ? "sent" : "received"}`}>
-                                    {msg.text}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Bottom - message input box */}
-                    <div className="message-input-bar">
-                        <input
-                            type="text"
-                            className="message-input"
-                            value={messageInput}
-                            onChange={(e) => setMessageInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Type a message"
-                        />
-                        <button className="send-button" onClick={handleSend}>
-                            ➤
-                        </button>
-                    </div>
-                </div>
+                <ChatWindow
+                    chat={selectedChat}
+                    messages={messages}
+                    myUserId={myUserId}
+                    canSend={isConnected}
+                    onSend={(text) => sendChatMessage(clientRef.current, selectedChat.chatId, text)}
+                    onOpenProfile={() => setShowProfile(true)}
+                />
             ) : (
-                <div className="chat-window empty-state">
-                    <p>Chat ekක select karanna</p>
+                <div className="flex-1 flex items-center justify-center">
+                    <p className="text-sm text-gray-500">Select a chat to start.</p>
                 </div>
             )}
 
-            {/* Profile panel - top header click kalama pennanawa */}
             {showProfile && selectedChat && (
-                <div className="profile-panel">
-                    <div className="profile-header">
-                        <span onClick={() => setShowProfile(false)}>✕</span>
+                <div className="w-72 bg-white border-l border-gray-100 p-6 text-center">
+                    <div className="flex justify-between mb-6 text-sm text-gray-500">
+                        <button onClick={() => setShowProfile(false)}>✕</button>
                         <span>Contact info</span>
                     </div>
-
-                    <img src={selectedChat.avatar} alt={selectedChat.name} className="profile-avatar" />
-                    <h3 className="profile-name">{selectedChat.name}</h3>
-                    <p className="profile-phone">{selectedChat.phone}</p>
-
-                    <div className="profile-about">
-                        <p className="profile-label">About</p>
-                        <p>{selectedChat.about}</p>
+                    <div className="w-24 h-24 mx-auto rounded-full bg-green-100 text-green-700 text-3xl font-semibold flex items-center justify-center">
+                        {selectedChat.otherUserName.charAt(0).toUpperCase()}
                     </div>
+                    <h3 className="mt-3 text-lg font-semibold text-gray-800">{selectedChat.otherUserName}</h3>
+                    {/* TODO: show phone and about when the backend sends them for the other user */}
                 </div>
             )}
         </div>

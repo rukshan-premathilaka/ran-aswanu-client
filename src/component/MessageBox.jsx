@@ -1,0 +1,18 @@
+// src/component/MessageBox.jsx
+// type = "error" or "success". Shows nothing when text is empty.
+function MessageBox({ type = "error", text }) {
+    if (!text) return null;
+
+    const style =
+        type === "success"
+            ? "bg-green-50 text-green-700 border-green-200"
+            : "bg-red-50 text-red-700 border-red-200";
+
+    return (
+        <div className={`rounded-lg border px-4 py-2 text-sm ${style}`} role="alert">
+            {text}
+        </div>
+    );
+}
+
+export default MessageBox;

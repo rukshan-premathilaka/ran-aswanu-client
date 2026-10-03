@@ -1,47 +1,40 @@
-import { useState, useRef } from "react";
-import NotificationBell from "./NotificationBell.jsx";
+import MessageBox from "@/component/MessageBox.jsx";
 
-<NotificationBell notifications={notifications} />
-
-
-// notifications prop eka witharai denna one - state eka okkoma methanama thiyenawa
-function NotificationBell({ notifications }) {
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
-    const bellRef = useRef(null);
-
-    const handleToggle = () => {
-        if (!showNotifications && bellRef.current) {
-            // Bell icon eke exact screen position eka gannawa
-            const rect = bellRef.current.getBoundingClientRect();
-            setCoords({ top: rect.bottom + 8, left: rect.right - 280 });
-        }
-        setShowNotifications(!showNotifications);
-    };
-
+// Only shows the list. NotificationBell loads the data and decides what happens on click.
+function NotificationPanel({ notifications, isLoading, errorText, onMarkRead, onClose }) {
     return (
-        <div style={{ display: "inline-block" }}>
-      <span ref={bellRef} onClick={handleToggle} style={{ cursor: "pointer", fontSize: "20px" }}>
-        🔔
-      </span>
+        <div className="w-80 bg-white rounded-2xl border border-gray-100 shadow-lg p-4">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
+                <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm">
+                    ✕
+                </button>
+            </div>
 
-            {showNotifications && (
-                <div
-                    style={{
-                        position: "fixed", // "fixed" eken parent eke overflow eken clip wenne naa
-                        top: coords.top,
-                        left: coords.left,
-                        zIndex: 1000,
-                    }}
-                >
-                    <NotificationPanel
-                        notifications={notifications}
-                        onClose={() => setShowNotifications(false)}
-                    />
-                </div>
+            {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
+            {!isLoading && errorText && <MessageBox type="error" text={errorText} />}
+            {!isLoading && !errorText && notifications.length === 0 && (
+                <p className="text-sm text-gray-500">No notifications yet.</p>
             )}
+
+            <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
+                {notifications.map((note) => (
+                    <button
+                        key={note.notificationId}
+                        onClick={() => !note.isRead && onMarkRead(note.notificationId)}
+                        className={`text-left rounded-xl border px-3 py-2.5 ${
+                            note.isRead
+                                ? "bg-white border-gray-100"
+                                : "bg-green-50 border-green-200 hover:bg-green-100"
+                        }`}
+                    >
+                        <p className="text-sm font-semibold text-gray-800">{note.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{note.message}</p>
+                    </button>
+                ))}
+            </div>
         </div>
     );
 }
 
-export default NotificationBell;
+export default NotificationPanel;
