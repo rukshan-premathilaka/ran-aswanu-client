@@ -53,7 +53,7 @@ function LoginPage() {
                 localStorage.setItem("my_app_token", data.token);
             }
 
-            navigate("/dashboard");
+            navigate("/home");
         } catch (error) {
             const status = error?.response?.status;
             const data = error?.response?.data;

@@ -3,7 +3,7 @@ import logoImg from '../assets/farmerImg/logo.png';
 import { Outlet, NavLink } from 'react-router-dom';
 
 const FarmerDashboard = () => {
-    // ප්‍රධාන Navigation Array එකට Livestock සහ Expenses එක් කර ඇත
+    // ප්‍රධාන Navigation Items ලැයිස්තුව (Livestock සහ Expenses ඇතුළුව)
     const navItems = [
         { path: '/farmer/home', label: 'Home' },
         { path: '/farmer/add-harvest', label: 'Add Harvest' },
@@ -15,13 +15,14 @@ const FarmerDashboard = () => {
         { path: '/farmer/weather', label: 'Weather' },
     ];
 
+    // පහළ Navigation Items (Settings & Support)
     const bottomItems = [
         { path: '/farmer/settings', label: 'Settings' },
         { path: '/farmer/help', label: 'Help & Support' },
     ];
 
     return (
-        <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
+        <div className="relative flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
             {/* වම් පස ස්ථිර Sidebar එක */}
             <aside className="w-64 bg-white border-r border-gray-100 flex flex-col justify-between p-6 flex-shrink-0">
                 <div>
@@ -37,7 +38,7 @@ const FarmerDashboard = () => {
                         </h1>
                     </div>
 
-                    {/* ප්‍රධාන මෙනු ලින්ක්ස් (Clean Text Navigation) */}
+                    {/* ප්‍රධාන මෙනු ලින්ක්ස් */}
                     <nav className="space-y-1">
                         {navItems.map((item) => (
                             <NavLink
@@ -77,13 +78,14 @@ const FarmerDashboard = () => {
                 </div>
             </aside>
 
-            {/* දකුණු පස Header එක සහ පිටු පෙන්වන කොටස */}
+            {/* දකුණු පස පිටු පෙන්වන ප්‍රධාන කොටස */}
             <div className="flex flex-col flex-1 h-full overflow-hidden">
-                {/* Outlet හරහා පිටු මාරු වන ප්‍රධාන කොටස */}
                 <main className="flex-1 overflow-y-auto p-6 md:p-8">
                     <Outlet />
                 </main>
             </div>
+
+
         </div>
     );
 };
