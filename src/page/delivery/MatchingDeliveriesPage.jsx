@@ -1,38 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { MapPin, Calendar, Clock, Plus, Truck, Search, ChevronLeft } from "lucide-react";
+import { Calendar, Clock, MapPin, Truck, Users } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
-import { USE_DUMMY_DATA, DUMMY_VEHICLES, DUMMY_FARMER_REQUESTS } from "./deliveryDummyData.js";
-
-// The 2 main categories
-const CATEGORIES = [
-    { key: "vehicles", label: "Available vehicles", tag: "Available Vehicle", hint: "Vehicles deliverers have offered. Pick one for your goods.", action: "Choose vehicle", fallbackEmoji: "🚚" },
-    { key: "requests", label: "Farmer requests", tag: "Farmer Request", hint: "Farmers waiting for a vehicle. Accept one you can carry.", action: "Accept request", fallbackEmoji: "🌾" },
-];
-
-const SORTS = [
-    { key: "all", label: "All" },
-    { key: "az", label: "A to Z" },
-    { key: "za", label: "Z to A" },
-];
 
 export default function MatchingDeliveriesPage() {
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const category = searchParams.get("tab") === "requests" ? "requests" : "vehicles";
-
-    const [items, setItems] = useState([]);
+    const [searchParams] = useSearchParams();
+    const [role, setRole] = useState(null);
+    const [requests, setRequests] = useState([]);
+    const [matches, setMatches] = useState([]);
+    const [transportBoard, setTransportBoard] = useState([]);
+    const [vehicles, setVehicles] = useState([]);
+    const [selectedRequestId, setSelectedRequestId] = useState(Number(searchParams.get("requestId")) || null);
+    const [selectedVehicleId, setSelectedVehicleId] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [isActioning, setIsActioning] = useState(null);
     const [errorText, setErrorText] = useState("");
-    const [selectingId, setSelectingId] = useState(null);
-    const [search, setSearch] = useState("");
-    const [sort, setSort] = useState("all");
 
-    // 401 on a protected page = login expired
     const handleError = (error) => {
         const err = getApiError(error);
         if (err.status === 401) {
@@ -43,202 +31,196 @@ export default function MatchingDeliveriesPage() {
         setErrorText(err.message);
     };
 
-    useEffect(() => {
-        const loadItems = async () => {
-            setIsLoading(true);
-            setErrorText("");
-            if (USE_DUMMY_DATA) {
-                setItems(category === "vehicles" ? DUMMY_VEHICLES : DUMMY_FARMER_REQUESTS);
-                setIsLoading(false);
-                return;
-            }
-            try {
-                const endpoint =
-                    category === "vehicles" ? ENDPOINTS.DELIVERY.LIST_VEHICLES : ENDPOINTS.DELIVERY.LIST_FARMER_REQUESTS;
-                const data = await api.call(endpoint);
-                setItems(Array.isArray(data) ? data : []); // the backend returns a plain array
-            } catch (error) {
-                handleError(error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadItems();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [category]);
-
-    const handleSelect = async (id) => {
-        if (USE_DUMMY_DATA) {
-            navigate(`/DeliveryTracking?deliveryId=${id}`);
-            return;
-        }
-        setSelectingId(id);
-        setErrorText("");
-        try {
-            const result = await api.call(ENDPOINTS.DELIVERY.SELECT(id));
-            navigate(`/DeliveryTracking?deliveryId=${result.deliveryId}`);
-        } catch (error) {
-            handleError(error);
-        } finally {
-            setSelectingId(null);
+    const loadCustomer = async (nextRequestId = selectedRequestId) => {
+        const data = await api.call(ENDPOINTS.DELIVERY.LIST_MY_REQUESTS);
+        const own = (Array.isArray(data) ? data : []).filter((r) => r.requestType === "CUSTOMER_REQUEST" || r.requestType === "FARMER_REQUEST");
+        setRequests(own);
+        const usable = own.filter((r) => r.status === "OPEN" || r.deliveryId);
+        const chosen = Number(nextRequestId) || usable[0]?.requestId || null;
+        setSelectedRequestId(chosen);
+        if (chosen) {
+            const result = await api.call(ENDPOINTS.DELIVERY.GET_MATCHES(chosen));
+            setMatches(Array.isArray(result?.matches) ? result.matches : []);
+        } else {
+            setMatches([]);
         }
     };
 
-    const current = CATEGORIES.find((c) => c.key === category);
+    const loadTransport = async () => {
+        const [board, myVehicles] = await Promise.all([
+            api.call(ENDPOINTS.DELIVERY.LIST_CUSTOMER_REQUESTS),
+            api.call(ENDPOINTS.DELIVERY.LIST_VEHICLES),
+        ]);
+        setTransportBoard(Array.isArray(board) ? board : []);
+        const activeVehicles = (Array.isArray(myVehicles) ? myVehicles : []).filter((v) => v.active);
+        setVehicles(activeVehicles);
+        setSelectedVehicleId((prev) => prev || String(activeVehicles[0]?.vehicleId ?? ""));
+    };
 
-    // Search, then A to Z / Z to A
-    const query = search.trim().toLowerCase();
-    const shown = items
-        .filter((m) =>
-            !query ||
-            [m.description, m.vehicleType, m.userName, m.pickupLocation, m.destination]
-                .filter(Boolean)
-                .some((v) => v.toLowerCase().includes(query))
-        )
-        .sort((a, b) => {
-            const A = (a.description ?? a.vehicleType ?? "").toLowerCase();
-            const B = (b.description ?? b.vehicleType ?? "").toLowerCase();
-            if (sort === "az") return A.localeCompare(B);
-            if (sort === "za") return B.localeCompare(A);
-            return 0;
+    const load = async () => {
+        setIsLoading(true);
+        setErrorText("");
+        try {
+            const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
+            setRole(me.role);
+            if (me.role === "TRANSPORT") await loadTransport();
+            else await loadCustomer(Number(searchParams.get("requestId")) || selectedRequestId);
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
+    const selectedRequest = requests.find((r) => r.requestId === selectedRequestId);
+    const uniqueTransportBoard = useMemo(() => {
+        const seen = new Set();
+        return transportBoard.filter((item) => {
+            const key = item.deliveryId ? `delivery-${item.deliveryId}` : `request-${item.requestId}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
         });
+    }, [transportBoard]);
+
+    const handleJoin = async (requestId) => {
+        setIsActioning(`join-${requestId}`);
+        setErrorText("");
+        try {
+            await api.call(ENDPOINTS.DELIVERY.JOIN(selectedRequestId), { withRequestId: requestId });
+            await loadCustomer(selectedRequestId);
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setIsActioning(null);
+        }
+    };
+
+    const handleAccept = async (requestId) => {
+        if (!selectedVehicleId) {
+            setErrorText("Add an active vehicle before accepting a delivery.");
+            navigate("/delivery/vehicles");
+            return;
+        }
+        setIsActioning(`accept-${requestId}`);
+        setErrorText("");
+        try {
+            const result = await api.call(ENDPOINTS.DELIVERY.ACCEPT_REQUEST(requestId), { vehicleId: Number(selectedVehicleId) });
+            navigate(`/delivery/tracking?deliveryId=${result.deliveryId}`);
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setIsActioning(null);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
-            <Sidebar minimal />
-
-            <div className="flex-1 flex flex-col min-w-0">
-                {/* Top bar: back, search, sort */}
-                <div className="px-8 pt-5 max-w-7xl w-full mx-auto flex flex-wrap items-center gap-3">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 rounded-full text-gray-600 hover:bg-gray-100"
-                        aria-label="Go back"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <div className="relative w-full max-w-sm">
-                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search deliveries"
-                            className="w-full rounded-full border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                        />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {SORTS.map((s) => (
-                            <button
-                                key={s.key}
-                                onClick={() => setSort(s.key)}
-                                className={`text-sm font-medium ${
-                                    sort === s.key ? "text-green-700" : "text-gray-600 hover:text-gray-900"
-                                }`}
-                            >
-                                {s.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="px-8 pt-8 pb-6 max-w-7xl w-full mx-auto">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">All Deliveries</h1>
-                            <p className="text-sm text-gray-500 mt-1">
-                                {current.hint}
-                                {USE_DUMMY_DATA && " Showing sample deliveries for now."}
-                            </p>
-                        </div>
-                        {/* Buttons on the right */}
-                        <div className="shrink-0 flex items-center gap-2">
-                            <button
-                                onClick={() => navigate("/DeliveryTracking")}
-                                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-semibold rounded-xl px-4 py-2.5 text-sm flex items-center gap-2"
-                            >
-                                <Truck size={18} /> Track delivery
-                            </button>
-                            <button
-                                onClick={() => navigate("/DeliveryRequest")}
-                                className="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-4 py-2.5 text-sm flex items-center gap-2"
-                            >
-                                <Plus size={18} /> Create request
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-6">
-                        {CATEGORIES.map((c) => (
-                            <button
-                                key={c.key}
-                                onClick={() => setSearchParams({ tab: c.key })}
-                                className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                                    category === c.key
-                                        ? "bg-green-600 text-white border-green-600"
-                                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                                }`}
-                            >
-                                {c.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex-1 px-8 pb-10 max-w-7xl w-full mx-auto">
-                    <MessageBox type="error" text={errorText} />
-                    {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
-                    {!isLoading && !errorText && shown.length === 0 && (
-                        <p className="text-sm text-gray-500">
-                            {query ? "No deliveries match your search." : "Nothing here yet. Create a request to get started."}
-                        </p>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-                        {shown.map((m) => {
-                            const when = new Date(m.preferredDateTime);
-                            return (
-                                <div key={m.requestId} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
-                                    <div className="h-44 rounded-xl bg-green-50 flex items-center justify-center text-6xl">
-                                        {m.emoji ?? current.fallbackEmoji}
-                                    </div>
-
-                                    <p className="text-xs font-medium text-green-700 mt-4">{current.tag}</p>
-                                    <div className="flex items-start justify-between gap-2 mt-1">
-                                        <h3 className="text-lg font-bold text-gray-900">{m.description || m.vehicleType}</h3>
-                                        <span className="text-xs font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-lg whitespace-nowrap">
-                                            {m.estimatedWeight} kg
-                                        </span>
-                                    </div>
-
-                                    <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-                                        <MapPin size={14} className="shrink-0" />
-                                        <span className="truncate">{m.userName}, {m.pickupLocation}</span>
-                                    </p>
-                                    <p className="text-sm text-gray-500 mt-1 pl-5">to {m.destination}</p>
-
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
-                                        <span className="flex items-center gap-1"><Calendar size={13} /> {when.toLocaleDateString()}</span>
-                                        <span className="flex items-center gap-1">
-                                            <Clock size={13} /> {when.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                        </span>
-                                        {category === "requests" && (
-                                            <span className="flex items-center gap-1"><Truck size={13} /> {m.vehicleType}</span>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        onClick={() => handleSelect(m.requestId)}
-                                        disabled={selectingId !== null}
-                                        className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl px-5 py-2.5 text-sm"
-                                    >
-                                        {selectingId === m.requestId ? "Selecting..." : current.action}
-                                    </button>
+            <Sidebar active={role === "TRANSPORT" ? "incoming" : "matches"} />
+            <main className="flex-1 min-w-0">
+                <div className="max-w-7xl mx-auto px-8 py-8">
+                    {role === "TRANSPORT" ? (
+                        <>
+                            <div className="flex items-start justify-between gap-4 flex-wrap">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">Delivery Requests</h1>
+                                    <p className="text-sm text-gray-500 mt-1">Accept open requests or assign a vehicle to an already-shared route.</p>
                                 </div>
-                            );
-                        })}
-                    </div>
+                                <button onClick={() => navigate("/delivery/vehicles")} className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-sm flex items-center gap-2"><Truck size={17} /> Manage vehicles</button>
+                            </div>
+
+                            {vehicles.length > 0 && (
+                                <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 max-w-xl">
+                                    <label className="text-sm text-gray-700">Vehicle to assign<select className="w-full mt-1.5 rounded-xl border border-gray-200 px-4 py-2.5 text-sm" value={selectedVehicleId} onChange={(e) => setSelectedVehicleId(e.target.value)}>
+                                        {vehicles.map((v) => <option key={v.vehicleId} value={v.vehicleId}>{v.vehicleName} · {v.registrationNumber} · {v.capacityKg} kg</option>)}
+                                    </select></label>
+                                </div>
+                            )}
+
+                            <MessageBox type="error" text={errorText} />
+                            {isLoading ? <p className="mt-5 text-sm text-gray-500">Loading requests...</p> : vehicles.length === 0 ? (
+                                <div className="mt-5 bg-white rounded-2xl border border-dashed border-gray-300 p-8 text-sm text-gray-600">You need an active vehicle before accepting requests. <button onClick={() => navigate("/delivery/vehicles")} className="text-green-700 font-semibold">Add a vehicle →</button></div>
+                            ) : uniqueTransportBoard.length === 0 ? (
+                                <div className="mt-5 bg-white rounded-2xl border border-dashed border-gray-300 p-8 text-sm text-gray-600">No delivery requests are waiting for a transport partner.</div>
+                            ) : (
+                                <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                                    {uniqueTransportBoard.map((item) => (
+                                        <article key={item.deliveryId ?? item.requestId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div><p className="text-xs text-green-700 font-semibold">{item.deliveryId ? "SHARED DELIVERY" : "DELIVERY REQUEST"}</p><h3 className="font-semibold text-gray-900 mt-1">{item.description || `Order #${item.orderId ?? "—"}`}</h3></div>
+                                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">{item.estimatedWeight} kg</span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-4 flex items-start gap-2"><MapPin size={15} className="mt-0.5 shrink-0" /> {item.pickupLocation} → {item.destination}</p>
+                                            <p className="text-xs text-gray-500 mt-2">Requested by {item.userName}</p>
+                                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Calendar size={13} /> {item.preferredDateTime ? new Date(item.preferredDateTime).toLocaleString() : ""}</p>
+                                            <button onClick={() => handleAccept(item.requestId)} disabled={isActioning !== null} className="w-full mt-5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl px-4 py-2.5 text-sm">{isActioning === `accept-${item.requestId}` ? "Assigning..." : item.deliveryId ? "Assign vehicle" : "Accept & assign vehicle"}</button>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-start justify-between gap-4 flex-wrap">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">Shared Delivery Matches</h1>
+                                    <p className="text-sm text-gray-500 mt-1">Buyers and farmers can share a delivery when the destination road/area matches.</p>
+                                </div>
+                                <button onClick={() => navigate("/delivery/request")} className="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-4 py-2.5 text-sm">+ Request delivery</button>
+                            </div>
+
+                            <MessageBox type="error" text={errorText} />
+                            {isLoading ? <p className="mt-5 text-sm text-gray-500">Loading requests...</p> : requests.length === 0 ? (
+                                <div className="mt-5 bg-white rounded-2xl border border-dashed border-gray-300 p-8 text-sm text-gray-600">Create a delivery request from one of your orders to find compatible same-road deliveries.</div>
+                            ) : (
+                                <div className="mt-6 grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 h-fit">
+                                        <div className="flex items-center gap-2 font-semibold text-gray-900 px-2"><Users size={17} /> My requests</div>
+                                        <div className="mt-3 space-y-2">
+                                            {requests.map((request) => (
+                                                <button key={request.requestId} onClick={() => { setSelectedRequestId(request.requestId); navigate(`/delivery/matches?requestId=${request.requestId}`); }} className={`w-full text-left rounded-xl p-3 border ${request.requestId === selectedRequestId ? "border-green-200 bg-green-50" : "border-gray-100 hover:bg-gray-50"}`}>
+                                                    <p className="text-sm font-semibold text-gray-800">{request.description || `Request #${request.requestId}`}</p>
+                                                    <p className="text-xs text-gray-500 mt-1 truncate">{request.destination}</p>
+                                                    <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[11px] text-gray-500">{request.status}</span>{request.deliveryId && <span className="text-[11px] text-green-700 font-semibold">Delivery #{request.deliveryId}</span>}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <section>
+                                        {selectedRequest?.deliveryId ? (
+                                            <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-6">
+                                                <p className="text-sm font-semibold text-green-700">Shared delivery created</p>
+                                                <h2 className="text-xl font-bold text-gray-900 mt-1">Delivery #{selectedRequest.deliveryId}</h2>
+                                                <p className="text-sm text-gray-600 mt-3">{selectedRequest.pickupLocation} → {selectedRequest.destination}</p>
+                                                <button onClick={() => navigate(`/delivery/tracking?deliveryId=${selectedRequest.deliveryId}`)} className="mt-5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-4 py-2.5 text-sm">Track delivery</button>
+                                            </div>
+                                        ) : selectedRequest ? (
+                                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                                <div className="flex items-start justify-between gap-4"><div><p className="text-xs text-green-700 font-semibold">REQUEST #{selectedRequest.requestId}</p><h2 className="text-xl font-bold text-gray-900 mt-1">Find someone on the same route</h2><p className="text-sm text-gray-500 mt-2">{selectedRequest.pickupLocation} → {selectedRequest.destination}</p></div><span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">{selectedRequest.estimatedWeight} kg</span></div>
+                                                <div className="mt-5 space-y-3">
+                                                    {matches.length === 0 ? <p className="text-sm text-gray-500">No matching request yet. Another buyer/farmer must use the same destination road/area and meet the route/time criteria.</p> : matches.map((match) => (
+                                                        <div key={match.requestId} className="border border-gray-100 rounded-xl p-4">
+                                                            <div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-gray-800">{match.userName}</p><p className="text-xs text-gray-500 mt-1">{match.pickupLocation} → {match.destination}</p></div><span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-lg">{Math.round(match.matchScore * 100)}% match</span></div>
+                                                            <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500"><span className="flex items-center gap-1"><Clock size={13} /> {match.preferredDateTime ? new Date(match.preferredDateTime).toLocaleString() : ""}</span><span>{match.estimatedSavingPercent}% shared-delivery saving</span></div>
+                                                            <button onClick={() => handleJoin(match.requestId)} disabled={isActioning !== null} className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl px-4 py-2.5 text-sm">{isActioning === `join-${match.requestId}` ? "Creating shared delivery..." : "Share this delivery"}</button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                    </section>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

@@ -12,7 +12,7 @@ const MENU_ITEMS = [
     { label: "Home", path: "/home" },
     { label: "Products", path: "/products" },
     { label: "Chat", path: "/chat" },
-    { label: "Delivery ", path: "/DeliveryRequest" },
+    { label: "Delivery ", path: "/delivery/request" },
     // Shown only after login. The path comes from PERSONAL_PROFILE_PATH in src/utils/useCurrentUser.js
     { label: "Personal Profile", path: PERSONAL_PROFILE_PATH, requiresLogin: true },
 ];

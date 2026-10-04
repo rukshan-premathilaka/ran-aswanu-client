@@ -1,198 +1,216 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, ArrowRight } from "lucide-react";
+import { Calendar, MapPin, Package, Truck } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
 
-const INPUT_CLASS =
-    "w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none";
+const INPUT_CLASS = "w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100";
 
-// Label + input + red error text under it
-function Field({ label, error, children }) {
-    return (
-        <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-900 mb-1.5">{label}</label>
-            {children}
-            {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
-        </div>
-    );
-}
+const emptyForm = {
+    orderId: "",
+    pickupLocation: "",
+    destination: "",
+    date: "",
+    time: "",
+    vehicleType: "",
+    weight: "",
+    specialInstructions: "",
+};
 
 export default function DeliveryRequestPage() {
     const navigate = useNavigate();
-
-    // role: "farmer" (asks for a vehicle) or "deliverer" (offers a vehicle)
-    // weight: farmer = weight of the goods, deliverer = weight the vehicle can carry (both sent as estimatedWeight)
-    const [form, setForm] = useState({
-        role: "farmer",
-        goods: "",
-        pickupLocation: "",
-        destination: "",
-        date: "",
-        time: "",
-        vehicleType: "",
-        weight: "",
-    });
-    const [fieldErrors, setFieldErrors] = useState({});
-    const [formError, setFormError] = useState("");
+    const [role, setRole] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [form, setForm] = useState(emptyForm);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [errorText, setErrorText] = useState("");
 
-    const setValue = (key) => (e) => setForm({ ...form, [key]: e.target.value });
-    const isFarmer = form.role === "farmer";
+    const handleError = (error) => {
+        const err = getApiError(error);
+        if (err.status === 401) {
+            localStorage.removeItem("my_app_token");
+            navigate("/login");
+            return;
+        }
+        setErrorText(err.message);
+    };
 
-    // Start on the tab that matches the account (TRANSPORT = deliverer); the user can still switch.
     useEffect(() => {
-        const loadRole = async () => {
+        let cancelled = false;
+        const load = async () => {
+            setIsLoading(true);
             try {
                 const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
-                if (me.role === "TRANSPORT") setForm((f) => ({ ...f, role: "deliverer" }));
-            } catch (error) {
-                if (getApiError(error).status === 401) {
-                    localStorage.removeItem("my_app_token");
-                    navigate("/login");
+                if (cancelled) return;
+                setProfile(me);
+                setRole(me.role);
+
+                if (me.role === "TRANSPORT") return;
+
+                const purchaseOrders = await api.call(ENDPOINTS.BUYER_ORDERS.LIST_MINE);
+                let combined = (Array.isArray(purchaseOrders) ? purchaseOrders : []).map((o) => ({ ...o, source: "purchase" }));
+
+                if (me.role === "FARMER") {
+                    const sellerOrders = await api.call({ url: "/farmer/orders", method: "GET" });
+                    combined = combined.concat((Array.isArray(sellerOrders) ? sellerOrders : []).map((o) => ({ ...o, source: "seller" })));
                 }
+
+                const unique = Array.from(new Map(combined.map((o) => [o.orderId, o])).values())
+                    .filter((o) => !o.deliveryId);
+                setOrders(unique);
+
+                if (unique.length) {
+                    const first = unique[0];
+                    setForm((prev) => ({
+                        ...prev,
+                        orderId: String(first.orderId),
+                        destination: first.deliveryAddress ?? "",
+                        pickupLocation: me.role === "FARMER" ? (me.address ?? "") : (prev.pickupLocation ?? ""),
+                    }));
+                }
+            } catch (error) {
+                if (!cancelled) handleError(error);
+            } finally {
+                if (!cancelled) setIsLoading(false);
             }
         };
-        loadRole();
+        load();
+        return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setFieldErrors({});
-        setFormError("");
+    const selectedOrder = useMemo(
+        () => orders.find((o) => String(o.orderId) === String(form.orderId)),
+        [orders, form.orderId]
+    );
 
+    const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+    const selectOrder = (value) => {
+        const order = orders.find((o) => String(o.orderId) === String(value));
+        setForm((prev) => ({
+            ...prev,
+            orderId: value,
+            destination: order?.deliveryAddress ?? "",
+        }));
+    };
+
+    const submit = async (event) => {
+        event.preventDefault();
+        setErrorText("");
+        if (!form.orderId) {
+            setErrorText("Select an order before creating a delivery request.");
+            return;
+        }
         if (!form.date || !form.time) {
-            setFieldErrors({ preferredDateTime: "Choose a date and a time." });
+            setErrorText("Choose the preferred delivery date and time.");
             return;
         }
 
-        // The backend names win: requestType, estimatedWeight (both types), description, size
-        const body = {
-            requestType: isFarmer ? "FARMER_REQUEST" : "VEHICLE_OFFER",
-            pickupLocation: form.pickupLocation,
-            destination: form.destination,
-            preferredDateTime: new Date(`${form.date}T${form.time}`).toISOString(),
-            vehicleType: form.vehicleType,
-            estimatedWeight: Number(form.weight),
-            description: form.goods || undefined,
-            size: "N/A", // required by the backend until it becomes optional
-        };
-
         setIsSaving(true);
         try {
-            await api.call(ENDPOINTS.DELIVERY.CREATE_REQUEST, body);
-            // Open the Matching Deliveries tab where the new entry is listed:
-            // a farmer request shows under "Farmer requests", a vehicle offer under "Available vehicles"
-            navigate(`/MatchineDeliveries?tab=${isFarmer ? "requests" : "vehicles"}`);
+            const result = await api.call(ENDPOINTS.DELIVERY.CREATE_REQUEST, {
+                requestType: "CUSTOMER_REQUEST",
+                orderId: Number(form.orderId),
+                pickupLocation: form.pickupLocation,
+                destination: form.destination,
+                preferredDateTime: new Date(`${form.date}T${form.time}`).toISOString(),
+                vehicleType: form.vehicleType,
+                estimatedWeight: Number(form.weight),
+                size: "N/A",
+                description: selectedOrder?.firstItemName ? `Order #${form.orderId} - ${selectedOrder.firstItemName}` : `Order #${form.orderId}`,
+                specialInstructions: form.specialInstructions || undefined,
+            });
+            navigate(`/delivery/matches?requestId=${result.requestId}`);
         } catch (error) {
-            const err = getApiError(error);
-            if (err.status === 401) {
-                localStorage.removeItem("my_app_token");
-                navigate("/login");
-                return;
-            }
-            setFieldErrors(err.fieldErrors);
-            setFormError(err.message); // e.g. 403 when the account role does not match the chosen type
+            handleError(error);
         } finally {
             setIsSaving(false);
         }
     };
 
+    if (role === "TRANSPORT") {
+        return (
+            <div className="min-h-screen bg-gray-50 flex">
+                <Sidebar active="vehicles" />
+                <main className="flex-1">
+                    <div className="max-w-4xl mx-auto px-8 py-12">
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+                            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center mb-4"><Truck /></div>
+                            <h1 className="text-2xl font-bold text-gray-900">Delivery partner area</h1>
+                            <p className="text-sm text-gray-500 mt-2">Transport accounts manage vehicles and accept customer delivery requests instead of creating customer requests.</p>
+                            <button onClick={() => navigate("/delivery/vehicles")} className="mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm">Manage my vehicles</button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 flex">
             <Sidebar active="request" />
+            <main className="flex-1 min-w-0">
+                <div className="max-w-4xl mx-auto px-8 py-8">
+                    <h1 className="text-2xl font-bold text-gray-900">Request a Delivery</h1>
+                    <p className="text-sm text-gray-500 mt-1">Attach the request to an order so a transport partner can deliver it. Matching uses the destination road/area.</p>
 
-            <div className="flex-1 flex flex-col">
-                <div className="px-8 pt-8 pb-6 max-w-6xl w-full mx-auto">
-                    <h1 className="text-2xl font-bold text-gray-800">Create Request</h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Farmers ask for a vehicle. Deliverers offer one.
-                    </p>
+                    <form onSubmit={submit} className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+                        <MessageBox type="error" text={errorText} />
+
+                        {isLoading ? <p className="text-sm text-gray-500">Loading your orders...</p> : orders.length === 0 ? (
+                            <div className="rounded-xl bg-gray-50 border border-gray-200 p-5 text-sm text-gray-600">
+                                There are no orders available for delivery yet. Place an order first, or complete the farmer order flow if you are shipping a customer order.
+                                <button type="button" onClick={() => navigate("/products")} className="block mt-3 text-green-700 font-semibold">Browse products →</button>
+                            </div>
+                        ) : (
+                            <>
+                                <label className="block text-sm text-gray-700">
+                                    Order
+                                    <select className={`${INPUT_CLASS} mt-1.5`} value={form.orderId} onChange={(e) => selectOrder(e.target.value)} required>
+                                        {orders.map((order) => (
+                                            <option key={order.orderId} value={order.orderId}>
+                                                #{order.orderId} · {order.firstItemName || "Order"} · {order.source === "seller" ? "Farmer order" : "My purchase"}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                {selectedOrder && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-600">
+                                        <div className="rounded-xl bg-gray-50 p-3 flex items-center gap-2"><Package size={15} /> {selectedOrder.totalAmount ?? ""}</div>
+                                        <div className="rounded-xl bg-gray-50 p-3 flex items-center gap-2"><MapPin size={15} /> {selectedOrder.deliveryAddress || "No address"}</div>
+                                        <div className="rounded-xl bg-gray-50 p-3 flex items-center gap-2"><Calendar size={15} /> {selectedOrder.orderDate ? new Date(selectedOrder.orderDate).toLocaleDateString() : ""}</div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="text-sm text-gray-700">Pickup road / area<input className={`${INPUT_CLASS} mt-1.5`} value={form.pickupLocation} onChange={(e) => set("pickupLocation", e.target.value)} required placeholder={profile?.role === "FARMER" ? "Your farm / pickup area" : "Seller or collection road"} /></label>
+                                    <label className="text-sm text-gray-700">Destination road / area<input className={`${INPUT_CLASS} mt-1.5`} value={form.destination} onChange={(e) => set("destination", e.target.value)} required placeholder="e.g. Main Road, Negombo" /></label>
+                                    <label className="text-sm text-gray-700">Vehicle type<input className={`${INPUT_CLASS} mt-1.5`} value={form.vehicleType} onChange={(e) => set("vehicleType", e.target.value)} required placeholder="Lorry / Van / Pickup" /></label>
+                                    <label className="text-sm text-gray-700">Estimated weight (kg)<input className={`${INPUT_CLASS} mt-1.5`} type="number" min="1" step="1" value={form.weight} onChange={(e) => set("weight", e.target.value)} required placeholder="500" /></label>
+                                    <label className="text-sm text-gray-700">Preferred date<input className={`${INPUT_CLASS} mt-1.5`} type="date" value={form.date} min={new Date().toISOString().slice(0, 10)} onChange={(e) => set("date", e.target.value)} required /></label>
+                                    <label className="text-sm text-gray-700">Preferred time<input className={`${INPUT_CLASS} mt-1.5`} type="time" value={form.time} onChange={(e) => set("time", e.target.value)} required /></label>
+                                </div>
+
+                                <label className="block text-sm text-gray-700">Special instructions (optional)<textarea className={`${INPUT_CLASS} mt-1.5 min-h-24`} value={form.specialInstructions} onChange={(e) => set("specialInstructions", e.target.value)} maxLength={500} /></label>
+
+                                <div className="flex items-center justify-between gap-3 pt-2">
+                                    <p className="text-xs text-gray-500">For shared delivery, use the same destination road/area wording as the other customer.</p>
+                                    <button disabled={isSaving} className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl px-5 py-2.5 text-sm">
+                                        {isSaving ? "Creating..." : "Create delivery request"}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </form>
                 </div>
-
-                <form onSubmit={handleSubmit} className="flex-1 px-8 pb-10 max-w-3xl w-full mx-auto">
-                    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-6">
-                        <MessageBox type="error" text={formError} />
-
-                        {/* Farmer / Deliverer */}
-                        <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-xl">
-                            {["farmer", "deliverer"].map((r) => (
-                                <button
-                                    type="button"
-                                    key={r}
-                                    onClick={() => setForm({ ...form, role: r })}
-                                    className={`py-2 rounded-lg text-sm font-medium capitalize ${
-                                        form.role === r ? "bg-white text-green-700 shadow-sm" : "text-gray-600"
-                                    }`}
-                                >
-                                    {r}
-                                </button>
-                            ))}
-                        </div>
-
-                        <Field label={isFarmer ? "Goods (optional)" : "Vehicle name (optional)"} error={fieldErrors.description}>
-                            <input
-                                className={INPUT_CLASS}
-                                placeholder={isFarmer ? "e.g., Carrots" : "e.g., Dual-cab Pickup"}
-                                value={form.goods}
-                                onChange={setValue("goods")}
-                            />
-                        </Field>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Field label="Pickup Location" error={fieldErrors.pickupLocation}>
-                                <input className={INPUT_CLASS} value={form.pickupLocation} onChange={setValue("pickupLocation")} />
-                            </Field>
-                            <Field label="Destination" error={fieldErrors.destination}>
-                                <input className={INPUT_CLASS} value={form.destination} onChange={setValue("destination")} />
-                            </Field>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Field label="Date" error={fieldErrors.preferredDateTime}>
-                                <input type="date" className={INPUT_CLASS} value={form.date} onChange={setValue("date")} />
-                            </Field>
-                            <Field label="Time">
-                                <input type="time" className={INPUT_CLASS} value={form.time} onChange={setValue("time")} />
-                            </Field>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Field label={isFarmer ? "Vehicle needed" : "Your vehicle"} error={fieldErrors.vehicleType}>
-                                <input className={INPUT_CLASS} placeholder="e.g., Lorry" value={form.vehicleType} onChange={setValue("vehicleType")} />
-                            </Field>
-                            <Field
-                                label={isFarmer ? "Weight of goods (kg)" : "Weight you can carry (kg)"}
-                                error={fieldErrors.estimatedWeight}
-                            >
-                                <input type="number" min="1" step="1" className={INPUT_CLASS} placeholder="e.g., 50" value={form.weight} onChange={setValue("weight")} />
-                            </Field>
-                        </div>
-
-                        <div className="bg-green-50 rounded-xl px-4 py-3 flex items-start gap-3">
-                            <Users size={20} className="text-green-600 mt-0.5 shrink-0" />
-                            <p className="text-sm text-gray-700">
-                                {isFarmer
-                                    ? "Your request will be listed under Farmer requests in Matching Deliveries."
-                                    : "Your vehicle will be listed under Available vehicles in Matching Deliveries."}
-                            </p>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2"
-                        >
-                            {isSaving ? "Saving..." : "Create request"}
-                            {!isSaving && <ArrowRight size={18} />}
-                        </button>
-                    </div>
-                </form>
-            </div>
+            </main>
         </div>
     );
 }

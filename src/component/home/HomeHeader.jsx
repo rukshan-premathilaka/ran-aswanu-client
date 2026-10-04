@@ -17,7 +17,7 @@ const NAV_LINKS = [
 // Same extra pages the old side panel had.
 const MEMBER_LINKS = [
     { label: "Chat", path: "/chat" },
-    { label: "Delivery", path: "/MatchineDeliveries" },
+    { label: "Delivery", path: "/delivery/matches" },
 ];
 
 function ProfileChip({ username, picture, onClick }) {
