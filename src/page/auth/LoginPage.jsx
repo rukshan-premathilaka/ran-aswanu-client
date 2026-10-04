@@ -120,7 +120,7 @@ function LoginPage() {
                         <FormInput
                             id="email"
                             name="email"
-                            label="Email"
+                            label="Username or Email"
                             type="email"
                             value={form.email}
                             onChange={handleChange}
