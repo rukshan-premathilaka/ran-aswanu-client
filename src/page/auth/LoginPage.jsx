@@ -53,6 +53,21 @@ function LoginPage() {
                 localStorage.setItem("my_app_token", data.token);
             }
 
+            // Admin accounts go to the admin area (guide: call GET /api/me, role === "ADMIN" -> /admin).
+            // If this check fails for any reason, the normal flow below is used.
+            try {
+                const me = await apiService.request(
+                    ENDPOINTS.ME.GET_PROFILE.method,
+                    ENDPOINTS.ME.GET_PROFILE.url
+                );
+                if (me?.role === "ADMIN") {
+                    navigate("/admin");
+                    return;
+                }
+            } catch {
+                // ignore, continue to /home
+            }
+
             navigate("/home");
         } catch (error) {
             const status = error?.response?.status;
