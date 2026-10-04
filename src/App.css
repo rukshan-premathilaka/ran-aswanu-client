@@ -4,6 +4,9 @@
 @import "tailwindcss/preflight";
 @tailwind utilities;
 
+* {
+    font-family: Poppins, serif;
+}
 @layer base {
     :root {
         /* Main Theme Colors */
