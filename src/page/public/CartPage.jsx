@@ -3,23 +3,25 @@ import { Link } from "react-router-dom";
 import { ShoppingBag, Trash2 } from "lucide-react";
 import Navbar from "@/component/Navbar.jsx";
 import CheckoutModal from "@/component/CheckoutModal.jsx";
-import { fileUrl } from "@/api/fileUrl.js";
+import { fileUrl } from "@/api/fileurl.js";
 import { getCart, onCartChange, removeFromCart, removeManyFromCart, updateCartQuantity } from "@/utils/cart.js";
 
 const UNKNOWN_SELLER = "unknown"; // items added before the cart stored the farmer
 
-const money = (n) => Number(n).toFixed(2);
-const lineTotal = (i) => Number(i.pricePerUnit) * (Number(i.quantity) || 0);
+// Never prints "NaN" when a price or quantity is missing
+const num = (n) => Number(n) || 0;
+const money = (n) => num(n).toFixed(2);
+const lineTotal = (i) => num(i.pricePerUnit) * num(i.quantity);
 
 // Same rules the backend checks when the order is placed
 function quantityProblem(i) {
     const qty = Number(i.quantity);
     if (!(qty > 0)) return "Enter a quantity above 0.";
     if (i.minimumOrderQuantity && qty < Number(i.minimumOrderQuantity)) {
-        return `The minimum order is ${i.minimumOrderQuantity} ${i.unitOfMeasurement}.`;
+        return `The minimum order is ${i.minimumOrderQuantity} ${i.unitOfMeasurement ?? ""}.`;
     }
     if (i.availableStock != null && qty > Number(i.availableStock)) {
-        return `Only ${i.availableStock} ${i.unitOfMeasurement} in stock.`;
+        return `Only ${i.availableStock} ${i.unitOfMeasurement ?? ""} in stock.`;
     }
     return "";
 }
@@ -27,10 +29,13 @@ function quantityProblem(i) {
 // The cart is kept in the browser (localStorage). "Buy now" sends it to POST /buyer/orders,
 // and the backend creates ONE ORDER PER FARMER.
 export default function CartPage() {
-    const [items, setItems] = useState(getCart());
+    const [items, setItems] = useState(() => getCart()); // lazy: reads localStorage once, not on every render
     const [showCheckout, setShowCheckout] = useState(false);
 
-    useEffect(() => onCartChange(() => setItems(getCart())), []);
+    useEffect(() => {
+        setItems(getCart()); // catches a change that happened before this effect ran
+        return onCartChange(() => setItems(getCart()));
+    }, []);
 
     // group the items by seller
     const groups = useMemo(() => {
@@ -55,7 +60,7 @@ export default function CartPage() {
             <div className="max-w-3xl mx-auto px-6 py-10">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Your cart</h1>
 
-                {items.length === 0 ? (
+                {items.length === 0 && !showCheckout ? (
                     <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 py-16 text-center">
                         <ShoppingBag size={40} className="text-gray-300" />
                         <p className="text-sm text-gray-500">Your cart is empty.</p>
@@ -101,10 +106,11 @@ export default function CartPage() {
                                                     <div className="flex items-center gap-2">
                                                         <input
                                                             type="number"
+                                                            inputMode="decimal"
                                                             aria-label={`Quantity of ${i.productName}`}
                                                             min={i.minimumOrderQuantity ?? 1}
-                                                            max={i.availableStock}
-                                                            value={i.quantity}
+                                                            max={i.availableStock ?? undefined}
+                                                            value={i.quantity ?? ""}
                                                             onChange={(e) => updateCartQuantity(i.listId, e.target.value)}
                                                             className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-600"
                                                         />
@@ -112,7 +118,7 @@ export default function CartPage() {
                                                     </div>
 
                                                     <div className="w-32 text-right">
-                                                        <p className="text-xs text-gray-400">{Number(i.quantity) || 0} {i.unitOfMeasurement} × LKR {i.pricePerUnit}</p>
+                                                        <p className="text-xs text-gray-400">{num(i.quantity)} {i.unitOfMeasurement} × LKR {i.pricePerUnit}</p>
                                                         <p className="text-sm font-semibold text-gray-800">LKR {money(lineTotal(i))}</p>
                                                     </div>
 
@@ -135,38 +141,40 @@ export default function CartPage() {
                         </div>
 
                         {/* summary */}
-                        <div className="mt-6 rounded-2xl border border-gray-100 p-5">
-                            {(groups.length > 1 || hasUnknownSeller) && (
-                                <p className="mb-3 text-sm text-gray-500">
-                                    {hasUnknownSeller
-                                        ? "Items from different sellers are placed as separate orders (one order for each seller)."
-                                        : `Your cart has items from ${groups.length} sellers, so ${groups.length} separate orders will be placed (one for each seller).`}
-                                </p>
-                            )}
+                        {items.length > 0 && (
+                            <div className="mt-6 rounded-2xl border border-gray-100 p-5">
+                                {(groups.length > 1 || hasUnknownSeller) && (
+                                    <p className="mb-3 text-sm text-gray-500">
+                                        {hasUnknownSeller
+                                            ? "Items from different sellers are placed as separate orders (one order for each seller)."
+                                            : `Your cart has items from ${groups.length} sellers, so ${groups.length} separate orders will be placed (one for each seller).`}
+                                    </p>
+                                )}
 
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-500">{items.length} item{items.length > 1 ? "s" : ""} in your cart</p>
-                                <p className="text-lg font-bold text-gray-800">Total: LKR {money(total)}</p>
-                            </div>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-gray-500">{items.length} item{items.length > 1 ? "s" : ""} in your cart</p>
+                                    <p className="text-lg font-bold text-gray-800">Total: LKR {money(total)}</p>
+                                </div>
 
-                            <div className="mt-4 flex gap-3">
-                                <Link
-                                    to="/products"
-                                    className="flex-1 rounded-xl border-2 border-green-600 text-green-700 hover:bg-green-50 font-semibold py-3 text-sm text-center"
-                                >
-                                    Buy more
-                                </Link>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCheckout(true)}
-                                    disabled={hasProblem}
-                                    className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Buy now
-                                </button>
+                                <div className="mt-4 flex gap-3">
+                                    <Link
+                                        to="/products"
+                                        className="flex-1 rounded-xl border-2 border-green-600 text-green-700 hover:bg-green-50 font-semibold py-3 text-sm text-center"
+                                    >
+                                        Buy more
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCheckout(true)}
+                                        disabled={hasProblem}
+                                        className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Buy now
+                                    </button>
+                                </div>
+                                {hasProblem && <p className="mt-2 text-xs text-red-600">Fix the quantities marked in red to continue.</p>}
                             </div>
-                            {hasProblem && <p className="mt-2 text-xs text-red-600">Fix the quantities marked in red to continue.</p>}
-                        </div>
+                        )}
                     </>
                 )}
             </div>
@@ -175,6 +183,7 @@ export default function CartPage() {
                 <CheckoutModal
                     items={items}
                     onClose={() => setShowCheckout(false)}
+                    // The modal shows its own "Order placed" screen, so removing the items here is safe
                     onSuccess={() => removeManyFromCart(items.map((i) => i.listId))}
                 />
             )}

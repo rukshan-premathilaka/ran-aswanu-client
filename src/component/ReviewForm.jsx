@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 import MessageBox from "@/component/MessageBox.jsx";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
+import { getApiError } from "@/api/Apierror.js";
 
 const MAX_COMMENT = 500;
 

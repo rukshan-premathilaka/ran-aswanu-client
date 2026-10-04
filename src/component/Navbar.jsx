@@ -8,14 +8,32 @@ import { cartCount, onCartChange } from '@/utils/cart.js';
 function Navbar() {
     const navigate = useNavigate();
     // number of different items in the cart (3 items added -> 3), updates live
-    const [count, setCount] = useState(cartCount());
-    useEffect(() => onCartChange(() => setCount(cartCount())), []);
+    const [count, setCount] = useState(() => cartCount());
+    const [keyword, setKeyword] = useState('');
+
+    useEffect(() => {
+        setCount(cartCount());
+        return onCartChange(() => setCount(cartCount()));
+    }, []);
+
+    // Enter in the search box opens the products page with the keyword (ProductsPage reads ?keyword=)
+    const handleSearch = (e) => {
+        e.preventDefault();
+        const q = keyword.trim();
+        navigate(q ? `/products?keyword=${encodeURIComponent(q)}` : '/products');
+    };
 
     return (
         <nav className="w-full h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 md:px-12 sticky top-0 left-0 z-50">
 
             {/* 🌿 1. Logo & Site Name */}
-            <div className="flex items-center gap-2.5 cursor-pointer">
+            <div
+                className="flex items-center gap-2.5 cursor-pointer"
+                onClick={() => navigate('/home')}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigate('/home')}
+            >
                 {/*logo*/}
                 <div className="w-9 h-9 bg-[#54B435] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
                     R
@@ -27,24 +45,27 @@ function Navbar() {
             </div>
 
             {/* 🔍 2. Item Search Bar */}
-
-            <div className="flex-1 max-w-md mx-4 md:mx-8">
+            <form onSubmit={handleSearch} role="search" className="flex-1 max-w-md mx-4 md:mx-8">
                 <div className="relative w-full">
                     <input
                         type="text"
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
+                        aria-label="Search fresh items"
                         placeholder="සොයන්න / Search fresh items..."
                         className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#54B435] focus:bg-white transition-all placeholder:text-gray-400"
                     />
                     {/* Search bar */}
-                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                    <Search className="absolute left-3 top-2.5 text-gray-400 pointer-events-none" size={18} />
                 </div>
-            </div>
+            </form>
 
             {/* 👤 3. Action Icons & User Profile */}
             <div className="flex items-center gap-3">
 
                 {/* 🛒 Cart Button  */}
                 <button
+                    type="button"
                     onClick={() => navigate('/cart')}
                     aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
                     className="p-2 text-gray-600 hover:text-[#54B435] hover:bg-gray-50 rounded-xl transition-all relative"

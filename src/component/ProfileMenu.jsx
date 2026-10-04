@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, User } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
-import { fileUrl } from "@/api/fileUrl.js";
+import { getApiError } from "@/api/Apierror.js";
+import { fileUrl } from "@/api/fileurl.js";
 
 const roleLabel = (role) => (!role || role === "UNASSIGNED" ? "No role yet" : role.charAt(0) + role.slice(1).toLowerCase());
 
