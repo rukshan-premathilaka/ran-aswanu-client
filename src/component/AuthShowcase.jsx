@@ -1,4 +1,5 @@
-import React from "react";
+
+import logoImg from "@/assets/farmerImg/logo.png";
 
 /**
  * Left panel shown on the register/login pages.
@@ -17,10 +18,7 @@ function AuthShowcase() {
             <div className="relative z-10 px-12 pt-12">
                 <div className="flex items-center gap-2">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm">
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none">
-                            <path d="M12 3C9 6 7 9 7 12.5C7 15.5 9.2 18 12 18C14.8 18 17 15.5 17 12.5C17 9 15 6 12 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                            <path d="M12 18V21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                        </svg>
+                        <img src={logoImg} alt="Ran Aswanu logo" className="h-7 w-7 object-contain" />
                     </div>
                     <span className="text-lg font-semibold tracking-tight text-white">Ranaswanu</span>
                 </div>

@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/apiError.js";
-import { createChatClient, subscribeToChat, sendChatMessage, closeChatClient } from "@/api/chatSocket.js";
+import {
+    createChatClient,
+    subscribeToChat,
+    subscribeToChatErrors,
+    sendChatMessage,
+    closeChatClient,
+} from "@/api/chatSocket.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import NotificationBell from "@/component/NotificationBell.jsx";
 import ChatWindow from "@/component/ChatWindow.jsx";
 
 function ChatPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const clientRef = useRef(null);
 
     const [myUserId, setMyUserId] = useState(null);
@@ -17,7 +24,10 @@ function ChatPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [errorText, setErrorText] = useState("");
 
-    const [selectedChatId, setSelectedChatId] = useState(null);
+    // /chat?chatId=12 (from "Chat with seller") selects that chat; a click in the list overrides it
+    const chatIdFromUrl = Number(searchParams.get("chatId")) || null;
+    const [pickedChatId, setPickedChatId] = useState(null);
+    const selectedChatId = pickedChatId ?? chatIdFromUrl;
     const [messages, setMessages] = useState([]);
     const [showProfile, setShowProfile] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
@@ -43,7 +53,8 @@ function ChatPage() {
             try {
                 const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
                 setMyUserId(me.userId);
-                setChats(await api.call(ENDPOINTS.CHAT.LIST_CHATS));
+                const list = await api.call(ENDPOINTS.CHAT.LIST_CHATS);
+                setChats(Array.isArray(list) ? list : []);
             } catch (error) {
                 handleError(error);
             } finally {
@@ -51,8 +62,9 @@ function ChatPage() {
             }
         };
         loadChats();
+        // Reload when we arrive from "Chat with seller" (a brand new chat is not in an old list)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [searchParams]);
 
     // 2. One socket connection for the whole page
     useEffect(() => {
@@ -66,12 +78,20 @@ function ChatPage() {
         return () => closeChatClient(clientRef.current);
     }, []);
 
+    // 2b. Errors the server sends back for my messages (for example "too long")
+    useEffect(() => {
+        if (!isConnected) return;
+        const subscription = subscribeToChatErrors(clientRef.current, (text) => setErrorText(text));
+        return () => subscription.unsubscribe();
+    }, [isConnected]);
+
     // 3. Load history when a chat is selected
     useEffect(() => {
         if (!selectedChatId) return;
         const loadMessages = async () => {
             try {
-                setMessages(await api.call(ENDPOINTS.CHAT.LIST_MESSAGES(selectedChatId)));
+                const list = await api.call(ENDPOINTS.CHAT.LIST_MESSAGES(selectedChatId));
+                setMessages(Array.isArray(list) ? list : []);
             } catch (error) {
                 handleError(error);
             }
@@ -88,14 +108,19 @@ function ChatPage() {
             setMessages((prev) =>
                 prev.some((m) => m.messageId === newMessage.messageId) ? prev : [...prev, newMessage]
             );
+            // Keep the left list in sync (last message text)
+            setChats((prev) =>
+                prev.map((c) => (c.chatId === newMessage.chatId ? { ...c, lastMessage: newMessage.content } : c))
+            );
         });
         return () => subscription.unsubscribe();
     }, [isConnected, selectedChatId]);
 
     const handleSelectChat = (chatId) => {
-        setSelectedChatId(chatId);
+        setPickedChatId(chatId);
         setMessages([]);
         setShowProfile(false);
+        setErrorText("");
     };
 
     return (
@@ -123,11 +148,11 @@ function ChatPage() {
                         }`}
                     >
                         <div className="w-10 h-10 shrink-0 rounded-full bg-green-100 text-green-700 font-semibold flex items-center justify-center">
-                            {chat.otherUserName.charAt(0).toUpperCase()}
+                            {(chat.otherUserName ?? "?").charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-800">{chat.otherUserName}</p>
-                            <p className="text-xs text-gray-500 truncate">{chat.lastMessage}</p>
+                            <p className="text-sm font-medium text-gray-800">{chat.otherUserName ?? "Unknown user"}</p>
+                            <p className="text-xs text-gray-500 truncate">{chat.lastMessage ?? "No messages yet"}</p>
                         </div>
                     </button>
                 ))}
@@ -139,7 +164,10 @@ function ChatPage() {
                     messages={messages}
                     myUserId={myUserId}
                     canSend={isConnected}
-                    onSend={(text) => sendChatMessage(clientRef.current, selectedChat.chatId, text)}
+                    onSend={(text) => {
+                        setErrorText("");
+                        sendChatMessage(clientRef.current, selectedChat.chatId, text);
+                    }}
                     onOpenProfile={() => setShowProfile(true)}
                 />
             ) : (
@@ -155,10 +183,10 @@ function ChatPage() {
                         <span>Contact info</span>
                     </div>
                     <div className="w-24 h-24 mx-auto rounded-full bg-green-100 text-green-700 text-3xl font-semibold flex items-center justify-center">
-                        {selectedChat.otherUserName.charAt(0).toUpperCase()}
+                        {(selectedChat.otherUserName ?? "?").charAt(0).toUpperCase()}
                     </div>
                     <h3 className="mt-3 text-lg font-semibold text-gray-800">{selectedChat.otherUserName}</h3>
-                    {/* TODO: show phone and about when the backend sends them for the other user */}
+                    {/* The backend sends no phone or "about" for another user, so only the name is shown. */}
                 </div>
             )}
         </div>

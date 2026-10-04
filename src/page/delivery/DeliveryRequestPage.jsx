@@ -1,26 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Users, ArrowRight } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
+import { getApiError } from "@/api/apiError.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
-
-// Local copy of getApiError so these pages work without apiError.js
-function getApiError(error) {
-    const res = error?.response;
-    const data = res?.data ?? error?.data ?? {};
-    const rawFieldErrors = data.fieldErrors ?? data.errors;
-
-    return {
-        status: res?.status ?? error?.status ?? 0,
-        message: data.message || error?.message || "Something went wrong. Please try again.",
-        fieldErrors:
-            rawFieldErrors && typeof rawFieldErrors === "object" && !Array.isArray(rawFieldErrors)
-                ? rawFieldErrors
-                : {},
-    };
-}
 
 const INPUT_CLASS =
     "w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none";
@@ -39,10 +24,12 @@ function Field({ label, error, children }) {
 export default function DeliveryRequestPage() {
     const navigate = useNavigate();
 
-    // role: "farmer" or "deliverer"
-    // weight: farmer = weight of the goods, deliverer = weight the vehicle can carry
+    // The role is NOT picked by hand: GET /me -> FARMER = farmer form, TRANSPORT = deliverer form.
+    // weight: farmer = weight of the goods, deliverer = weight the vehicle can carry (both sent as estimatedWeight)
+    const [myRole, setMyRole] = useState(null);
+    const [isLoadingRole, setIsLoadingRole] = useState(true);
     const [form, setForm] = useState({
-        role: "farmer",
+        goods: "",
         pickupLocation: "",
         destination: "",
         date: "",
@@ -55,7 +42,29 @@ export default function DeliveryRequestPage() {
     const [isSaving, setIsSaving] = useState(false);
 
     const setValue = (key) => (e) => setForm({ ...form, [key]: e.target.value });
-    const isFarmer = form.role === "farmer";
+    const isFarmer = myRole === "FARMER";
+    const canCreate = myRole === "FARMER" || myRole === "TRANSPORT";
+
+    useEffect(() => {
+        const loadRole = async () => {
+            try {
+                const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
+                setMyRole(me.role);
+            } catch (error) {
+                const err = getApiError(error);
+                if (err.status === 401) {
+                    localStorage.removeItem("my_app_token");
+                    navigate("/login");
+                    return;
+                }
+                setFormError(err.message);
+            } finally {
+                setIsLoadingRole(false);
+            }
+        };
+        loadRole();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -67,15 +76,16 @@ export default function DeliveryRequestPage() {
             return;
         }
 
+        // The backend names win: requestType, estimatedWeight (both roles), description, size
         const body = {
-            role: form.role,
+            requestType: isFarmer ? "FARMER_REQUEST" : "VEHICLE_OFFER",
             pickupLocation: form.pickupLocation,
             destination: form.destination,
             preferredDateTime: new Date(`${form.date}T${form.time}`).toISOString(),
             vehicleType: form.vehicleType,
-            ...(isFarmer
-                ? { estimatedWeight: Number(form.weight) }
-                : { availableWeight: Number(form.weight) }),
+            estimatedWeight: Number(form.weight),
+            description: form.goods || undefined,
+            size: "N/A", // required by the backend until it becomes optional
         };
 
         setIsSaving(true);
@@ -97,6 +107,24 @@ export default function DeliveryRequestPage() {
         }
     };
 
+    if (isLoadingRole || !canCreate) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex">
+                <Sidebar active="request" />
+                <div className="flex-1 px-8 pt-8 max-w-6xl w-full mx-auto">
+                    <h1 className="text-2xl font-bold text-gray-800">Create Request</h1>
+                    <div className="mt-4 space-y-3">
+                        {isLoadingRole && <p className="text-sm text-gray-500">Loading...</p>}
+                        <MessageBox type="error" text={formError} />
+                        {!isLoadingRole && !formError && (
+                            <p className="text-sm text-gray-500">Only farmers and transport users can create requests.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 flex">
             <Sidebar active="request" />
@@ -116,21 +144,21 @@ export default function DeliveryRequestPage() {
                     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-6">
                         <MessageBox type="error" text={formError} />
 
-                        {/* Farmer / Deliverer */}
-                        <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-xl">
-                            {["farmer", "deliverer"].map((r) => (
-                                <button
-                                    type="button"
-                                    key={r}
-                                    onClick={() => setForm({ ...form, role: r })}
-                                    className={`py-2 rounded-lg text-sm font-medium capitalize ${
-                                        form.role === r ? "bg-white text-green-700 shadow-sm" : "text-gray-600"
-                                    }`}
-                                >
-                                    {r}
-                                </button>
-                            ))}
+                        {/* Your role (from your account, not chosen by hand) */}
+                        <div className="bg-gray-100 p-1 rounded-xl">
+                            <div className="py-2 rounded-lg text-sm font-medium text-center bg-white text-green-700 shadow-sm">
+                                {isFarmer ? "Farmer" : "Deliverer"}
+                            </div>
                         </div>
+
+                        <Field label={isFarmer ? "Goods (optional)" : "Vehicle name (optional)"} error={fieldErrors.description}>
+                            <input
+                                className={INPUT_CLASS}
+                                placeholder={isFarmer ? "e.g., Carrots" : "e.g., Dual-cab Pickup"}
+                                value={form.goods}
+                                onChange={setValue("goods")}
+                            />
+                        </Field>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Field label="Pickup Location" error={fieldErrors.pickupLocation}>
@@ -156,7 +184,7 @@ export default function DeliveryRequestPage() {
                             </Field>
                             <Field
                                 label={isFarmer ? "Weight of goods (kg)" : "Weight you can carry (kg)"}
-                                error={fieldErrors.estimatedWeight || fieldErrors.availableWeight}
+                                error={fieldErrors.estimatedWeight}
                             >
                                 <input type="number" min="1" step="1" className={INPUT_CLASS} placeholder="e.g., 50" value={form.weight} onChange={setValue("weight")} />
                             </Field>

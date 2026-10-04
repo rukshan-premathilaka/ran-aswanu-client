@@ -3,25 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { MapPin, Calendar, Clock, Plus, Truck, Search, ChevronLeft } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
+import { getApiError } from "@/api/apiError.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
 import { USE_DUMMY_DATA, DUMMY_VEHICLES, DUMMY_FARMER_REQUESTS } from "./deliveryDummyData.js";
-
-// Local copy of getApiError so these pages work without apiError.js
-function getApiError(error) {
-    const res = error?.response;
-    const data = res?.data ?? error?.data ?? {};
-    const rawFieldErrors = data.fieldErrors ?? data.errors;
-
-    return {
-        status: res?.status ?? error?.status ?? 0,
-        message: data.message || error?.message || "Something went wrong. Please try again.",
-        fieldErrors:
-            rawFieldErrors && typeof rawFieldErrors === "object" && !Array.isArray(rawFieldErrors)
-                ? rawFieldErrors
-                : {},
-    };
-}
 
 // The 2 main categories
 const CATEGORIES = [
@@ -71,7 +56,7 @@ export default function MatchingDeliveriesPage() {
                 const endpoint =
                     category === "vehicles" ? ENDPOINTS.DELIVERY.LIST_VEHICLES : ENDPOINTS.DELIVERY.LIST_FARMER_REQUESTS;
                 const data = await api.call(endpoint);
-                setItems(data.items ?? []);
+                setItems(Array.isArray(data) ? data : []); // the backend returns a plain array
             } catch (error) {
                 handleError(error);
             } finally {
@@ -106,13 +91,13 @@ export default function MatchingDeliveriesPage() {
     const shown = items
         .filter((m) =>
             !query ||
-            [m.title, m.vehicleType, m.userName, m.pickupLocation, m.destination]
+            [m.description, m.vehicleType, m.userName, m.pickupLocation, m.destination]
                 .filter(Boolean)
                 .some((v) => v.toLowerCase().includes(query))
         )
         .sort((a, b) => {
-            const A = (a.title ?? a.vehicleType ?? "").toLowerCase();
-            const B = (b.title ?? b.vehicleType ?? "").toLowerCase();
+            const A = (a.description ?? a.vehicleType ?? "").toLowerCase();
+            const B = (b.description ?? b.vehicleType ?? "").toLowerCase();
             if (sort === "az") return A.localeCompare(B);
             if (sort === "za") return B.localeCompare(A);
             return 0;
@@ -212,16 +197,16 @@ export default function MatchingDeliveriesPage() {
                         {shown.map((m) => {
                             const when = new Date(m.preferredDateTime);
                             return (
-                                <div key={m.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
+                                <div key={m.requestId} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                                     <div className="h-44 rounded-xl bg-green-50 flex items-center justify-center text-6xl">
                                         {m.emoji ?? current.fallbackEmoji}
                                     </div>
 
                                     <p className="text-xs font-medium text-green-700 mt-4">{current.tag}</p>
                                     <div className="flex items-start justify-between gap-2 mt-1">
-                                        <h3 className="text-lg font-bold text-gray-900">{m.title ?? m.vehicleType}</h3>
+                                        <h3 className="text-lg font-bold text-gray-900">{m.description || m.vehicleType}</h3>
                                         <span className="text-xs font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-lg whitespace-nowrap">
-                                            {m.weight} kg
+                                            {m.estimatedWeight} kg
                                         </span>
                                     </div>
 
@@ -242,11 +227,11 @@ export default function MatchingDeliveriesPage() {
                                     </div>
 
                                     <button
-                                        onClick={() => handleSelect(m.id)}
+                                        onClick={() => handleSelect(m.requestId)}
                                         disabled={selectingId !== null}
                                         className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-xl px-5 py-2.5 text-sm"
                                     >
-                                        {selectingId === m.id ? "Selecting..." : current.action}
+                                        {selectingId === m.requestId ? "Selecting..." : current.action}
                                     </button>
                                 </div>
                             );

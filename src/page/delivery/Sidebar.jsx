@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Users, Truck, PlusCircle } from "lucide-react";
+import { Users, Truck, PlusCircle } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
+import logoImg from "@/assets/farmerImg/logo.png";
 
-// Routes: /DeliveryRequest and /MatchineDeliveries come from the guide.
-// TODO: make sure "/DeliveryTracking" matches the path in your Routes config.
+// Routes: /DeliveryRequest, /MatchineDeliveries and /DeliveryTracking match Routes.config.js.
 const NAV_ITEMS = [
     { key: "request", label: "Create Request", icon: PlusCircle, path: "/DeliveryRequest" },
     { key: "matches", label: "Matching Deliveries", icon: Users, path: "/MatchineDeliveries" },
@@ -27,14 +27,12 @@ export default function Sidebar({ active, minimal = false }) {
             }
         };
         loadMe();
-    }, []);
+    }, [minimal]);
 
     return (
         <aside className="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-gray-100 bg-white h-screen sticky top-0">
             <div className="flex items-center gap-2 px-6 py-6">
-                <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center">
-                    <Package size={18} className="text-white" />
-                </div>
+                <img src={logoImg} alt="Ran Aswanu logo" className="w-8 h-8 object-contain" />
                 <span className="text-lg font-semibold text-gray-900">Ranaswanu</span>
             </div>
 
@@ -59,10 +57,10 @@ export default function Sidebar({ active, minimal = false }) {
                 <div className="px-6 py-6 border-t border-gray-100">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-xs font-semibold text-green-700">
-                            {me.username.slice(0, 2).toUpperCase()}
+                            {(me.username ?? "").slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{me.username}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">{me.username ?? ""}</p>
                             {me.address && <p className="text-xs text-gray-400 truncate">{me.address}</p>}
                         </div>
                     </div>

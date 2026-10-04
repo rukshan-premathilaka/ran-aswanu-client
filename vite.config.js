@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite"
-import path from 'path' // 1. මේක උඩින්ම import කරගන්න
+import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,10 +9,11 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  // sockjs-client expects a Node-style `global`
+  define: { global: 'window' },
   resolve: {
     alias: {
-
-      '@': path.resolve(__dirname, './src'),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 })

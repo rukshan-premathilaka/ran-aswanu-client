@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronLeft, Leaf, Menu, Search, User, X } from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronLeft, Menu, Search, User, X } from "lucide-react";
 import { useProducts } from "@/api/fetchProducts.js";
 import ProductTile from "@/component/ProductTile.jsx";
 import ProductDetailView from "@/component/ProductDetailView.jsx";
+import logoImg from "@/assets/farmerImg/logo.png";
 
 // Sidebar menu. Change the paths here if your routes are named differently.
 const MENU_ITEMS = [
-    { label: "Home", path: "/" },
+    { label: "Home", path: "/home" },
     { label: "Products", path: "/products" },
     { label: "Chat", path: "/chat" },
-    { label: "Delivery Request", path: "/delivery-request" },
-    { label: "Farmer Home", path: "/farmer-home" },
+    { label: "Delivery Request", path: "/DeliveryRequest" },
+    { label: "Farmer Home", path: "/farmer/home" },
     { label: "Buyer Profile", path: "/buyer-profile" },
 ];
 
@@ -21,7 +22,7 @@ const SORT_TABS = [
     { id: "za", label: "Z to A" },
 ];
 
-const getName = (p) => p.name ?? p.productName ?? p.title ?? "Product";
+const getName = (p) => p.productName ?? "Product";
 
 // Sidebar: hidden until the menu (three lines) button is clicked, like on Home
 function Sidebar({ open, onClose, onBack }) {
@@ -31,7 +32,7 @@ function Sidebar({ open, onClose, onBack }) {
     const go = (path) => {
         onClose();
         // Opened from Home with "See more": Home goes back to the home view, Products stays here
-        if (onBack && path === "/") return onBack();
+        if (onBack && path === "/home") return onBack();
         if (onBack && path === "/products") return;
         navigate(path);
     };
@@ -66,8 +67,8 @@ function Sidebar({ open, onClose, onBack }) {
                 }`}
             >
                 <div className="flex items-center justify-between px-6 pt-8 pb-6">
-                    <Link to="/" className="flex items-center gap-3">
-                        <Leaf className="w-9 h-9 text-green-600" />
+                    <Link to="/home" className="flex items-center gap-3">
+                        <img src={logoImg} alt="Ran Aswanu logo" className="w-9 h-9 object-contain" />
                         <span className="text-2xl font-bold text-green-600 leading-tight">
 							Ran<br />Aswanna
 						</span>
@@ -84,8 +85,9 @@ function Sidebar({ open, onClose, onBack }) {
 
 export function ProductsPage({ onBack } = {}) {
     const navigate = useNavigate();
-    const { products, isLoading, isDemo } = useProducts();
-    const [search, setSearch] = useState("");
+    const { products, isLoading, errorText } = useProducts();
+    const [searchParams] = useSearchParams();
+    const [search, setSearch] = useState(searchParams.get("keyword") ?? ""); // /products?keyword=tomato from the Navbar search
     const [sort, setSort] = useState("all");
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selected, setSelected] = useState(null); // product whose detail page is open
@@ -166,12 +168,16 @@ export function ProductsPage({ onBack } = {}) {
                     <h1 className="text-2xl font-bold text-stone-900">All Products</h1>
                     <p className="text-sm text-stone-500 mt-1 mb-6">
                         Listings from farmers across Sri Lanka.
-                        {isDemo && <span className="text-stone-400"> Showing sample products for now.</span>}
                     </p>
 
+                    {errorText && (
+                        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2 mb-3">{errorText}</p>
+                    )}
                     {isLoading && <p className="text-sm text-stone-500">Loading...</p>}
-                    {!isLoading && shown.length === 0 && (
-                        <p className="text-sm text-stone-500">No produce matches "{search}".</p>
+                    {!isLoading && !errorText && shown.length === 0 && (
+                        <p className="text-sm text-stone-500">
+                            {search.trim() ? `No produce matches "${search}".` : "No produce listed yet. Check back soon."}
+                        </p>
                     )}
 
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">

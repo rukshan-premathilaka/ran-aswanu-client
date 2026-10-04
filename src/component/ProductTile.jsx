@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { Leaf, MapPin } from "lucide-react";
+import { fileUrl } from "@/api/fileUrl.js";
 
 // Product card used on the Home page and the Products page. No price is shown.
-// Field names are read defensively because the backend shape may differ.
+// Keys come straight from the backend (GET /products): productName, farmerName, category, productImage.
 // tall = taller picture (used on the Products page)
 export default function ProductTile({ product, tall = false, onClick }) {
     const [imageBroken, setImageBroken] = useState(false);
 
-    const name = product.name ?? product.productName ?? product.title ?? "Product";
-    const label = product.category ?? product.type ?? "Fresh Produce";
-    const farmer = product.farmerName ?? product.farmer ?? product.sellerName;
-    const location = product.location ?? product.district;
-    const image = product.imageUrl ?? product.image;
+    const name = product.productName ?? "Product";
+    const label = product.category ?? "Fresh Produce";
+    const farmer = product.farmerName;
+    const location = product.location; // not sent yet (backend to-do); hidden until it arrives
+    const image = fileUrl(product.productImage); // null when the product has no picture -> leaf placeholder
     const sub = [farmer, location].filter(Boolean).join(", ");
 
     return (
@@ -35,11 +36,7 @@ export default function ProductTile({ product, tall = false, onClick }) {
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        {product.emoji ? (
-                            <span className="text-6xl">{product.emoji}</span>
-                        ) : (
-                            <Leaf className="w-10 h-10 text-green-600" />
-                        )}
+                        <Leaf className="w-10 h-10 text-green-600" />
                     </div>
                 )}
             </div>

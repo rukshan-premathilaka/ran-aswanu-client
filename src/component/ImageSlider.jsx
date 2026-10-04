@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Leaf } from "lucide-react";
 
-function ImageSlider({ images }) {
+function ImageSlider({ images = [] }) {
     const [activeIndex, setActiveIndex] = useState(0);
+
+    // No picture: show a placeholder instead of crashing
+    if (images.length === 0) {
+        return (
+            <div className="w-full aspect-square bg-gray-50 rounded-2xl flex items-center justify-center">
+                <Leaf size={48} className="text-green-600" />
+            </div>
+        );
+    }
 
     const goPrev = () =>
         setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));

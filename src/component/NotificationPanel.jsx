@@ -1,5 +1,20 @@
 import MessageBox from "@/component/MessageBox.jsx";
 
+// "5 min ago", "2 h ago", "3 d ago"; older than a week shows the date.
+function timeAgo(isoString) {
+    if (!isoString) return "";
+    const then = new Date(isoString);
+    if (Number.isNaN(then.getTime())) return "";
+    const minutes = Math.floor((Date.now() - then.getTime()) / 60000);
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} d ago`;
+    return then.toLocaleDateString();
+}
+
 // Only shows the list. NotificationBell loads the data and decides what happens on click.
 function NotificationPanel({ notifications, isLoading, errorText, onMarkRead, onClose }) {
     return (
@@ -30,6 +45,9 @@ function NotificationPanel({ notifications, isLoading, errorText, onMarkRead, on
                     >
                         <p className="text-sm font-semibold text-gray-800">{note.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{note.message}</p>
+                        {note.createdAt && (
+                            <p className="text-[11px] text-gray-400 mt-1">{timeAgo(note.createdAt)}</p>
+                        )}
                     </button>
                 ))}
             </div>

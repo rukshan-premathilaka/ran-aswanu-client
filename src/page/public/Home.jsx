@@ -5,6 +5,7 @@ import { useProducts } from "@/api/fetchProducts.js";
 import ProductTile from "@/component/ProductTile.jsx";
 import ProductsPage from "./ProductsPage.jsx";
 import ProductDetailView from "@/component/ProductDetailView.jsx";
+import logoImg from "@/assets/farmerImg/logo.png";
 
 // Short explanations shown in a pop-up when a feature is clicked
 const FEATURES = [
@@ -34,7 +35,7 @@ const FEATURES = [
 // Side panel menu. Change the paths here if your routes are named differently.
 // "Products" opens the products page right here on Home (no route needed).
 const MENU_ITEMS = [
-	{ label: "Home", path: "/" },
+	{ label: "Home", path: "/home" },
 	{ label: "Products", path: "/products", action: "products" },
 	{ label: "Chat", path: "/chat" },
 	{ label: "Delivery ", path: "/MatchineDeliveries" },
@@ -91,7 +92,7 @@ function SidePanel({ open, onClose, onProducts }) {
 			>
 				<div className="flex items-center justify-between px-6 pt-8 pb-6">
 					<div className="flex items-center gap-3">
-						<Leaf className="w-9 h-9 text-green-600" />
+						<img src={logoImg} alt="Ran Aswanu logo" className="w-9 h-9 object-contain" />
 						<span className="text-2xl font-bold text-green-600 leading-tight">
 							Ran<br />Aswanna
 						</span>
@@ -163,7 +164,7 @@ export function Home() {
 	}, [selected]);
 
 	// Live product list (refreshes by itself). Home shows only the first 4.
-	const { products, isLoading, isDemo, errorText } = useProducts();
+	const { products, isLoading, errorText } = useProducts();
 	// Fresh Picks shows 4 products at a time and rotates through the whole list every few seconds
 	const PICKS_PER_PAGE = 4;
 	const ROTATE_MS = 5000;
@@ -204,8 +205,8 @@ export function Home() {
 					>
 						<Menu className="w-5 h-5 text-stone-700" />
 					</button>
-					<Link to="/" className="flex items-center gap-2 font-extrabold text-stone-900">
-						<Leaf className="w-5 h-5 text-green-700" /> RAN ASWANU
+					<Link to="/home" className="flex items-center gap-2 font-extrabold text-stone-900">
+						<img src={logoImg} alt="Ran Aswanu logo" className="w-5 h-5 object-contain" /> RAN ASWANU
 					</Link>
 				</div>
 				<nav className="flex items-center gap-6 text-sm font-medium text-stone-600">
@@ -276,7 +277,6 @@ export function Home() {
 							<h2 className="text-2xl font-bold text-stone-900">Fresh Picks</h2>
 							<p className="text-sm text-stone-500">
 								Listings from farmers across Sri Lanka.
-								{isDemo && <span className="text-stone-400"> Showing sample products for now.</span>}
 							</p>
 						</div>
 						<button onClick={() => setShowAll(true)} className="text-sm font-semibold text-green-700 hover:text-green-800 flex items-center gap-1">

@@ -2,21 +2,13 @@ import { useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import ProductClick from "@/page/public/ProductClick.jsx";
 
-// Opens the product detail page (ProductClick, used as-is) for one product, with a back bar on top.
+// Opens the product detail page (ProductClick) for one product, with a back bar on top.
 // onBack = go back to the list the user came from.
+// ProductClick loads the full product by listId itself; `product` is only shown while it loads.
 export default function ProductDetailView({ product, onBack }) {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [product]);
-
-    const name = product.name ?? product.productName ?? product.title ?? "Product";
-    const farmer = product.farmerName ?? product.farmer ?? product.sellerName;
-    const location = product.location ?? product.district;
-    const price = product.price ?? product.pricePerKg ?? product.unitPrice;
-    const image = product.imageUrl ?? product.image;
-    const description =
-        product.description ??
-        `Fresh ${name}${farmer ? ` grown by ${farmer}` : ""}${location ? ` in ${location}` : ""}. Harvested fresh and delivered straight from the farm.`;
 
     return (
         <div>
@@ -28,7 +20,7 @@ export default function ProductDetailView({ product, onBack }) {
                     <ArrowLeft className="w-4 h-4" /> Back to products
                 </button>
             </div>
-            <ProductClick image={image} name={name} description={description} price={price ?? "N/A"} />
+            <ProductClick listId={product.listId} initialProduct={product} />
         </div>
     );
 }

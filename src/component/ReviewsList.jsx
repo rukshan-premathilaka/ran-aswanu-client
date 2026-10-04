@@ -16,11 +16,17 @@ function ReviewsList({ reviews }) {
                 >
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <img
-                                src={review.userImage}
-                                alt={review.userName}
-                                className="w-8 h-8 rounded-full object-cover"
-                            />
+                            {review.userImage ? (
+                                <img
+                                    src={review.userImage}
+                                    alt={review.userName}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 text-xs font-semibold flex items-center justify-center">
+                                    {(review.userName ?? "?").charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <span className="font-medium text-gray-800 text-sm">
                 {review.userName}
               </span>

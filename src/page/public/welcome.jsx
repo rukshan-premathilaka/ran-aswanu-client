@@ -2,28 +2,16 @@ import { useNavigate } from "react-router-dom"; // 1. Import the hook
 import CustomButton from "@/component/CustomButton.jsx";
 import AuthLayout from "@/layouts/Authlayout.jsx";
 import Leftimg from "@/assets/LeftImg.jpg";
+import logoImg from "@/assets/farmerImg/logo.png";
 
 const Welcome = () => {
     // 2. Initialize the navigate function
     const navigate = useNavigate();
 
-    // 3. Create the handler function
-    const handleLanguageSelection = async (language) => {
-        try {
-            console.log(`Saving ${language} to database...`);
-
-            // TODO: YOUR DATABASE LOGIC GOES HERE
-
-            // Simulating a database delay so you can see it work right now
-            await new Promise((resolve) => setTimeout(resolve, 500));
-
-            // 4. Navigate to SignIn AFTER the database save is successful
-            navigate('/signin');
-
-        } catch (error) {
-            console.error("Error saving language:", error);
-            // Optional: Show an error message to the auth here
-        }
+    // 3. The language is saved in the browser only (there is no backend endpoint for it)
+    const handleLanguageSelection = (language) => {
+        localStorage.setItem("app_language", language);
+        navigate("/login");
     };
 
     return (
@@ -31,8 +19,8 @@ const Welcome = () => {
             <div className="flex flex-col items-center mb-8 w-full">
                 <div className="w-24 h-24 bg-white p-2 rounded-xl shadow-sm mb-4 border border-blue-400">
                     <img
-                        src={""}
-                        alt="Ran Aswanna Logo"
+                        src={logoImg}
+                        alt="Ran Aswanu logo"
                         className="w-full h-full object-contain"
                     />
                 </div>
@@ -40,7 +28,7 @@ const Welcome = () => {
                     RAN ASWANU
                 </h1>
                 <p className="text-2xs text-gray-500 text-center mt-1 px-6 max-w-sm">
-                    Ran Aswanna is an AI matchmaking tool that lets you seamlessly create roommates.
+                    Ran Aswanu is a farm-to-table marketplace that connects Sri Lankan farmers, buyers and trusted transport partners.
                 </p>
             </div>
 

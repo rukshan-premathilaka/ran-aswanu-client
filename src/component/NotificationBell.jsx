@@ -19,12 +19,12 @@ function NotificationBell() {
     const [coords, setCoords] = useState({ top: 0, left: 0 });
 
     useEffect(() => {
-        const loadNotifications = async () => {
-            setIsLoading(true);
+        const loadNotifications = async (showSpinner = true) => {
+            if (showSpinner) setIsLoading(true);
             setErrorText("");
             try {
                 const data = await api.call(ENDPOINTS.NOTIFICATIONS.LIST_MINE);
-                setNotifications(data);
+                setNotifications(Array.isArray(data) ? data : []);
             } catch (error) {
                 const err = getApiError(error);
                 if (err.status === 401) {
@@ -38,6 +38,9 @@ function NotificationBell() {
             }
         };
         loadNotifications();
+        // New notifications show up without a page reload
+        const timer = setInterval(() => loadNotifications(false), 30000);
+        return () => clearInterval(timer);
     }, [navigate]);
 
     const handleToggle = () => {
