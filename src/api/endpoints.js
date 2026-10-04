@@ -13,9 +13,7 @@ const ENDPOINTS = {
         UPLOAD_PICTURE: { url: "/me/picture", method: "POST" },
     },
 
-    USERS: {
-        GET_RATINGS: (userId) => ({ url: `/users/${userId}/ratings`, method: "GET" }),
-    },
+    // (USERS.GET_RATINGS was removed: the backend dropped /users/{id}/ratings. Use RATINGS.LIST_FOR_USER.)
 
     FARMER_DASHBOARD: {
         GET_SUMMARY: { url: "/farmer/dashboard/summary", method: "GET" },
@@ -67,6 +65,45 @@ const ENDPOINTS = {
     BUYER_ORDERS: {
         PLACE_ORDER: { url: "/buyer/orders", method: "POST" },
         LIST_MINE: { url: "/buyer/orders", method: "GET" },
+    },
+
+    // ---------- ORDERS (cart stays in the browser) ----------
+    BUYER_ORDERS: {
+        PLACE_ORDER: { url: "/buyer/orders", method: "POST" },
+        LIST_MINE:   { url: "/buyer/orders", method: "GET" },
+    },
+
+    // ---------- RATINGS ----------
+    RATINGS: {
+        SUBMIT: (orderId) => ({ url: `/orders/${orderId}/rating`, method: "POST" }),
+        LIST_FOR_USER: (userId) => ({ url: `/users/${userId}/reviews`, method: "GET" }),
+    },
+
+    // ---------- DELIVERY ----------
+    DELIVERY: {
+        CREATE_REQUEST:   { url: "/delivery-requests", method: "POST" },                  // ✅
+        LIST_MY_REQUESTS: { url: "/delivery-requests", method: "GET" },                   // ✅
+        GET_MATCHES:  (requestId) => ({ url: `/delivery-requests/${requestId}/matches`, method: "GET" }),  // ✅
+        JOIN:         (requestId) => ({ url: `/delivery-requests/${requestId}/join`, method: "POST" }),    // ✅
+        GET_TRACKING: (deliveryId) => ({ url: `/deliveries/${deliveryId}/status`, method: "GET" }),        // ✅
+        UPDATE_STATUS:(deliveryId) => ({ url: `/deliveries/${deliveryId}/status`, method: "PATCH" }),      // ✅ (transport users)
+        // The next three wait for the backend (BACKEND_TODO_FOR_FRONTEND_PAGES.md, section 1)
+        LIST_VEHICLES:        { url: "/delivery-requests/open?type=VEHICLE_OFFER", method: "GET" },        // 🔧
+        LIST_FARMER_REQUESTS: { url: "/delivery-requests/open?type=FARMER_REQUEST", method: "GET" },       // 🔧
+        SELECT: (requestId) => ({ url: `/delivery-requests/${requestId}/accept`, method: "POST" }),       // 🔧
+    },
+
+    // ---------- NOTIFICATIONS ----------
+    NOTIFICATIONS: {
+        LIST_MINE: { url: "/notifications", method: "GET" },
+        MARK_READ: (id) => ({ url: `/notifications/${id}/read`, method: "PATCH" }),
+    },
+
+    // ---------- CHAT (REST part. Live messages use the socket) ----------
+    CHAT: {
+        START:         { url: "/chats", method: "POST" },
+        LIST_CHATS:    { url: "/chats", method: "GET" },
+        LIST_MESSAGES: (chatId) => ({ url: `/chats/${chatId}/messages`, method: "GET" }),
     },
 };
 

@@ -1,17 +1,53 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { ShoppingBag, Trash2 } from "lucide-react";
 import Navbar from "@/component/Navbar.jsx";
 import CheckoutModal from "@/component/CheckoutModal.jsx";
+import { fileUrl } from "@/api/fileUrl.js";
 import { getCart, onCartChange, removeFromCart, removeManyFromCart, updateCartQuantity } from "@/utils/cart.js";
 
-// The cart is kept in the browser (localStorage). Checkout sends it to POST /buyer/orders.
+const UNKNOWN_SELLER = "unknown"; // items added before the cart stored the farmer
+
+const money = (n) => Number(n).toFixed(2);
+const lineTotal = (i) => Number(i.pricePerUnit) * (Number(i.quantity) || 0);
+
+// Same rules the backend checks when the order is placed
+function quantityProblem(i) {
+    const qty = Number(i.quantity);
+    if (!(qty > 0)) return "Enter a quantity above 0.";
+    if (i.minimumOrderQuantity && qty < Number(i.minimumOrderQuantity)) {
+        return `The minimum order is ${i.minimumOrderQuantity} ${i.unitOfMeasurement}.`;
+    }
+    if (i.availableStock != null && qty > Number(i.availableStock)) {
+        return `Only ${i.availableStock} ${i.unitOfMeasurement} in stock.`;
+    }
+    return "";
+}
+
+// The cart is kept in the browser (localStorage). "Buy now" sends it to POST /buyer/orders,
+// and the backend creates ONE ORDER PER FARMER.
 export default function CartPage() {
     const [items, setItems] = useState(getCart());
     const [showCheckout, setShowCheckout] = useState(false);
 
     useEffect(() => onCartChange(() => setItems(getCart())), []);
 
-    const total = items.reduce((sum, i) => sum + Number(i.pricePerUnit) * Number(i.quantity), 0);
+    // group the items by seller
+    const groups = useMemo(() => {
+        const map = new Map();
+        for (const i of items) {
+            const key = i.farmerId ?? UNKNOWN_SELLER;
+            if (!map.has(key)) {
+                map.set(key, { key, name: key === UNKNOWN_SELLER ? "Other items" : i.farmerName || "Seller", items: [] });
+            }
+            map.get(key).items.push(i);
+        }
+        return [...map.values()];
+    }, [items]);
+
+    const total = items.reduce((sum, i) => sum + lineTotal(i), 0);
+    const hasProblem = items.some((i) => quantityProblem(i));
+    const hasUnknownSeller = groups.some((g) => g.key === UNKNOWN_SELLER);
 
     return (
         <div className="w-full min-h-screen bg-white">
@@ -20,49 +56,116 @@ export default function CartPage() {
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Your cart</h1>
 
                 {items.length === 0 ? (
-                    <p className="text-sm text-gray-500">
-                        Your cart is empty.{" "}
-                        <Link to="/home" className="text-green-700 font-medium underline">Browse produce</Link>
-                    </p>
+                    <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 py-16 text-center">
+                        <ShoppingBag size={40} className="text-gray-300" />
+                        <p className="text-sm text-gray-500">Your cart is empty.</p>
+                        <Link to="/products" className="rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 text-sm">
+                            Browse produce
+                        </Link>
+                    </div>
                 ) : (
                     <>
-                        <ul className="divide-y divide-gray-100 rounded-2xl border border-gray-100">
-                            {items.map((i) => (
-                                <li key={i.listId} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                                    <div>
-                                        <Link to={`/product/${i.listId}`} className="font-medium text-gray-800 hover:text-green-700">
-                                            {i.productName}
-                                        </Link>
-                                        <p className="text-xs text-gray-500">LKR {i.pricePerUnit} / {i.unitOfMeasurement}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="number"
-                                            min={i.minimumOrderQuantity ?? 1}
-                                            max={i.availableStock}
-                                            value={i.quantity}
-                                            onChange={(e) => updateCartQuantity(i.listId, e.target.value)}
-                                            className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-600"
-                                        />
-                                        <span className="text-sm font-semibold text-gray-800 w-28 text-right">
-                                            LKR {(Number(i.pricePerUnit) * Number(i.quantity || 0)).toFixed(2)}
-                                        </span>
-                                        <button onClick={() => removeFromCart(i.listId)} className="text-sm text-red-600 hover:underline">
-                                            Remove
-                                        </button>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="flex flex-col gap-5">
+                            {groups.map((group) => (
+                                <section key={group.key} aria-label={`Items from ${group.name}`} className="rounded-2xl border border-gray-100 overflow-hidden">
+                                    <header className="flex items-center justify-between gap-3 bg-gray-50 px-4 py-3">
+                                        <p className="text-sm font-semibold text-gray-800">
+                                            <span className="font-normal text-gray-500">Seller: </span>{group.name}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Subtotal: <span className="font-semibold text-gray-800">LKR {money(group.items.reduce((s, i) => s + lineTotal(i), 0))}</span>
+                                        </p>
+                                    </header>
 
-                        <div className="flex items-center justify-between mt-6">
-                            <p className="text-lg font-bold text-gray-800">Total: LKR {total.toFixed(2)}</p>
-                            <button
-                                onClick={() => setShowCheckout(true)}
-                                className="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-6 py-3 text-sm"
-                            >
-                                Checkout
-                            </button>
+                                    <ul className="divide-y divide-gray-100">
+                                        {group.items.map((i) => {
+                                            const image = fileUrl(i.productImage);
+                                            const problem = quantityProblem(i);
+                                            return (
+                                                <li key={i.listId} className="flex flex-wrap items-center gap-4 p-4">
+                                                    {image ? (
+                                                        <img src={image} alt={i.productName} className="h-16 w-16 rounded-xl border border-gray-100 object-cover" />
+                                                    ) : (
+                                                        <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-green-50 text-lg font-semibold text-green-700">
+                                                            {(i.productName ?? "?").charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="min-w-[8rem] flex-1">
+                                                        <Link to={`/product/${i.listId}`} className="font-medium text-gray-800 hover:text-green-700">
+                                                            {i.productName}
+                                                        </Link>
+                                                        <p className="text-xs text-gray-500">LKR {i.pricePerUnit} / {i.unitOfMeasurement}</p>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            aria-label={`Quantity of ${i.productName}`}
+                                                            min={i.minimumOrderQuantity ?? 1}
+                                                            max={i.availableStock}
+                                                            value={i.quantity}
+                                                            onChange={(e) => updateCartQuantity(i.listId, e.target.value)}
+                                                            className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-600"
+                                                        />
+                                                        <span className="text-sm text-gray-500">{i.unitOfMeasurement}</span>
+                                                    </div>
+
+                                                    <div className="w-32 text-right">
+                                                        <p className="text-xs text-gray-400">{Number(i.quantity) || 0} {i.unitOfMeasurement} × LKR {i.pricePerUnit}</p>
+                                                        <p className="text-sm font-semibold text-gray-800">LKR {money(lineTotal(i))}</p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeFromCart(i.listId)}
+                                                        aria-label={`Remove ${i.productName}`}
+                                                        className="flex items-center gap-1 text-sm text-red-600 hover:underline"
+                                                    >
+                                                        <Trash2 size={14} /> Remove
+                                                    </button>
+
+                                                    {problem && <p role="alert" className="basis-full text-xs text-red-600">{problem}</p>}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </section>
+                            ))}
+                        </div>
+
+                        {/* summary */}
+                        <div className="mt-6 rounded-2xl border border-gray-100 p-5">
+                            {(groups.length > 1 || hasUnknownSeller) && (
+                                <p className="mb-3 text-sm text-gray-500">
+                                    {hasUnknownSeller
+                                        ? "Items from different sellers are placed as separate orders (one order for each seller)."
+                                        : `Your cart has items from ${groups.length} sellers, so ${groups.length} separate orders will be placed (one for each seller).`}
+                                </p>
+                            )}
+
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-500">{items.length} item{items.length > 1 ? "s" : ""} in your cart</p>
+                                <p className="text-lg font-bold text-gray-800">Total: LKR {money(total)}</p>
+                            </div>
+
+                            <div className="mt-4 flex gap-3">
+                                <Link
+                                    to="/products"
+                                    className="flex-1 rounded-xl border-2 border-green-600 text-green-700 hover:bg-green-50 font-semibold py-3 text-sm text-center"
+                                >
+                                    Buy more
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCheckout(true)}
+                                    disabled={hasProblem}
+                                    className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Buy now
+                                </button>
+                            </div>
+                            {hasProblem && <p className="mt-2 text-xs text-red-600">Fix the quantities marked in red to continue.</p>}
                         </div>
                     </>
                 )}

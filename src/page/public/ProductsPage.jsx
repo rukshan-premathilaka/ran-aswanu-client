@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Menu, Search, User, X } from "lucide-react";
+import { ChevronLeft, Menu, Search, ShoppingCart, User, X } from "lucide-react";
 import { useProducts } from "@/api/fetchProducts.js";
 import ProductTile from "@/component/ProductTile.jsx";
 import ProductDetailView from "@/component/ProductDetailView.jsx";
 import logoImg from "@/assets/farmerImg/logo.png";
+import { cartCount, onCartChange } from "@/utils/cart.js";
 
 // Sidebar menu. Change the paths here if your routes are named differently.
 const MENU_ITEMS = [
@@ -90,6 +91,9 @@ export function ProductsPage({ onBack } = {}) {
     const [search, setSearch] = useState(searchParams.get("keyword") ?? ""); // /products?keyword=tomato from the Navbar search
     const [sort, setSort] = useState("all");
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    // number of different items in the cart, updates live
+    const [cartItems, setCartItems] = useState(cartCount());
+    useEffect(() => onCartChange(() => setCartItems(cartCount())), []);
     const [selected, setSelected] = useState(null); // product whose detail page is open
 
     // Close the small-screen sidebar with Escape
@@ -154,13 +158,29 @@ export function ProductsPage({ onBack } = {}) {
                         ))}
                     </nav>
 
-                    <Link
-                        to="/login"
-                        aria-label="Account"
-                        className="ml-auto w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
-                    >
-                        <User className="w-5 h-5" />
-                    </Link>
+                    <div className="ml-auto flex items-center gap-3">
+                        {/* Cart: opens the cart page, shows how many items are in it */}
+                        <Link
+                            to="/cart"
+                            aria-label={`Cart, ${cartItems} item${cartItems === 1 ? "" : "s"}`}
+                            className="relative w-10 h-10 rounded-full bg-white border border-stone-200 text-stone-700 flex items-center justify-center hover:text-green-700 hover:border-green-600 transition-colors"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            {cartItems > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                                    {cartItems > 99 ? "99+" : cartItems}
+                                </span>
+                            )}
+                        </Link>
+
+                        <Link
+                            to="/login"
+                            aria-label="Account"
+                            className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
+                        >
+                            <User className="w-5 h-5" />
+                        </Link>
+                    </div>
                 </header>
 
                 {/* Product grid */}

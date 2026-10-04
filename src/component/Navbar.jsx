@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { Search, User, ShoppingCart } from 'lucide-react';
+import { Search, ShoppingCart } from 'lucide-react';
+import ProfileMenu from '@/component/ProfileMenu.jsx';
+import { cartCount, onCartChange } from '@/utils/cart.js';
 
 function Navbar() {
+    const navigate = useNavigate();
+    // number of different items in the cart (3 items added -> 3), updates live
+    const [count, setCount] = useState(cartCount());
+    useEffect(() => onCartChange(() => setCount(cartCount())), []);
+
     return (
         <nav className="w-full h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 md:px-12 sticky top-0 left-0 z-50">
 
@@ -36,17 +44,21 @@ function Navbar() {
             <div className="flex items-center gap-3">
 
                 {/* 🛒 Cart Button  */}
-                <button className="p-2 text-gray-600 hover:text-[#54B435] hover:bg-gray-50 rounded-xl transition-all relative">
+                <button
+                    onClick={() => navigate('/cart')}
+                    aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
+                    className="p-2 text-gray-600 hover:text-[#54B435] hover:bg-gray-50 rounded-xl transition-all relative"
+                >
                     <ShoppingCart size={22} />
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        0
-                    </span>
+                    {count > 0 && (
+                        <span className="absolute top-0 right-0 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {count > 99 ? '99+' : count}
+                        </span>
+                    )}
                 </button>
 
-                {/* 👤 User Profile Icon */}
-                <button className="flex items-center justify-center p-2 rounded-xl bg-gray-50 text-gray-600 hover:text-[#54B435] hover:bg-green-50 border border-gray-100 transition-all shadow-sm">
-                    <User size={20} />
-                </button>
+                {/* 👤 User Profile Icon: opens a popup with the profile and a Logout button */}
+                <ProfileMenu />
 
             </div>
         </nav>

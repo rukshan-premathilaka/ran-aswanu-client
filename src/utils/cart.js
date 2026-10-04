@@ -1,5 +1,6 @@
 // The cart lives in the browser (team decision D2): localStorage + a small change event.
-// Item shape: { listId, productName, pricePerUnit, unitOfMeasurement, minimumOrderQuantity, availableStock, quantity }
+// Item shape: { listId, productName, pricePerUnit, unitOfMeasurement, minimumOrderQuantity, availableStock, quantity,
+//               farmerId, farmerName, productImage }   (farmer + image are used to group the cart by seller)
 const CART_KEY = "ran_aswanu_cart";
 const CART_EVENT = "cart:changed";
 
@@ -27,6 +28,10 @@ export function addToCart(product, quantity) {
     const existing = items.find((i) => i.listId === product.listId);
     if (existing) {
         existing.quantity = Number(existing.quantity) + qty;
+        // items added before the cart knew the farmer get it now
+        existing.farmerId = existing.farmerId ?? product.farmerId;
+        existing.farmerName = existing.farmerName ?? product.farmerName;
+        existing.productImage = existing.productImage ?? product.productImage;
     } else {
         items.push({
             listId: product.listId,
@@ -36,6 +41,9 @@ export function addToCart(product, quantity) {
             minimumOrderQuantity: product.minimumOrderQuantity,
             availableStock: product.availableStock,
             quantity: qty,
+            farmerId: product.farmerId,
+            farmerName: product.farmerName,
+            productImage: product.productImage,
         });
     }
     saveCart(items);

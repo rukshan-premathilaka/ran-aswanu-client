@@ -9,6 +9,7 @@ import ReviewsList from "@/component/ReviewsList.jsx";
 import RelatedProducts from "@/component/RelatedProducts.jsx";
 import MessageBox from "@/component/MessageBox.jsx";
 import CheckoutModal from "@/component/CheckoutModal.jsx";
+import ReviewForm from "@/component/ReviewForm.jsx";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/apiError.js";
@@ -143,6 +144,16 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
         }
     };
 
+    // After a new review is saved, load the seller's reviews again
+    const refreshReviews = async () => {
+        try {
+            setReviewData(await api.call(ENDPOINTS.RATINGS.LIST_FOR_USER(product.farmerId)));
+            setReviewsNote("");
+        } catch {
+            /* keep the list that is already on screen */
+        }
+    };
+
     if (isLoading && !product) {
         return (
             <div className="w-full min-h-screen bg-white">
@@ -254,6 +265,11 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
                 ) : (
                     <ReviewsList reviews={reviews} />
                 )}
+
+                {/* rate the seller: stars + comment (below the reviews) */}
+                <div className="mt-8">
+                    <ReviewForm farmerId={product.farmerId} onSubmitted={refreshReviews} />
+                </div>
             </div>
 
             {/* related products */}
