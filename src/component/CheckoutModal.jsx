@@ -37,7 +37,7 @@ export default function CheckoutModal({ items, onClose, onSuccess }) {
     const [fieldErrors, setFieldErrors] = useState({});
     const [formError, setFormError] = useState("");
     const [isSaving, setIsSaving] = useState(false);
-    const [placedCount, setPlacedCount] = useState(null);
+    const [placedOrders, setPlacedOrders] = useState(null); // set after a successful order
 
     const setValue = (key) => (e) => setForm({ ...form, [key]: e.target.value });
     const total = items.reduce((sum, i) => sum + Number(i.pricePerUnit) * Number(i.quantity), 0);
@@ -69,7 +69,7 @@ export default function CheckoutModal({ items, onClose, onSuccess }) {
                 notes: form.notes || undefined,
             });
             const orders = Array.isArray(result?.orders) ? result.orders : [];
-            setPlacedCount(orders.length || 1);
+            setPlacedOrders(orders);
             onSuccess?.(orders);
         } catch (error) {
             const err = getApiError(error);
@@ -99,12 +99,18 @@ export default function CheckoutModal({ items, onClose, onSuccess }) {
                     <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
-                {placedCount !== null ? (
+                {placedOrders !== null ? (
                     <div className="space-y-4">
-                        <MessageBox
-                            type="success"
-                            text={`Order placed! ${placedCount} ${placedCount === 1 ? "order was" : "orders were"} created (one per farmer).`}
-                        />
+                        <MessageBox type="success" text="Order placed successfully!" />
+                        <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100 text-sm">
+                            {placedOrders.map((o) => (
+                                <li key={o.orderId} className="flex justify-between gap-3 px-3 py-2">
+                                    <span className="text-gray-700">Order #{o.orderId}{o.farmerName ? ` · ${o.farmerName}` : ""}</span>
+                                    <span className="font-medium text-gray-900 whitespace-nowrap">LKR {Number(o.totalAmount).toFixed(2)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="text-sm text-gray-500">The seller has been notified and will confirm your order soon.</p>
                         <button
                             onClick={onClose}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl py-3 text-sm"
