@@ -30,6 +30,7 @@ function BuyerProfilePage() {
     // Orders State
     const [myOrders, setMyOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+    const [ordersError, setOrdersError] = useState("");
 
     // UI States
     const [activeTab, setActiveTab] = useState("details");
@@ -64,19 +65,22 @@ function BuyerProfilePage() {
         }
     };
 
-    // Load Orders from Backend
+    // Load Orders from Backend (F3 Fixed: Real Error Handling)
     const fetchOrders = async () => {
         setIsLoadingOrders(true);
+        setOrdersError("");
         try {
             const data = await api.request('GET', '/buyer/orders');
-            if (Array.isArray(data)) {
-                setMyOrders(data);
-            } else {
-                setMyOrders([]);
-            }
+            setMyOrders(Array.isArray(data) ? data : []);
         } catch (error) {
-            // Keep empty list on error so the page does not break
+            console.error("Failed to load buyer orders:", error);
+            const status = error.response?.status;
             setMyOrders([]);
+            setOrdersError(
+                status === 401 ? "Your session has expired. Please log in again."
+                    : status === 403 ? "You don't have permission to view these orders."
+                        : "Could not load order history from database."
+            );
         } finally {
             setIsLoadingOrders(false);
         }
@@ -228,11 +232,13 @@ function BuyerProfilePage() {
         );
     }
 
+    const ordersCountLabel = ordersError ? "—" : myOrders.length;
+
     return (
         <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 font-sans">
             <div className="max-w-6xl mx-auto">
 
-                {/* Top Bar with Title and Logout Button */}
+                {/* Top Bar with Title, Home Button and Logout Button */}
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Buyer Profile</h1>
@@ -241,13 +247,25 @@ function BuyerProfilePage() {
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-semibold px-5 py-2 rounded-xl text-sm transition cursor-pointer self-start sm:self-auto"
-                    >
-                        Logout
-                    </button>
+                    <div className="flex items-center gap-3 self-start sm:self-auto">
+                        {/* Go to Home Button */}
+                        <button
+                            type="button"
+                            onClick={() => navigate('/home')}
+                            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-semibold px-4 py-2 rounded-xl text-sm transition cursor-pointer shadow-sm"
+                        >
+                            Home
+                        </button>
+
+                        {/* Logout Button */}
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-semibold px-5 py-2 rounded-xl text-sm transition cursor-pointer"
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </div>
 
                 {/* Top Summary Card */}
@@ -290,7 +308,7 @@ function BuyerProfilePage() {
                     <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
                         <div className="bg-gray-50 border border-gray-100 px-5 py-3 rounded-xl text-center">
                             <span className="text-xs text-gray-400 font-bold block uppercase tracking-wider">Purchases</span>
-                            <span className="text-lg font-bold text-gray-900">{myOrders.length}</span>
+                            <span className="text-lg font-bold text-gray-900">{ordersCountLabel}</span>
                         </div>
                         <div className="bg-gray-50 border border-gray-100 px-5 py-3 rounded-xl text-center">
                             <span className="text-xs text-gray-400 font-bold block uppercase tracking-wider">Status</span>
@@ -321,7 +339,7 @@ function BuyerProfilePage() {
                                 : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
                         }`}
                     >
-                        Order History ({myOrders.length})
+                        Order History ({ordersCountLabel})
                     </button>
                 </div>
 
@@ -515,11 +533,22 @@ function BuyerProfilePage() {
                 {activeTab === "orders" && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                         <h3 className="text-base font-bold text-gray-800 mb-4 border-b border-gray-100 pb-3">
-                            My Orders ({myOrders.length})
+                            My Orders ({ordersCountLabel})
                         </h3>
 
                         {isLoadingOrders ? (
                             <p className="text-sm text-gray-500 py-6 text-center">Loading orders...</p>
+                        ) : ordersError ? (
+                            <div className="py-8 text-center flex flex-col items-center">
+                                <p className="text-sm text-red-600 mb-3">{ordersError}</p>
+                                <button
+                                    type="button"
+                                    onClick={fetchOrders}
+                                    className="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl transition cursor-pointer shadow-sm"
+                                >
+                                    Retry
+                                </button>
+                            </div>
                         ) : myOrders.length === 0 ? (
                             <p className="text-sm text-gray-500 py-6 text-center">No orders recorded yet.</p>
                         ) : (

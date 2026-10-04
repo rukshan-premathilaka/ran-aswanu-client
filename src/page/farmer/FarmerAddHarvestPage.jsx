@@ -4,7 +4,7 @@ import ApiService from '@/api/ApiService.js';
 const api = new ApiService();
 
 function FarmerAddHarvestPage() {
-    // Form States matching Backend DTO keys exactly
+    // Form States
     const [productName, setProductName] = useState("");
     const [category, setCategory] = useState("Vegetables");
     const [unitOfMeasurement, setUnitOfMeasurement] = useState("kg");
@@ -24,7 +24,6 @@ function FarmerAddHarvestPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    // Handle Image Selection
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -38,7 +37,6 @@ function FarmerAddHarvestPage() {
         }
     };
 
-    // Submit Handler: 2-Step Real Backend Upload
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -56,12 +54,10 @@ function FarmerAddHarvestPage() {
 
         setIsSubmitting(true);
 
-        // Convert user date to Full ISO Date-Time String (Instant field in Backend)
         const formattedDate = harvestedDate
             ? new Date(harvestedDate).toISOString()
             : new Date().toISOString();
 
-        // Step 1: Create Product Listing in Database
         const payload = {
             productName: productName.trim(),
             category: category,
@@ -78,6 +74,8 @@ function FarmerAddHarvestPage() {
             const createdProduct = await api.request('POST', '/farmer/products', payload);
             const listId = createdProduct?.listId || createdProduct?.id;
 
+            let imageFailed = false;
+
             // Step 2: Upload Product Image if selected
             if (selectedFile && listId) {
                 const formData = new FormData();
@@ -88,10 +86,16 @@ function FarmerAddHarvestPage() {
                     });
                 } catch (imgErr) {
                     console.warn("Product image upload failed:", imgErr);
+                    imageFailed = true;
                 }
             }
 
-            setSuccessMessage("Harvest product successfully saved to Database!");
+            // F10 Fixed: Accurately reflect image upload status
+            if (imageFailed) {
+                setSuccessMessage("Product details saved, but the image upload failed. Please edit the product to attach the image.");
+            } else {
+                setSuccessMessage("Harvest product successfully saved to Database!");
+            }
 
             // Form Reset
             setProductName("");
@@ -164,7 +168,6 @@ function FarmerAddHarvestPage() {
                 <div className="w-full lg:w-2/3 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                        {/* Product Name */}
                         <div className="md:col-span-2">
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Product Name</label>
                             <input
@@ -177,7 +180,6 @@ function FarmerAddHarvestPage() {
                             />
                         </div>
 
-                        {/* Category */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Category</label>
                             <select
@@ -193,7 +195,6 @@ function FarmerAddHarvestPage() {
                             </select>
                         </div>
 
-                        {/* Unit of Measurement */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Unit of Measurement</label>
                             <select
@@ -208,7 +209,6 @@ function FarmerAddHarvestPage() {
                             </select>
                         </div>
 
-                        {/* Total Available Stock */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Available Stock ({unitOfMeasurement})</label>
                             <input
@@ -222,7 +222,6 @@ function FarmerAddHarvestPage() {
                             />
                         </div>
 
-                        {/* Price per Unit */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Price per 1 {unitOfMeasurement} (LKR)</label>
                             <input
@@ -236,7 +235,6 @@ function FarmerAddHarvestPage() {
                             />
                         </div>
 
-                        {/* Minimum Order Quantity */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Min Order Quantity ({unitOfMeasurement})</label>
                             <input
@@ -250,7 +248,6 @@ function FarmerAddHarvestPage() {
                             />
                         </div>
 
-                        {/* Harvest Date */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Harvest Date</label>
                             <input
@@ -262,7 +259,6 @@ function FarmerAddHarvestPage() {
                             />
                         </div>
 
-                        {/* Delivery Option */}
                         <div className="md:col-span-2">
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Delivery Option</label>
                             <select
@@ -276,7 +272,6 @@ function FarmerAddHarvestPage() {
                             </select>
                         </div>
 
-                        {/* Description */}
                         <div className="md:col-span-2">
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Product Description</label>
                             <textarea

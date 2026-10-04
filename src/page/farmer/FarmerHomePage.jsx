@@ -5,119 +5,80 @@ import ApiService from '@/api/ApiService.js';
 const api = new ApiService();
 
 function FarmerHomePage() {
-    // 1. Dashboard Metrics from Real Database
-    const [plotsCount, setPlotsCount] = useState(0);
-    const [productsCount, setProductsCount] = useState(0);
-    const [totalExpenses, setTotalExpenses] = useState(0);
+    // 1. Dashboard Metrics
+    const [metrics, setMetrics] = useState({ plots: null, products: null, expenses: null });
     const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
-    // 2. Daily Farm Tasks (Activities)
+    // 2. Daily Farm Tasks
     const [tasks, setTasks] = useState([]);
     const [newTaskInput, setNewTaskInput] = useState("");
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
+    const [tasksError, setTasksError] = useState("");
 
-    // 3. Customer Orders & Delivery Status
+    // 3. Customer Orders
     const [customerOrders, setCustomerOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+    const [ordersError, setOrdersError] = useState("");
     const [updatingOrderId, setUpdatingOrderId] = useState(null);
-    const [actionMessage, setActionMessage] = useState("");
+    const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
 
-    // 1. Load Live Metrics (Crops, Products, & Expenses) from Database
+    // 1. Load Live Metrics (Crops, Products, & Expenses)
     const loadDashboardMetrics = async () => {
         setIsLoadingMetrics(true);
+        const [cropsRes, productsRes, expensesRes] = await Promise.allSettled([
+            api.request('GET', '/farmer/crops'),
+            api.request('GET', '/farmer/products'),
+            api.request('GET', '/farmer/expenses'),
+        ]);
 
-        try {
-            const cropsData = await api.request('GET', '/farmer/crops');
-            if (Array.isArray(cropsData)) {
-                setPlotsCount(cropsData.length);
-            }
-        } catch {
-            setPlotsCount(0);
-        }
+        const extractList = (res) => {
+            if (res.status !== 'fulfilled') return null;
+            const data = res.value;
+            if (Array.isArray(data)) return data;
+            if (data && Array.isArray(data.content)) return data.content;
+            return null;
+        };
 
-        try {
-            const productsData = await api.request('GET', '/farmer/products');
-            if (Array.isArray(productsData)) {
-                setProductsCount(productsData.length);
-            } else if (productsData && Array.isArray(productsData.content)) {
-                setProductsCount(productsData.content.length);
-            }
-        } catch {
-            setProductsCount(0);
-        }
+        const cropsList = extractList(cropsRes);
+        const productsList = extractList(productsRes);
+        const expensesList = extractList(expensesRes);
 
-        try {
-            const expensesData = await api.request('GET', '/farmer/expenses');
-            if (Array.isArray(expensesData)) {
-                const totalSum = expensesData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-                setTotalExpenses(totalSum);
-            } else {
-                setTotalExpenses(0);
-            }
-        } catch {
-            setTotalExpenses(0);
-        }
+        setMetrics({
+            plots: cropsList ? cropsList.length : null,
+            products: productsList ? productsList.length : null,
+            expenses: expensesList ? expensesList.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) : null
+        });
 
         setIsLoadingMetrics(false);
     };
 
-    // 2. Load Daily Farm Tasks
+    // 2. Load Daily Farm Tasks (F7 Fixed: No fake local fallback)
     const loadTasks = async () => {
         setIsLoadingTasks(true);
+        setTasksError("");
         try {
             const data = await api.request('GET', '/farmer/activities');
-            if (Array.isArray(data)) {
-                setTasks(data);
-            } else {
-                setTasks([]);
-            }
-        } catch {
-            const savedTasks = localStorage.getItem('farmer_local_activities');
-            if (savedTasks) {
-                setTasks(JSON.parse(savedTasks));
-            } else {
-                setTasks([
-                    { activityId: 1, activity: "Apply organic fertilizer to Carrot plot", activityStatus: false },
-                    { activityId: 2, activity: "Inspect soil moisture index in Plot A", activityStatus: true }
-                ]);
-            }
+            setTasks(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Failed to load tasks:", err);
+            setTasks([]);
+            setTasksError("Could not load tasks from database.");
         } finally {
             setIsLoadingTasks(false);
         }
     };
 
-    // 3. Load Customer Orders directly from Database (GET /api/farmer/orders)
+    // 3. Load Customer Orders (F1 Fixed: No fake Kamal/Sunil fallback)
     const loadOrders = async () => {
         setIsLoadingOrders(true);
+        setOrdersError("");
         try {
             const data = await api.request('GET', '/farmer/orders');
-            if (Array.isArray(data)) {
-                setCustomerOrders(data);
-            } else {
-                setCustomerOrders([]);
-            }
+            setCustomerOrders(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.warn("Farmer orders endpoint error, using demo orders:", err);
-            setCustomerOrders([
-                {
-                    orderId: 101,
-                    buyerName: "Kamal Perera",
-                    firstItemName: "Organic Carrots",
-                    totalAmount: 1800,
-                    orderStatus: "PENDING",
-                    paymentMethod: "CASH_ON_DELIVERY",
-                    deliveryAddress: "No 12, Kandy Road, Peradeniya"
-                },
-                {
-                    orderId: 102,
-                    buyerName: "Sunil Shantha",
-                    firstItemName: "Keeri Samba Rice",
-                    totalAmount: 5750,
-                    orderStatus: "SHIPPED",
-                    paymentMethod: "CASH_ON_DELIVERY",
-                    deliveryAddress: "No 45, Temple Road, Badulla"
-                }
-            ]);
+            console.error("Failed to load farmer orders:", err);
+            setCustomerOrders([]);
+            setOrdersError("Could not load customer orders from database.");
         } finally {
             setIsLoadingOrders(false);
         }
@@ -129,53 +90,70 @@ function FarmerHomePage() {
         loadOrders();
     }, []);
 
-    // 4. Update Order / Delivery Status (PATCH /api/farmer/orders/{orderId}/status)
+    // 4. Update Order Status (F2 Fixed: No fake local status update)
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         setUpdatingOrderId(orderId);
-        setActionMessage("");
+        setActionMessage({ type: "", text: "" });
 
         try {
             await api.request('PATCH', `/farmer/orders/${orderId}/status`, { status: newStatus });
-            setActionMessage(`Order #${orderId} marked as ${newStatus}!`);
+            setActionMessage({ type: "success", text: `Order #${orderId} marked as ${newStatus}!` });
             await loadOrders();
         } catch (err) {
             console.error("Failed to update order status:", err);
-            // Local state fallback update for smooth UX
-            setCustomerOrders(prev => prev.map(o => (o.orderId === orderId ? { ...o, orderStatus: newStatus } : o)));
-            setActionMessage(`Order #${orderId} status updated locally to ${newStatus}`);
+            const serverMsg = err.response?.data?.message || err.response?.data?.error || "Please check backend connection.";
+            setActionMessage({ type: "error", text: `Failed to update order #${orderId}. ${serverMsg}` });
         } finally {
             setUpdatingOrderId(null);
         }
     };
 
-    // Task Actions
+    // Task Actions (F7 Fixed)
     const handleAddTask = async () => {
         if (!newTaskInput.trim()) return;
+        setTasksError("");
         const payload = { activity: newTaskInput.trim() };
         try {
             const saved = await api.request('POST', '/farmer/activities', payload);
-            if (saved && saved.activityId) setTasks([...tasks, saved]);
-        } catch {
-            const localItem = { activityId: Date.now(), activity: newTaskInput.trim(), activityStatus: false };
-            setTasks([...tasks, localItem]);
+            if (saved && saved.activityId) {
+                setTasks(prev => [...prev, saved]);
+            } else {
+                await loadTasks();
+            }
+            setNewTaskInput("");
+        } catch (err) {
+            console.error("Failed to add task:", err);
+            setTasksError("Failed to add task. Please try again.");
         }
-        setNewTaskInput("");
     };
 
     const handleDeleteTask = async (activityId, e) => {
         e.stopPropagation();
+        setTasksError("");
         try {
             await api.request('DELETE', `/farmer/activities/${activityId}`);
-        } catch {}
-        setTasks(tasks.filter(t => t.activityId !== activityId));
+            setTasks(prev => prev.filter(t => t.activityId !== activityId));
+        } catch (err) {
+            console.error("Failed to delete task:", err);
+            setTasksError("Failed to delete task from database.");
+        }
     };
 
     const handleToggleTask = async (activityId, currentStatus) => {
         const newStatus = !currentStatus;
+        setTasksError("");
         try {
             await api.request('PATCH', `/farmer/activities/${activityId}/status`, { done: newStatus });
-        } catch {}
-        setTasks(tasks.map(t => t.activityId === activityId ? { ...t, activityStatus: newStatus } : t));
+            setTasks(prev => prev.map(t => t.activityId === activityId ? { ...t, activityStatus: newStatus } : t));
+        } catch (err) {
+            console.error("Failed to update task status:", err);
+            setTasksError("Failed to update task status.");
+        }
+    };
+
+    const formatMetric = (val, suffix = "") => {
+        if (val === null) return "—";
+        return `${val.toLocaleString()} ${suffix}`;
     };
 
     return (
@@ -183,12 +161,12 @@ function FarmerHomePage() {
             {/* Top Bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome Back</h1>
                     <p className="text-sm text-gray-500 mt-1">Live monitoring, orders tracking, and central farm analytics.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => { loadDashboardMetrics(); loadOrders(); }}
+                        onClick={() => { loadDashboardMetrics(); loadOrders(); loadTasks(); }}
                         className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-all cursor-pointer"
                     >
                         Sync Dashboard
@@ -203,37 +181,36 @@ function FarmerHomePage() {
             </div>
 
             {/* Notification alert for Order action */}
-            {actionMessage && (
-                <div className="mb-6 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm font-semibold">
-                    {actionMessage}
+            {actionMessage.text && (
+                <div className={`mb-6 p-3 rounded-xl text-sm font-semibold border ${
+                    actionMessage.type === "success"
+                        ? "bg-green-50 border-green-200 text-green-700"
+                        : "bg-red-50 border-red-200 text-red-700"
+                }`}>
+                    {actionMessage.text}
                 </div>
             )}
 
-            {/* Metrics Overview Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+            {/* Metrics Overview Cards (Total Revenue අයින් කර කාඩ්පත් 3 ක් ලෙස සකසා ඇත) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Plots</p>
-                    <h3 className="text-3xl font-bold text-gray-800 mt-1">
-                        {isLoadingMetrics ? "..." : `${plotsCount} Fields`}
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
+                        {isLoadingMetrics ? "..." : formatMetric(metrics.plots, "Fields")}
                     </h3>
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Market Products</p>
-                    <h3 className="text-3xl font-bold text-gray-800 mt-1">
-                        {isLoadingMetrics ? "..." : `${productsCount} Items`}
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
+                        {isLoadingMetrics ? "..." : formatMetric(metrics.products, "Items")}
                     </h3>
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Revenue</p>
-                    <h3 className="text-3xl font-bold text-green-700 mt-1">LKR 45,200</h3>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Expenses</p>
-                    <h3 className="text-3xl font-bold text-red-600 mt-1">
-                        {isLoadingMetrics ? "..." : `LKR ${totalExpenses.toLocaleString()}`}
+                    <h3 className="text-2xl sm:text-3xl font-bold text-red-600 mt-1">
+                        {isLoadingMetrics ? "..." : (metrics.expenses !== null ? `LKR ${metrics.expenses.toLocaleString()}` : "—")}
                     </h3>
                 </div>
             </div>
@@ -250,11 +227,17 @@ function FarmerHomePage() {
                         </span>
                     </div>
 
+                    {tasksError && (
+                        <div className="mb-3 text-xs font-semibold text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                            {tasksError}
+                        </div>
+                    )}
+
                     <div className="space-y-2 flex-1 overflow-y-auto pr-1">
                         {isLoadingTasks ? (
                             <div className="text-center py-12 text-gray-400 text-sm">Loading tasks...</div>
                         ) : tasks.length === 0 ? (
-                            <div className="text-center py-12 text-gray-400 text-sm">No tasks added yet. Add a task below.</div>
+                            <div className="text-center py-12 text-gray-400 text-sm">No tasks recorded in database.</div>
                         ) : (
                             tasks.map((item) => (
                                 <div
@@ -304,7 +287,7 @@ function FarmerHomePage() {
                     </div>
                 </div>
 
-                {/* 2. Customer Orders & Delivery/Payment Tracker */}
+                {/* 2. Customer Orders */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[520px]">
                     <div className="flex justify-between items-center mb-4">
                         <div>
@@ -321,6 +304,16 @@ function FarmerHomePage() {
 
                     {isLoadingOrders ? (
                         <div className="text-center py-12 text-gray-400 text-sm">Loading orders from database...</div>
+                    ) : ordersError ? (
+                        <div className="text-center py-12 flex flex-col items-center">
+                            <p className="text-sm text-red-600 mb-3">{ordersError}</p>
+                            <button
+                                onClick={loadOrders}
+                                className="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg cursor-pointer"
+                            >
+                                Retry
+                            </button>
+                        </div>
                     ) : customerOrders.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 text-sm">No incoming customer orders found.</div>
                     ) : (
@@ -346,7 +339,7 @@ function FarmerHomePage() {
                                                     Item: <span className="font-semibold text-gray-800">{order.firstItemName || order.item || "Farm Produce"}</span>
                                                 </p>
                                                 <p className="text-xs text-gray-400 mt-0.5">
-                                                    Address: {order.deliveryAddress || "Farm Pickup / Local Delivery"}
+                                                    Address: {order.deliveryAddress || "Not provided"}
                                                 </p>
                                             </div>
 
@@ -355,43 +348,42 @@ function FarmerHomePage() {
                                                     LKR {Number(order.totalAmount || 0).toLocaleString()}
                                                 </span>
                                                 <span className="text-[10px] font-medium text-gray-500 block mt-0.5">
-                                                    Payment: {order.paymentMethod === 'CASH_ON_DELIVERY' ? 'Cash on Delivery (COD)' : (order.paymentMethod || 'COD')}
+                                                    Payment: {order.paymentMethod === 'CASH_ON_DELIVERY' ? 'Cash on Delivery (COD)' : (order.paymentMethod || 'Unknown')}
+                                                    {order.paymentStatus ? ` · ${order.paymentStatus}` : ''}
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* Status Badge & Action Controls */}
                                         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200/60">
-                                            {/* Status Badge */}
                                             <div>
                                                 {status === 'PENDING' && (
                                                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-100 text-yellow-800">
-                                                        ⏳ Pending Farmer Acceptance
+                                                        Pending Farmer Acceptance
                                                     </span>
                                                 )}
                                                 {status === 'ACCEPTED' && (
                                                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800">
-                                                        🚜 Accepted (Preparing Harvest)
+                                                        Accepted (Preparing Harvest)
                                                     </span>
                                                 )}
                                                 {status === 'SHIPPED' && (
                                                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800">
-                                                        🚚 Handed to Delivery Boy
+                                                        Handed to Delivery
                                                     </span>
                                                 )}
                                                 {status === 'COMPLETED' && (
                                                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-green-100 text-green-800">
-                                                        ✅ Delivered & Cash Paid
+                                                        Delivered & Paid
                                                     </span>
                                                 )}
                                                 {status === 'REJECTED' && (
                                                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-100 text-red-700">
-                                                        ❌ Order Cancelled / Rejected
+                                                        Order Cancelled / Rejected
                                                     </span>
                                                 )}
                                             </div>
 
-                                            {/* Step-by-Step Action Buttons */}
                                             <div className="flex items-center gap-1.5">
                                                 {status === 'PENDING' && (
                                                     <>
@@ -399,7 +391,7 @@ function FarmerHomePage() {
                                                             type="button"
                                                             disabled={isBusy}
                                                             onClick={() => handleUpdateOrderStatus(orderId, 'ACCEPTED')}
-                                                            className="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                                                            className="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
                                                         >
                                                             Accept Order
                                                         </button>
@@ -407,7 +399,7 @@ function FarmerHomePage() {
                                                             type="button"
                                                             disabled={isBusy}
                                                             onClick={() => handleUpdateOrderStatus(orderId, 'REJECTED')}
-                                                            className="text-xs font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
+                                                            className="text-xs font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
                                                         >
                                                             Reject
                                                         </button>
@@ -419,8 +411,7 @@ function FarmerHomePage() {
                                                         type="button"
                                                         disabled={isBusy}
                                                         onClick={() => handleUpdateOrderStatus(orderId, 'SHIPPED')}
-                                                        className="text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-                                                        title="Mark that the produce is given to delivery person"
+                                                        className="text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
                                                     >
                                                         Hand over to Delivery
                                                     </button>
@@ -431,8 +422,7 @@ function FarmerHomePage() {
                                                         type="button"
                                                         disabled={isBusy}
                                                         onClick={() => handleUpdateOrderStatus(orderId, 'COMPLETED')}
-                                                        className="text-xs font-bold bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-                                                        title="Confirm that delivery is done and cash collected"
+                                                        className="text-xs font-bold bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
                                                     >
                                                         Mark Delivered & Paid
                                                     </button>
@@ -440,7 +430,7 @@ function FarmerHomePage() {
 
                                                 {status === 'COMPLETED' && (
                                                     <span className="text-xs font-bold text-green-700">
-                                                        Payment Settled 💰
+                                                        Payment Settled
                                                     </span>
                                                 )}
                                             </div>

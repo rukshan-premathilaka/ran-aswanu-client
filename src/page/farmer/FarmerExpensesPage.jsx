@@ -24,7 +24,7 @@ function FarmerExpensesPage() {
     const [editExpenseDate, setEditExpenseDate] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // 1. Load all expenses from Database (GET /api/farmer/expenses)
+    // 1. Load all expenses from Database
     const loadExpenses = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -48,7 +48,7 @@ function FarmerExpensesPage() {
         loadExpenses();
     }, []);
 
-    // 2. Add New Expense (POST /api/farmer/expenses)
+    // 2. Add New Expense
     const handleAddExpense = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -108,7 +108,7 @@ function FarmerExpensesPage() {
         setEditingExpenseId(null);
     };
 
-    // 4. Save Edited Expense (PUT /api/farmer/expenses/{id})
+    // 4. Save Edited Expense
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -151,7 +151,7 @@ function FarmerExpensesPage() {
         }
     };
 
-    // 5. Delete Expense (DELETE /api/farmer/expenses/{id})
+    // 5. Delete Expense
     const handleDeleteExpense = async (expenseId) => {
         if (!window.confirm("Are you sure you want to delete this expense record from Database?")) {
             return;
@@ -171,23 +171,14 @@ function FarmerExpensesPage() {
         }
     };
 
-    // Total expense sum calculation
     const totalExpenseAmount = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     return (
         <div className="w-full h-full font-sans max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Farm Expenses Tracker</h1>
-                    <p className="text-sm text-gray-500 mt-1">Track financial investments, edit entries, and monitor expenses.</p>
-                </div>
-                <button
-                    onClick={loadExpenses}
-                    className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer"
-                >
-                    Refresh Records
-                </button>
+            {/* Header (Refresh button අයින් කර ඇත) */}
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">Farm Expenses Tracker</h1>
+                <p className="text-sm text-gray-500 mt-1">Track financial investments, edit entries, and monitor expenses.</p>
             </div>
 
             {/* Notification Messages */}
@@ -202,7 +193,7 @@ function FarmerExpensesPage() {
                 </div>
             )}
 
-            {/* Summary Cards (Refined to 2 balanced columns) */}
+            {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Farm Expenses</p>
@@ -315,7 +306,6 @@ function FarmerExpensesPage() {
                                         className="p-4 bg-gray-50 rounded-xl border border-gray-100"
                                     >
                                         {isEditing ? (
-                                            /* Inline Edit Form */
                                             <form onSubmit={handleSaveEdit} className="space-y-3">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <div>
@@ -389,7 +379,6 @@ function FarmerExpensesPage() {
                                                 </div>
                                             </form>
                                         ) : (
-                                            /* Normal View with Edit & Delete Buttons */
                                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                                 <div>
                                                     <div className="flex items-center gap-2">
@@ -408,7 +397,6 @@ function FarmerExpensesPage() {
                                                         - LKR {Number(item.amount || 0).toLocaleString()}
                                                     </span>
 
-                                                    {/* Edit Button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleStartEdit(item)}
@@ -417,7 +405,6 @@ function FarmerExpensesPage() {
                                                         Edit
                                                     </button>
 
-                                                    {/* Delete Button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteExpense(item.expenseId)}

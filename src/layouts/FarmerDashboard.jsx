@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logoImg from '../assets/farmerImg/logo.png';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 
 const FarmerDashboard = () => {
-    // ප්‍රධාන Navigation Items ලැයිස්තුව (Livestock සහ Expenses ඇතුළුව)
+    const navigate = useNavigate();
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    // ප්‍රධාන Navigation Items
     const navItems = [
         { path: '/farmer/home', label: 'Home' },
         { path: '/farmer/add-harvest', label: 'Add Harvest' },
@@ -15,27 +18,50 @@ const FarmerDashboard = () => {
         { path: '/farmer/weather', label: 'Weather' },
     ];
 
-    // පහළ Navigation Items (Settings & Support)
+    // පහළ Settings & Help Items
     const bottomItems = [
         { path: '/farmer/settings', label: 'Settings' },
         { path: '/farmer/help', label: 'Help & Support' },
     ];
 
+    const closeMobileSidebar = () => setIsMobileOpen(false);
+
     return (
         <div className="relative flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
-            {/* වම් පස ස්ථිර Sidebar එක */}
-            <aside className="w-64 bg-white border-r border-gray-100 flex flex-col justify-between p-6 flex-shrink-0">
-                <div>
-                    {/* Brand Logo */}
-                    <div className="flex items-center gap-3 mb-8 pl-2">
-                        <img
-                            src={logoImg}
-                            alt="Ran Aswanna Logo"
-                            className="w-8 h-8 object-contain"
-                        />
-                        <h1 className="text-2xl font-bold text-green-600 tracking-tight">
-                            Ran Aswanna
-                        </h1>
+
+            {/* Mobile Backdrop Overlay */}
+            {isMobileOpen && (
+                <div
+                    onClick={closeMobileSidebar}
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden transition-opacity"
+                />
+            )}
+
+            {/* Sidebar (Desktop ස්ථිරව, Mobile වලදී drawer එකක් ලෙස) */}
+            <aside
+                className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col justify-between p-6 flex-shrink-0 transform transition-transform duration-300 ease-in-out ${
+                    isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+                }`}
+            >
+                <div className="overflow-y-auto">
+                    {/* Brand Logo & Close Button for Mobile */}
+                    <div className="flex items-center justify-between mb-8 pl-2">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={logoImg}
+                                alt="Ran Aswanna Logo"
+                                className="w-8 h-8 object-contain"
+                            />
+                            <h1 className="text-2xl font-bold text-green-600 tracking-tight">
+                                Ran Aswanna
+                            </h1>
+                        </div>
+                        <button
+                            onClick={closeMobileSidebar}
+                            className="lg:hidden text-gray-400 hover:text-gray-700 text-xl font-bold p-1 cursor-pointer"
+                        >
+                            ✕
+                        </button>
                     </div>
 
                     {/* ප්‍රධාන මෙනු ලින්ක්ස් */}
@@ -44,6 +70,7 @@ const FarmerDashboard = () => {
                             <NavLink
                                 key={item.path}
                                 to={item.path}
+                                onClick={closeMobileSidebar}
                                 className={({ isActive }) =>
                                     `block px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                                         isActive
@@ -58,12 +85,13 @@ const FarmerDashboard = () => {
                     </nav>
                 </div>
 
-                {/* පහළ Settings සහ Help ලින්ක්ස් */}
-                <div className="space-y-1 border-t border-gray-100 pt-4">
+                {/* පහළ Settings, Help & Support සහ Buyer Profile බටනය */}
+                <div className="space-y-1.5 border-t border-gray-100 pt-4 mt-4">
                     {bottomItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
+                            onClick={closeMobileSidebar}
                             className={({ isActive }) =>
                                 `block px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                                     isActive
@@ -75,16 +103,40 @@ const FarmerDashboard = () => {
                             {item.label}
                         </NavLink>
                     ))}
+
+                    {/* Return to Buyer Profile Button */}
+                    <NavLink
+                        to="/buyer-profile"
+                        onClick={closeMobileSidebar}
+                        className="block px-4 py-2.5 rounded-xl text-sm font-semibold transition-all text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 mt-2 text-center"
+                    >
+                        Switch to Buyer Profile
+                    </NavLink>
                 </div>
             </aside>
 
-            {/* දකුණු පස පිටු පෙන්වන ප්‍රධාන කොටස */}
-            <div className="flex flex-col flex-1 h-full overflow-hidden">
-                <main className="flex-1 overflow-y-auto p-6 md:p-8">
+            {/* දකුණු පස ප්‍රධාන කොටස */}
+            <div className="flex flex-col flex-1 h-full overflow-hidden w-full">
+
+                {/* Mobile Top Header with Hamburger Button */}
+                <header className="lg:hidden bg-white border-b border-gray-100 p-4 flex items-center justify-between z-30">
+                    <div className="flex items-center gap-2">
+                        <img src={logoImg} alt="Logo" className="w-7 h-7 object-contain" />
+                        <span className="font-bold text-green-600 text-lg">Ran Aswanna</span>
+                    </div>
+                    <button
+                        onClick={() => setIsMobileOpen(true)}
+                        className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 cursor-pointer"
+                        aria-label="Open Menu"
+                    >
+                        ☰
+                    </button>
+                </header>
+
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
                     <Outlet />
                 </main>
             </div>
-
 
         </div>
     );

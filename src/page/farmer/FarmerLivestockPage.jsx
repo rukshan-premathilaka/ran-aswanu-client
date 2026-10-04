@@ -22,7 +22,7 @@ function FarmerLivestockPage() {
     const [editAmount, setEditAmount] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // 1. Load livestock from Database (GET /api/farmer/livestock)
+    // 1. Load livestock from Database
     const loadLivestock = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -46,7 +46,7 @@ function FarmerLivestockPage() {
         loadLivestock();
     }, []);
 
-    // 2. Add New Livestock (POST /api/farmer/livestock)
+    // 2. Add New Livestock
     const handleAddLivestock = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -99,7 +99,7 @@ function FarmerLivestockPage() {
         setEditingLiveStockId(null);
     };
 
-    // 4. Save Edited Livestock (PUT /api/farmer/livestock/{id})
+    // 4. Save Edited Livestock
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -137,7 +137,7 @@ function FarmerLivestockPage() {
         }
     };
 
-    // 5. Delete Livestock (DELETE /api/farmer/livestock/{id})
+    // 5. Delete Livestock
     const handleDeleteLivestock = async (id) => {
         if (!window.confirm("Are you sure you want to remove this livestock record from Database?")) {
             return;
@@ -157,23 +157,14 @@ function FarmerLivestockPage() {
         }
     };
 
-    // Total animal count calculation
     const totalAnimals = livestockList.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     return (
         <div className="w-full h-full font-sans max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Livestock Inventory</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage cattle, dairy, poultry, and animal counts on your farm.</p>
-                </div>
-                <button
-                    onClick={loadLivestock}
-                    className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer"
-                >
-                    Refresh List
-                </button>
+            {/* Header (Refresh button අයින් කර ඇත) */}
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">Livestock Inventory</h1>
+                <p className="text-sm text-gray-500 mt-1">Manage cattle, dairy, poultry, and animal counts on your farm.</p>
             </div>
 
             {/* Notification Messages */}
@@ -227,14 +218,14 @@ function FarmerLivestockPage() {
                                 onChange={(e) => setCategory(e.target.value)}
                                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-green-600 cursor-pointer"
                             >
-                                <option value="Cattle">Cattle / Cows (ගවයින්)</option>
-                                <option value="Dairy Cows">Dairy Cows (කිරි ගවයින්)</option>
-                                <option value="Poultry">Poultry / Chickens (කුකුළන්)</option>
-                                <option value="Goats">Goats (එළුවන්)</option>
-                                <option value="Pigs">Pigs (ඌරන්)</option>
-                                <option value="Sheep">Sheep (බැටළුවන්)</option>
-                                <option value="Buffaloes">Buffaloes (මී ගවයින්)</option>
-                                <option value="Beekeeping">Beekeeping Boxes (මී මැසි ජනපද)</option>
+                                <option value="Cattle">Cattle / Cows</option>
+                                <option value="Dairy Cows">Dairy Cows</option>
+                                <option value="Poultry">Poultry / Chickens</option>
+                                <option value="Goats">Goats</option>
+                                <option value="Pigs">Pigs</option>
+                                <option value="Sheep">Sheep</option>
+                                <option value="Buffaloes">Buffaloes</option>
+                                <option value="Beekeeping">Beekeeping Boxes</option>
                             </select>
                         </div>
 
@@ -273,7 +264,7 @@ function FarmerLivestockPage() {
                     </form>
                 </div>
 
-                {/* Right List: Livestock Holdings with Edit & Delete */}
+                {/* Right List: Livestock Holdings */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                         Current Livestock Holdings ({livestockList.length})
@@ -297,7 +288,6 @@ function FarmerLivestockPage() {
                                         className="p-5 bg-gray-50 rounded-xl border border-gray-100 flex flex-col justify-between"
                                     >
                                         {isEditing ? (
-                                            /* Inline Edit Form */
                                             <form onSubmit={handleSaveEdit} className="space-y-3">
                                                 <div>
                                                     <label className="text-xs font-bold text-gray-600 block mb-1">Category</label>
@@ -306,14 +296,14 @@ function FarmerLivestockPage() {
                                                         onChange={(e) => setEditCategory(e.target.value)}
                                                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
                                                     >
-                                                        <option value="Cattle">Cattle / Cows (ගවයින්)</option>
-                                                        <option value="Dairy Cows">Dairy Cows (කිරි ගවයින්)</option>
-                                                        <option value="Poultry">Poultry / Chickens (කුකුළන්)</option>
-                                                        <option value="Goats">Goats (එළුවන්)</option>
-                                                        <option value="Pigs">Pigs (ඌරන්)</option>
-                                                        <option value="Sheep">Sheep (බැටළුවන්)</option>
-                                                        <option value="Buffaloes">Buffaloes (මී ගවයින්)</option>
-                                                        <option value="Beekeeping">Beekeeping Boxes (මී මැසි ජනපද)</option>
+                                                        <option value="Cattle">Cattle / Cows</option>
+                                                        <option value="Dairy Cows">Dairy Cows</option>
+                                                        <option value="Poultry">Poultry / Chickens</option>
+                                                        <option value="Goats">Goats</option>
+                                                        <option value="Pigs">Pigs</option>
+                                                        <option value="Sheep">Sheep</option>
+                                                        <option value="Buffaloes">Buffaloes</option>
+                                                        <option value="Beekeeping">Beekeeping Boxes</option>
                                                     </select>
                                                 </div>
 
@@ -357,7 +347,6 @@ function FarmerLivestockPage() {
                                                 </div>
                                             </form>
                                         ) : (
-                                            /* Normal View with Edit & Delete Buttons */
                                             <>
                                                 <div>
                                                     <h4 className="font-bold text-gray-800 text-lg">{item.category}</h4>
@@ -372,7 +361,6 @@ function FarmerLivestockPage() {
                                                 </div>
 
                                                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100 justify-end">
-                                                    {/* Edit Button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleStartEdit(item)}
@@ -380,8 +368,6 @@ function FarmerLivestockPage() {
                                                     >
                                                         Edit
                                                     </button>
-
-                                                    {/* Delete Button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteLivestock(item.liveStockId)}
