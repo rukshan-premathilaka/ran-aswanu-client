@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ApiService from '@/api/ApiService.js';
 
 const api = new ApiService();
 
 function FarmerSettingsPage() {
-    // Profile Fields (Exact Backend DTO keys)
+    const navigate = useNavigate();
+
+    // Profile Fields
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -22,10 +25,11 @@ function FarmerSettingsPage() {
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingPassword, setIsSavingPassword] = useState(false);
     const [isUploadingPic, setIsUploadingPic] = useState(false);
+    const [isSwitchingRole, setIsSwitchingRole] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    // 1. Database එකෙන් User Profile තොරතුරු Load කිරීම (GET /api/me)
+    // 1. Load User Profile from Database
     const loadProfile = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -52,7 +56,7 @@ function FarmerSettingsPage() {
         loadProfile();
     }, []);
 
-    // 2. Profile Details Database එකේ Save කිරීම (PUT /api/me)
+    // 2. Save Profile Details
     const handleSaveProfile = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -68,7 +72,7 @@ function FarmerSettingsPage() {
 
         try {
             const updated = await api.request('PUT', '/me', payload);
-            setSuccessMessage("Profile details successfully updated in Database!");
+            setSuccessMessage("Profile details successfully updated!");
             if (updated) {
                 setUsername(updated.username || username);
                 setEmail(updated.email || email);
@@ -84,7 +88,7 @@ function FarmerSettingsPage() {
         }
     };
 
-    // 3. Profile Picture එක Upload කිරීම (POST /api/me/picture)
+    // 3. Upload Profile Picture
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -119,7 +123,7 @@ function FarmerSettingsPage() {
         }
     };
 
-    // 4. Password එක වෙනස් කිරීම (PUT /api/me/password)
+    // 4. Change Password
     const handleChangePassword = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -162,6 +166,32 @@ function FarmerSettingsPage() {
         }
     };
 
+    // 5. Remove Farmer Access and Switch to Buyer Profile
+    const handleRemoveFarmerAccess = async () => {
+        if (!window.confirm("Are you sure you want to remove Farmer access and switch your account back to Buyer mode?")) {
+            return;
+        }
+
+        setIsSwitchingRole(true);
+        setErrorMessage("");
+
+        try {
+            // Backend Role change to  BUYER
+            await api.request('PUT', '/me/role', { role: "BUYER" });
+
+            // LocalStorage එක BUYER ලෙස වෙනස් කිරීම
+            localStorage.setItem("user_role", "BUYER");
+
+            //  Buyer Profile
+            navigate("/buyer-profile", { replace: true });
+        } catch (error) {
+            console.error("Role switch error:", error);
+            const serverMsg = error.response?.data?.error || error.response?.data?.message || "Failed to switch account mode.";
+            setErrorMessage(serverMsg);
+            setIsSwitchingRole(false);
+        }
+    };
+
     return (
         <div className="w-full h-full font-sans max-w-5xl mx-auto">
             {/* Header */}
@@ -189,7 +219,7 @@ function FarmerSettingsPage() {
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* Left Column: Profile Card & DP Upload */}
+                    {/* Left Column: Profile Card, DP Upload & Role Demote Button */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center h-fit">
                         <div className="relative group cursor-pointer w-32 h-32 mb-4">
                             {profilePictureUrl ? (
@@ -227,9 +257,20 @@ function FarmerSettingsPage() {
                             Role: {role}
                         </div>
 
-                        <p className="text-xs text-gray-400 mt-6 text-center">
-                            Click on photo to upload a fresh image (JPG, PNG or WEBP up to 5MB).
-                        </p>
+                        {/* Remove Farmer Access & Switch to Buyer Button */}
+                        <div className="w-full mt-6 pt-5 border-t border-gray-100">
+                            <button
+                                type="button"
+                                disabled={isSwitchingRole}
+                                onClick={handleRemoveFarmerAccess}
+                                className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer disabled:opacity-50"
+                            >
+                                {isSwitchingRole ? "Switching to Buyer..." : "Remove Farmer Access & Switch to Buyer"}
+                            </button>
+                            <p className="text-[11px] text-gray-400 mt-2">
+                                Leaves Farmer Mode and takes you back to Buyer Profile.
+                            </p>
+                        </div>
                     </div>
 
                     {/* Right Column: Profile Form & Password Change */}
@@ -325,7 +366,7 @@ function FarmerSettingsPage() {
                                         <input
                                             type="password"
                                             required
-                                            minLength="8"
+                                            minLength={8}
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             placeholder="At least 8 characters"
@@ -338,7 +379,7 @@ function FarmerSettingsPage() {
                                         <input
                                             type="password"
                                             required
-                                            minLength="8"
+                                            minLength={8}
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="Re-type new password"

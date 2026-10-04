@@ -52,7 +52,7 @@ function FarmerHomePage() {
         setIsLoadingMetrics(false);
     };
 
-    // 2. Load Daily Farm Tasks (F7 Fixed: No fake local fallback)
+    // 2. Load Daily Farm Tasks
     const loadTasks = async () => {
         setIsLoadingTasks(true);
         setTasksError("");
@@ -68,7 +68,7 @@ function FarmerHomePage() {
         }
     };
 
-    // 3. Load Customer Orders (F1 Fixed: No fake Kamal/Sunil fallback)
+    // 3. Load Customer Orders
     const loadOrders = async () => {
         setIsLoadingOrders(true);
         setOrdersError("");
@@ -90,7 +90,7 @@ function FarmerHomePage() {
         loadOrders();
     }, []);
 
-    // 4. Update Order Status (F2 Fixed: No fake local status update)
+    // 4. Update Order Status
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         setUpdatingOrderId(orderId);
         setActionMessage({ type: "", text: "" });
@@ -108,7 +108,7 @@ function FarmerHomePage() {
         }
     };
 
-    // Task Actions (F7 Fixed)
+    // Task Actions
     const handleAddTask = async () => {
         if (!newTaskInput.trim()) return;
         setTasksError("");
@@ -158,19 +158,20 @@ function FarmerHomePage() {
 
     return (
         <div className="w-full h-full font-sans max-w-6xl mx-auto">
-            {/* Top Bar */}
+            {/* Top Bar with Home and Add Harvest Buttons (Sync Dashboard removed) */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Welcome Back</h1>
                     <p className="text-sm text-gray-500 mt-1">Live monitoring, orders tracking, and central farm analytics.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button
-                        onClick={() => { loadDashboardMetrics(); loadOrders(); loadTasks(); }}
-                        className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-all cursor-pointer"
+                    {/* Home Page Link Button */}
+                    <Link
+                        to="/home"
+                        className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-5 rounded-xl text-sm transition-all cursor-pointer shadow-sm"
                     >
-                        Sync Dashboard
-                    </button>
+                        Home
+                    </Link>
                     <Link
                         to="/farmer/add-harvest"
                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm text-sm cursor-pointer"
@@ -191,7 +192,7 @@ function FarmerHomePage() {
                 </div>
             )}
 
-            {/* Metrics Overview Cards (Total Revenue අයින් කර කාඩ්පත් 3 ක් ලෙස සකසා ඇත) */}
+            {/* Metrics Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Plots</p>

@@ -125,7 +125,7 @@ function FarmerLivestockPage() {
 
         try {
             await api.request('PUT', `/farmer/livestock/${editingLiveStockId}`, payload);
-            setSuccessMessage("Livestock details updated successfully in Database!");
+            setSuccessMessage("Livestock details updated successfully!");
             setEditingLiveStockId(null);
             await loadLivestock();
         } catch (error) {

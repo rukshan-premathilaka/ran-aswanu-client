@@ -146,7 +146,7 @@ function FarmerCropManagementPage() {
 
         try {
             await api.request('PUT', `/farmer/crops/${selectedCrop.cropId}`, updatedPayload);
-            setStatusMessage("Crop details updated successfully in Database!");
+            setStatusMessage("Crop details updated successfully!");
             await loadCropsFromDatabase();
         } catch (error) {
             console.error("Update crop error:", error);
@@ -166,7 +166,7 @@ function FarmerCropManagementPage() {
             {/* Page Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Crop Management</h1>
-                <p className="text-sm text-gray-500 mt-1">Directly connected with your SQL Server database crops table.</p>
+                <p className="text-sm text-gray-500 mt-1">Manage, update, and track all your crops in one place.</p>
             </div>
 
             {/* Status & Error Alerts */}

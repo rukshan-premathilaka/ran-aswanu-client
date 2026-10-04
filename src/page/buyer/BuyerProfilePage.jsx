@@ -56,6 +56,11 @@ function BuyerProfilePage() {
                 setAddress(data.address || "");
                 setRole(data.role || "BUYER");
                 setProfilePictureUrl(data.profilePictureUrl || null);
+
+                // LocalStorage එකත් Backend Role එක සමඟ sync කරගැනීම
+                if (data.role) {
+                    localStorage.setItem("user_role", data.role);
+                }
             }
         } catch (error) {
             const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to load profile details.";
@@ -65,7 +70,7 @@ function BuyerProfilePage() {
         }
     };
 
-    // Load Orders from Backend (F3 Fixed: Real Error Handling)
+    // Load Orders from Backend
     const fetchOrders = async () => {
         setIsLoadingOrders(true);
         setOrdersError("");
@@ -197,6 +202,7 @@ function BuyerProfilePage() {
 
     // Become a Farmer / Go to Farmer Dashboard Action
     const handleFarmerButtonClick = async () => {
+        // දැනටමත් Farmer කෙනෙක් නම් සෘජුවම Farmer Dashboard වෙත යන්න
         if (role === "FARMER") {
             navigate("/farmer/home");
             return;
@@ -206,17 +212,22 @@ function BuyerProfilePage() {
         setIsSwitchingRole(true);
 
         try {
+            // Backend එකේ Role එක FARMER ලෙස update කිරීම
             await api.request('PUT', '/me/role', { role: "FARMER" });
+
+            // State සහ LocalStorage දෙකම FARMER බවට පත් කිරීම
             setRole("FARMER");
             localStorage.setItem("user_role", "FARMER");
+
             setFarmerMessage({
                 type: "success",
-                text: "Account switched to Farmer mode successfully. Redirecting..."
+                text: "Account switched to Farmer mode successfully. Redirecting to Farmer Dashboard..."
             });
 
+            // කිසිදු බාධාවකින් තොරව කෙලින්ම Farmer Dashboard වෙත යොමු කිරීම
             setTimeout(() => {
-                navigate("/farmer/home");
-            }, 800);
+                navigate("/farmer/home", { replace: true });
+            }, 600);
         } catch (error) {
             const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to switch role.";
             setFarmerMessage({ type: "error", text: errorText });
@@ -248,7 +259,6 @@ function BuyerProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-3 self-start sm:self-auto">
-                        {/* Go to Home Button */}
                         <button
                             type="button"
                             onClick={() => navigate('/home')}
@@ -257,7 +267,6 @@ function BuyerProfilePage() {
                             Home
                         </button>
 
-                        {/* Logout Button */}
                         <button
                             type="button"
                             onClick={handleLogout}

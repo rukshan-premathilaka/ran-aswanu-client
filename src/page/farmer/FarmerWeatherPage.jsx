@@ -7,7 +7,7 @@ function FarmerWeatherPage() {
     const [error, setError] = useState(null);
 
     const [cityInput, setCityInput] = useState("");
-    const [currentCityName, setCurrentCityName] = useState("Central Province, Sri Lanka");
+    const [currentCityName, setCurrentCityName] = useState("Uva Province, Sri Lanka");
     const [coords, setCoords] = useState({ lat: 7.2906, lon: 80.6337 });
 
     useEffect(() => {
@@ -145,7 +145,7 @@ function FarmerWeatherPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Weather</h1>
                     <p className="text-gray-500 mt-2 font-medium">
-                        📍 {currentCityName}
+                         {currentCityName}
                     </p>
                 </div>
 

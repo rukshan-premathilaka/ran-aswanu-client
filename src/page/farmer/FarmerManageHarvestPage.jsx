@@ -77,7 +77,7 @@ function FarmerManageHarvestPage() {
 
         try {
             await api.request('DELETE', `/farmer/products/${listId}`);
-            setSuccessMessage("Product removed from Database successfully!");
+            setSuccessMessage("Product removed successfully!");
             await loadProductsFromDb();
         } catch (error) {
             console.error("Delete product error:", error);
@@ -122,7 +122,7 @@ function FarmerManageHarvestPage() {
 
         try {
             await api.request('PUT', `/farmer/products/${editingListId}`, updatedPayload);
-            setSuccessMessage("Product details successfully updated in Database!");
+            setSuccessMessage("Product details successfully !");
             setEditingListId(null);
             await loadProductsFromDb();
         } catch (error) {

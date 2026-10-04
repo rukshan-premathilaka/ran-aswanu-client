@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import routes from "@/routes/Routes.config.js";
 import DevRouteList from "@/routes/DevRouteList.jsx";
 import RouteErrorBoundary from "@/routes/RouteErrorBoundary.jsx";
+import ProtectedRoute from "@/routes/ProtectedRoute.jsx";
 
 const PageFallback = () => (
 	<div className="flex min-h-screen w-full items-center justify-center bg-white">
@@ -16,8 +17,20 @@ function AppCopy() {
 			<RouteErrorBoundary>
 				<Suspense fallback={<PageFallback />}>
 					<Routes>
-						{routes.map(({ path, element: Element }) => (
-							<Route key={path} path={path} element={<Element />} />
+						{routes.map(({ path, element: Element, protectedRole }) => (
+							<Route
+								key={path}
+								path={path}
+								element={
+									protectedRole ? (
+										<ProtectedRoute requiredRole={protectedRole}>
+											<Element />
+										</ProtectedRoute>
+									) : (
+										<Element />
+									)
+								}
+							/>
 						))}
 
 						{import.meta.env.DEV && (

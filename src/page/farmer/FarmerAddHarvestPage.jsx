@@ -94,7 +94,7 @@ function FarmerAddHarvestPage() {
             if (imageFailed) {
                 setSuccessMessage("Product details saved, but the image upload failed. Please edit the product to attach the image.");
             } else {
-                setSuccessMessage("Harvest product successfully saved to Database!");
+                setSuccessMessage("Harvest product successfully saved!");
             }
 
             // Form Reset
@@ -120,7 +120,7 @@ function FarmerAddHarvestPage() {
         <div className="w-full h-full font-sans max-w-5xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Add Harvest</h1>
-                <p className="text-sm text-gray-500 mt-1">Publish fresh crop inventory directly to the marketplace database.</p>
+                <p className="text-sm text-gray-500 mt-1">Enter the details of your harvest below..</p>
             </div>
 
             {/* Success and Error Alerts */}

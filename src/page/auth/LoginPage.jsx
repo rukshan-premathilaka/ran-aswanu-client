@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import FormInput from "@/component/FormInput";
 import AuthShowcase from "@/component/AuthShowcase";
 import ApiService from "@/api/ApiService";
@@ -14,6 +14,7 @@ const INITIAL_FORM = {
 
 function LoginPage() {
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [form, setForm] = useState(INITIAL_FORM);
     const [fieldErrors, setFieldErrors] = useState({});
@@ -47,37 +48,40 @@ function LoginPage() {
                 form
             );
 
-            // Adjust this key to match whatever field your backend
-            // actually returns the JWT under (e.g. data.accessToken).
             if (data?.token) {
                 localStorage.setItem("my_app_token", data.token);
             }
 
-            // Admin accounts go to the admin area (guide: call GET /api/me, role === "ADMIN" -> /admin).
-            // If this check fails for any reason, the normal flow below is used.
+            // User Profile වෙතින් role එක ලබාගෙන localStorage හි තැන්පත් කිරීම
             try {
                 const me = await apiService.request(
                     ENDPOINTS.ME.GET_PROFILE.method,
                     ENDPOINTS.ME.GET_PROFILE.url
                 );
+
+                if (me?.role) {
+                    localStorage.setItem("user_role", me.role);
+                }
+
                 if (me?.role === "ADMIN") {
-                    navigate("/admin");
+                    navigate("/admin", { replace: true });
                     return;
                 }
             } catch {
-                // ignore, continue to /home
+                // If profile call fails, proceed to default redirect
             }
 
-            navigate("/home");
+            // කලින් පිවිසීමට උත්සාහ කළ ආරක්ෂිත පිටුවක් ඇත්නම් එතැනට යොමු කිරීම
+            const redirectTo = location.state?.from?.pathname || "/home";
+            navigate(redirectTo, { replace: true });
+
         } catch (error) {
             const status = error?.response?.status;
             const data = error?.response?.data;
 
             if (status === 400 && data && typeof data === "object") {
-                // Missing/blank field validation errors
                 setFieldErrors(data);
             } else if (status === 404) {
-                // UsernameNotFoundException handler -> invalid credentials
                 setFormError(data?.error || "Invalid email or password.");
             } else if (status === 401 || status === 403) {
                 setFormError("Invalid email or password.");
@@ -94,7 +98,7 @@ function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen w-full bg-white">
+        <div className="flex min-h-screen w-full bg-white font-sans">
             <AuthShowcase />
 
             <div className="flex w-full flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:w-1/2 lg:px-16">
@@ -141,7 +145,7 @@ function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => navigate("/forgot-password")}
-                                className="text-sm font-medium text-lime-700 hover:underline"
+                                className="text-sm font-medium text-lime-700 hover:underline cursor-pointer"
                             >
                                 Forgot password?
                             </button>
@@ -150,9 +154,9 @@ function LoginPage() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full rounded-lg bg-lime-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-lime-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="w-full rounded-lg bg-lime-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-lime-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                         >
-                            {isSubmitting ? "Logging in…" : "Log in"}
+                            {isSubmitting ? "Logging in..." : "Log in"}
                         </button>
 
                         <p className="text-center text-sm text-neutral-500">
@@ -160,7 +164,7 @@ function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => navigate("/register")}
-                                className="font-medium text-lime-700 hover:underline"
+                                className="font-medium text-lime-700 hover:underline cursor-pointer"
                             >
                                 Sign up
                             </button>
