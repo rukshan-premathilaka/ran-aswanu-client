@@ -49,6 +49,7 @@ function Navbar() {
                     aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
                     className="p-2 text-gray-600 hover:text-[#54B435] hover:bg-gray-50 rounded-xl transition-all relative"
                 >
+                    {/*shooping cart*/}
                     <ShoppingCart size={22} />
                     {count > 0 && (
                         <span className="absolute top-0 right-0 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
