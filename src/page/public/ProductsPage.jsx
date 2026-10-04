@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Menu, Search, User, X } from "lucide-react";
+import { ChevronLeft, Menu, Search, ShoppingCart, User, X } from "lucide-react";
 import { useProducts } from "@/api/fetchProducts.js";
 import ProductTile from "@/component/ProductTile.jsx";
-import ProductDetailView from "@/component/ProductDetailView.jsx";
 import logoImg from "@/assets/farmerImg/logo.png";
 import { PERSONAL_PROFILE_PATH, useCurrentUser } from "@/utils/useCurrentUser.js";
+import { cartCount, onCartChange } from "@/utils/cart.js";
 
 // Sidebar menu. Change the paths here if your routes are named differently.
 const MENU_ITEMS = [
@@ -30,20 +30,17 @@ const NAV_ITEM =
 const getName = (p) => p.productName ?? "Product";
 
 // Sidebar: hidden until the menu (three lines) button is clicked, like on Home
-function Sidebar({ open, onClose, onBack, isLoggedIn }) {
+function Sidebar({ open, onClose, isLoggedIn }) {
     const navigate = useNavigate();
     const { pathname } = useLocation();
 
     const go = (path) => {
         onClose();
-        // Opened from Home with "See more": Home goes back to the home view, Products stays here
-        if (onBack && path === "/home") return onBack();
-        if (onBack && path === "/products") return;
-        navigate(path);
+        if (path !== pathname) navigate(path);
     };
 
     const item = ({ label, path }) => {
-        const active = onBack ? path === "/products" : pathname === path;
+        const active = pathname === path;
         return (
             <button
                 key={path}
@@ -83,12 +80,13 @@ function Sidebar({ open, onClose, onBack, isLoggedIn }) {
                     </button>
                 </div>
 
-                <nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.filter((m) => !m.requiresLogin || isLoggedIn).map(item)}</nav>			</aside>
+                <nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.filter((m) => !m.requiresLogin || isLoggedIn).map(item)}</nav>
+            </aside>
         </>
     );
 }
 
-export function ProductsPage({ onBack } = {}) {
+export function ProductsPage() {
     const navigate = useNavigate();
     const { products, isLoading, errorText } = useProducts();
     const { isLoggedIn, username, picture } = useCurrentUser();
@@ -96,7 +94,12 @@ export function ProductsPage({ onBack } = {}) {
     const [search, setSearch] = useState(searchParams.get("keyword") ?? ""); // /products?keyword=tomato from the Navbar search
     const [sort, setSort] = useState("all");
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [selected, setSelected] = useState(null); // product whose detail page is open
+    const [count, setCount] = useState(() => cartCount()); // items in the cart, updates live
+
+    useEffect(() => {
+        setCount(cartCount());
+        return onCartChange(() => setCount(cartCount()));
+    }, []);
 
     // Close the small-screen sidebar with Escape
     useEffect(() => {
@@ -114,11 +117,9 @@ export function ProductsPage({ onBack } = {}) {
         return list;
     }, [products, search, sort]);
 
-    if (selected) return <ProductDetailView product={selected} onBack={() => setSelected(null)} />;
-
     return (
         <div className="min-h-screen bg-stone-50">
-            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onBack={onBack} isLoggedIn={isLoggedIn} />
+            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} />
 
             <div>
                 {/* Top bar */}
@@ -131,7 +132,7 @@ export function ProductsPage({ onBack } = {}) {
                         <Menu className="w-5 h-5 text-stone-700" />
                     </button>
                     <button
-                        onClick={() => (onBack ? onBack() : navigate(-1))}
+                        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/home"))}
                         aria-label="Go back"
                         className="p-2 rounded-full hover:bg-stone-100 text-stone-600"
                     >
@@ -160,7 +161,22 @@ export function ProductsPage({ onBack } = {}) {
                         ))}
                     </nav>
 
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-3">
+                        {/* Cart */}
+                        <button
+                            type="button"
+                            onClick={() => navigate("/cart")}
+                            aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
+                            className="relative w-10 h-10 rounded-full bg-white border border-stone-200 text-stone-700 flex items-center justify-center hover:bg-green-50 hover:text-green-700 transition-colors"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            {count > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                    {count > 99 ? "99+" : count}
+                                </span>
+                            )}
+                        </button>
+
                         {isLoggedIn ? (
                             <Link to={PERSONAL_PROFILE_PATH} className={`${NAV_ITEM} flex items-center gap-2.5`}>
                                 {picture ? (
@@ -203,7 +219,7 @@ export function ProductsPage({ onBack } = {}) {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                         {shown.map((p, i) => (
-                            <ProductTile key={p.listId ?? p.id ?? i} product={p} tall onClick={() => setSelected(p)} />
+                            <ProductTile key={p.listId ?? p.id ?? i} product={p} tall onClick={() => navigate(`/product/${p.listId}`)} />
                         ))}
                     </div>
                 </main>

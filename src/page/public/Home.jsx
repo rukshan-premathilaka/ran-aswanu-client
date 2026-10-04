@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "@/component/home/home.css";
 import { useProducts } from "@/api/fetchProducts.js";
 import { useCurrentUser } from "@/utils/useCurrentUser.js";
-import ProductsPage from "@/page/public/ProductsPage.jsx";
-import ProductDetailView from "@/component/ProductDetailView.jsx";
 
 import HomeLoader from "@/component/home/HomeLoader.jsx";
 import SectionBoundary from "@/component/home/SectionBoundary.jsx";
@@ -25,15 +24,11 @@ import FinalCTASection from "@/component/home/FinalCTASection.jsx";
 import Footer from "@/component/home/Footer.jsx";
 
 // Landing page (route: /home).
-// view "home"     = the long landing page
-// view "products" = the products list (ProductsPage) opened inside Home, with a back button
-// selected        = a product opened from Fresh Picks (detail page with a back bar)
+// "Products" opens the real /products page, and a product opens /product/:listId (separate pages with their own URL).
 export function Home() {
+    const navigate = useNavigate();
     const { products, isLoading, errorText } = useProducts();
     const { isLoggedIn, username, picture } = useCurrentUser();
-
-    const [view, setView] = useState("home");
-    const [selected, setSelected] = useState(null);
 
     // The branded loader plays once per tab session. The hero animation starts when it finishes.
     const [showLoader] = useState(() => shouldShowLoader());
@@ -45,28 +40,8 @@ export function Home() {
         setReady(true);
     }, []);
 
-    const openProducts = useCallback(() => {
-        setSelected(null);
-        setView("products");
-    }, []);
-
-    const backToHome = useCallback(() => {
-        setSelected(null);
-        setView("home");
-    }, []);
-
-    // Every time the view changes, start from the top of the page
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [view]);
-
-    if (selected) {
-        return <ProductDetailView product={selected} onBack={() => setSelected(null)} />;
-    }
-
-    if (view === "products") {
-        return <ProductsPage onBack={backToHome} />;
-    }
+    const openProducts = useCallback(() => navigate("/products"), [navigate]);
+    const openProduct = useCallback((product) => navigate(`/product/${product.listId}`), [navigate]);
 
     return (
         <div className={`home-root ${ready ? "is-ready" : ""} min-h-screen w-full bg-white`}>
@@ -84,7 +59,7 @@ export function Home() {
                         products={products}
                         isLoading={isLoading}
                         errorText={errorText}
-                        onSelect={setSelected}
+                        onSelect={openProduct}
                         onSeeAll={openProducts}
                     />
                 </SectionBoundary>
