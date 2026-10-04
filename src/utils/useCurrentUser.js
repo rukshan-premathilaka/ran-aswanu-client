@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { fileUrl } from "@/api/fileUrl.js";
+import { fileUrl } from "@/api/fileurl.js";
 
 // >>> Personal profile page path (BuyerProfilePage route in Routes.config.js). Home and Products both read it from this one place. <<<
 export const PERSONAL_PROFILE_PATH = "/buyer-profile";

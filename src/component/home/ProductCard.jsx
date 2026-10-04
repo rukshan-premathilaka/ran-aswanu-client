@@ -1,5 +1,5 @@
 import { Leaf, ArrowRight } from "lucide-react";
-import { fileUrl } from "@/api/fileUrl.js";
+import { fileUrl } from "@/api/fileurl.js";
 import { formatLkr } from "./homeUtils.js";
 import ImageWithFallback from "./ImageWithFallback.jsx";
 

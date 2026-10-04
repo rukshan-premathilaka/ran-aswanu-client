@@ -4,7 +4,7 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-const SOCKET_URL = "http://localhost:8080/ws/chat";
+import { WS_URL as SOCKET_URL } from "@/api/config.js";
 
 // Opens the connection. The backend knows who we are from the token.
 export function createChatClient({ onConnected, onError }) {

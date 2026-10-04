@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { API_BASE_URL } from '@/api/config.js';
 
 class ApiService {
 
-	baseURL = 'http://localhost:8080/api';
+	baseURL = API_BASE_URL;
 	client = null;
 
 	constructor() {

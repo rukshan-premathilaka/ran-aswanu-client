@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Leaf, MapPin } from "lucide-react";
-import { fileUrl } from "@/api/fileUrl.js";
+import { fileUrl } from "@/api/fileurl.js";
 
 // Product card used on the Home page and the Products page. No price is shown.
 // Keys come straight from the backend (GET /products): productName, farmerName, category, productImage.

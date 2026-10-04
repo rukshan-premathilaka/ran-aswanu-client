@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '@/api/ApiService.js';
+import { toFileUrl } from '@/api/config.js';
 
 const api = new ApiService();
 
 // Helper to resolve profile image path safely
-const resolveFileUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return 'http://localhost:8080' + (path.startsWith('/files/') ? path : '/files/' + path);
-};
+const resolveFileUrl = (path) => toFileUrl(path);
 
 function BuyerProfilePage() {
     const navigate = useNavigate();

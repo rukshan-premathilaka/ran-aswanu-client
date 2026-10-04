@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
+import { getApiError } from "@/api/Apierror.js";
 
 // GET /products is public (no login). Optional filters: { category, keyword }.
 // The backend returns a plain array of published products from active farmers.

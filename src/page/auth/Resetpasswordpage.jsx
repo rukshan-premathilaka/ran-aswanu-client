@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import FormInput from "../common/FormInput";
-import AuthShowcase from "./AuthShowcase";
+import FormInput from "@/component/FormInput.jsx";
+import AuthShowcase from "@/component/AuthShowcase.jsx";
 import ApiService from "@/api/ApiService";
-import ENDPOINTS from "@/api/ENDPOINTS";
+import ENDPOINTS from "@/api/endpoints.js";
 
 const apiService = new ApiService();
 

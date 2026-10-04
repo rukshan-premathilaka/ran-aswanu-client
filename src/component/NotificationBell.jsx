@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
+import { getApiError } from "@/api/Apierror.js";
 import NotificationPanel from "@/component/NotificationPanel.jsx";
 
 const PANEL_WIDTH = 320;

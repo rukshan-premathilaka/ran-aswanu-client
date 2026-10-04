@@ -11,8 +11,8 @@ import MessageBox from "@/component/MessageBox.jsx";
 import CheckoutModal from "@/component/CheckoutModal.jsx";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
-import { fileUrl } from "@/api/fileUrl.js";
+import { getApiError } from "@/api/Apierror.js";
+import { fileUrl } from "@/api/fileurl.js";
 import { fetchProductById, fetchRelatedProducts } from "@/api/fetchProducts.js";
 import { addToCart } from "@/utils/cart.js";
 
