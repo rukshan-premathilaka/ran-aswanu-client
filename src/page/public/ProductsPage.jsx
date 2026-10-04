@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Menu, Search, ShoppingCart, User, X } from "lucide-react";
+import { ChevronLeft, Menu, Search, X } from "lucide-react";
 import { useProducts } from "@/api/fetchProducts.js";
 import ProductTile from "@/component/ProductTile.jsx";
+import ProductDetailView from "@/component/ProductDetailView.jsx";
 import logoImg from "@/assets/farmerImg/logo.png";
 import { PERSONAL_PROFILE_PATH, useCurrentUser } from "@/utils/useCurrentUser.js";
-import { cartCount, onCartChange } from "@/utils/cart.js";
+import { openAuthModal } from "@/utils/authModal.js";
 
 // Sidebar menu. Change the paths here if your routes are named differently.
 const MENU_ITEMS = [
     { label: "Home", path: "/home" },
     { label: "Products", path: "/products" },
     { label: "Chat", path: "/chat" },
-    { label: "Delivery ", path: "/DeliveryRequest" },
+    { label: "Delivery Request", path: "/DeliveryRequest" },
     // Shown only after login. The path comes from PERSONAL_PROFILE_PATH in src/utils/useCurrentUser.js
     { label: "Personal Profile", path: PERSONAL_PROFILE_PATH, requiresLogin: true },
 ];
@@ -30,17 +31,20 @@ const NAV_ITEM =
 const getName = (p) => p.productName ?? "Product";
 
 // Sidebar: hidden until the menu (three lines) button is clicked, like on Home
-function Sidebar({ open, onClose, isLoggedIn }) {
+function Sidebar({ open, onClose, onBack, isLoggedIn }) {
     const navigate = useNavigate();
     const { pathname } = useLocation();
 
     const go = (path) => {
         onClose();
-        if (path !== pathname) navigate(path);
+        // Opened from Home with "See more": Home goes back to the home view, Products stays here
+        if (onBack && path === "/home") return onBack();
+        if (onBack && path === "/products") return;
+        navigate(path);
     };
 
     const item = ({ label, path }) => {
-        const active = pathname === path;
+        const active = onBack ? path === "/products" : pathname === path;
         return (
             <button
                 key={path}
@@ -80,13 +84,12 @@ function Sidebar({ open, onClose, isLoggedIn }) {
                     </button>
                 </div>
 
-                <nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.filter((m) => !m.requiresLogin || isLoggedIn).map(item)}</nav>
-            </aside>
+                <nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.filter((m) => !m.requiresLogin || isLoggedIn).map(item)}</nav>			</aside>
         </>
     );
 }
 
-export function ProductsPage() {
+export function ProductsPage({ onBack } = {}) {
     const navigate = useNavigate();
     const { products, isLoading, errorText } = useProducts();
     const { isLoggedIn, username, picture } = useCurrentUser();
@@ -94,12 +97,7 @@ export function ProductsPage() {
     const [search, setSearch] = useState(searchParams.get("keyword") ?? ""); // /products?keyword=tomato from the Navbar search
     const [sort, setSort] = useState("all");
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [count, setCount] = useState(() => cartCount()); // items in the cart, updates live
-
-    useEffect(() => {
-        setCount(cartCount());
-        return onCartChange(() => setCount(cartCount()));
-    }, []);
+    const [selected, setSelected] = useState(null); // product whose detail page is open
 
     // Close the small-screen sidebar with Escape
     useEffect(() => {
@@ -117,9 +115,11 @@ export function ProductsPage() {
         return list;
     }, [products, search, sort]);
 
+    if (selected) return <ProductDetailView product={selected} onBack={() => setSelected(null)} />;
+
     return (
         <div className="min-h-screen bg-stone-50">
-            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} />
+            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onBack={onBack} isLoggedIn={isLoggedIn} />
 
             <div>
                 {/* Top bar */}
@@ -132,7 +132,7 @@ export function ProductsPage() {
                         <Menu className="w-5 h-5 text-stone-700" />
                     </button>
                     <button
-                        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/home"))}
+                        onClick={() => (onBack ? onBack() : navigate(-1))}
                         aria-label="Go back"
                         className="p-2 rounded-full hover:bg-stone-100 text-stone-600"
                     >
@@ -161,22 +161,7 @@ export function ProductsPage() {
                         ))}
                     </nav>
 
-                    <div className="ml-auto flex items-center gap-3">
-                        {/* Cart */}
-                        <button
-                            type="button"
-                            onClick={() => navigate("/cart")}
-                            aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
-                            className="relative w-10 h-10 rounded-full bg-white border border-stone-200 text-stone-700 flex items-center justify-center hover:bg-green-50 hover:text-green-700 transition-colors"
-                        >
-                            <ShoppingCart className="w-5 h-5" />
-                            {count > 0 && (
-                                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                                    {count > 99 ? "99+" : count}
-                                </span>
-                            )}
-                        </button>
-
+                    <div className="ml-auto">
                         {isLoggedIn ? (
                             <Link to={PERSONAL_PROFILE_PATH} className={`${NAV_ITEM} flex items-center gap-2.5`}>
                                 {picture ? (
@@ -189,13 +174,10 @@ export function ProductsPage() {
                                 {username && <span className="max-w-[10rem] truncate">{username}</span>}
                             </Link>
                         ) : (
-                            <Link
-                                to="/login"
-                                aria-label="Account"
-                                className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
-                            >
-                                <User className="w-5 h-5" />
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <button type="button" onClick={() => openAuthModal("register")} className="px-5 py-3 rounded-xl text-sm font-medium transition-colors bg-green-50 text-green-900 shadow-sm">Register</button>
+                                <button type="button" onClick={() => openAuthModal("login")} className="px-5 py-3 rounded-xl text-sm font-medium transition-colors bg-green-50 text-green-900 shadow-sm">Login</button>
+                            </div>
                         )}
                     </div>
                 </header>
@@ -219,7 +201,7 @@ export function ProductsPage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                         {shown.map((p, i) => (
-                            <ProductTile key={p.listId ?? p.id ?? i} product={p} tall onClick={() => navigate(`/product/${p.listId}`)} />
+                            <ProductTile key={p.listId ?? p.id ?? i} product={p} tall onClick={() => setSelected(p)} />
                         ))}
                     </div>
                 </main>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { fileUrl } from "@/api/fileurl.js";
+import { fileUrl } from "@/api/fileUrl.js";
+import { onAuthChanged } from "@/utils/authModal.js";
 
 // >>> Personal profile page path (BuyerProfilePage route in Routes.config.js). Home and Products both read it from this one place. <<<
 export const PERSONAL_PROFILE_PATH = "/buyer-profile";
@@ -11,6 +12,18 @@ export const PERSONAL_PROFILE_PATH = "/buyer-profile";
 export function useCurrentUser() {
     const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem("my_app_token")));
     const [me, setMe] = useState(null);
+    const [reloadKey, setReloadKey] = useState(0);
+
+    // The login / sign-up popup finished: pick up the new token and load the user
+    useEffect(
+        () =>
+            onAuthChanged(() => {
+                setIsLoggedIn(Boolean(localStorage.getItem("my_app_token")));
+                setMe(null);
+                setReloadKey((k) => k + 1);
+            }),
+        []
+    );
 
     useEffect(() => {
         if (!localStorage.getItem("my_app_token")) return;
@@ -31,7 +44,7 @@ export function useCurrentUser() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [reloadKey]);
 
     return {
         isLoggedIn,

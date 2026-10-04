@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Search, ShoppingCart } from 'lucide-react';
@@ -12,10 +12,8 @@ function Navbar() {
     const [count, setCount] = useState(() => cartCount());
     const [keyword, setKeyword] = useState('');
 
-    useEffect(() => {
-        setCount(cartCount());
-        return onCartChange(() => setCount(cartCount()));
-    }, []);
+    // useState above already read the cart once, so the effect only listens for later changes
+    useEffect(() => onCartChange(() => setCount(cartCount())), []);
 
     // Enter in the search box opens the products page with the keyword (ProductsPage reads ?keyword=)
     const handleSearch = (e) => {
