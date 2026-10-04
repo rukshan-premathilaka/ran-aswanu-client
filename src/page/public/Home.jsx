@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "@/component/home/home.css";
 import { useProducts } from "@/api/fetchProducts.js";
 import { useCurrentUser } from "@/utils/useCurrentUser.js";
+import { useBecomeFarmer } from "@/utils/useBecomeFarmer.js";
 
 import HomeLoader from "@/component/home/HomeLoader.jsx";
 import SectionBoundary from "@/component/home/SectionBoundary.jsx";
@@ -22,6 +23,7 @@ import MobileAppSection from "@/component/home/MobileAppSection.jsx";
 import DesktopAppSection from "@/component/home/DesktopAppSection.jsx";
 import FinalCTASection from "@/component/home/FinalCTASection.jsx";
 import Footer from "@/component/home/Footer.jsx";
+import BecomeFarmerDialog from "@/component/home/BecomeFarmerDialog.jsx";
 
 // Landing page (route: /home).
 // "Products" opens the real /products page, and a product opens /product/:listId (separate pages with their own URL).
@@ -43,6 +45,25 @@ export function Home() {
     const openProducts = useCallback(() => navigate("/products"), [navigate]);
     const openProduct = useCallback((product) => navigate(`/product/${product.listId}`), [navigate]);
 
+    // Farmer buttons: change the user's role to FARMER in the database, then open the farmer dashboard.
+    // The buttons live inside their sections, so the click is caught here. Only buttons/links whose text
+    // matches `pattern` are caught, so other buttons in the same section keep working.
+    // keepActionWhenLoggedOut: visitors who are not logged in keep the button's normal action (e.g. open sign up).
+    const becomeFarmer = useBecomeFarmer();
+    const startBecomeFarmer = becomeFarmer.start;
+    const interceptFarmerClick = useCallback(
+        (pattern, { keepActionWhenLoggedOut = false } = {}) =>
+            (e) => {
+                const target = e.target.closest("button, a");
+                if (!target || !pattern.test(target.textContent)) return;
+                if (keepActionWhenLoggedOut && !localStorage.getItem("my_app_token")) return;
+                e.preventDefault();
+                e.stopPropagation();
+                startBecomeFarmer();
+            },
+        [startBecomeFarmer]
+    );
+
     return (
         <div className={`home-root ${ready ? "is-ready" : ""} min-h-screen w-full bg-white`}>
             {showLoader && <HomeLoader onFinish={handleLoaderFinish} />}
@@ -52,7 +73,11 @@ export function Home() {
             <main>
                 <SectionBoundary name="Hero"><HeroSection onOpenProducts={openProducts} /></SectionBoundary>
                 <SectionBoundary name="Benefits"><BenefitsSection /></SectionBoundary>
-                <SectionBoundary name="User roles"><UserRolesSection onOpenProducts={openProducts} /></SectionBoundary>
+                <SectionBoundary name="User roles">
+                    <div className="contents" onClickCapture={interceptFarmerClick(/start\s+as\s+a\s+farmer/i, { keepActionWhenLoggedOut: true })}>
+                        <UserRolesSection onOpenProducts={openProducts} />
+                    </div>
+                </SectionBoundary>
                 <SectionBoundary name="How it works"><HowItWorksSection /></SectionBoundary>
                 <SectionBoundary name="Fresh picks">
                     <FreshPicksSection
@@ -66,7 +91,11 @@ export function Home() {
                 <SectionBoundary name="Smart farm"><SmartFarmSection /></SectionBoundary>
                 <SectionBoundary name="Shared delivery"><SharedDeliverySection /></SectionBoundary>
                 <SectionBoundary name="More features"><MoreFeaturesSection /></SectionBoundary>
-                <SectionBoundary name="Become a farmer"><BecomeFarmerSection /></SectionBoundary>
+                <SectionBoundary name="Become a farmer">
+                    <div className="contents" onClickCapture={interceptFarmerClick(/farmer|sell|join|start|become/i)}>
+                        <BecomeFarmerSection />
+                    </div>
+                </SectionBoundary>
                 <SectionBoundary name="Future"><FutureSmartSection /></SectionBoundary>
                 <SectionBoundary name="Mobile app"><MobileAppSection /></SectionBoundary>
                 <SectionBoundary name="Desktop app"><DesktopAppSection /></SectionBoundary>
@@ -74,6 +103,8 @@ export function Home() {
             </main>
 
             <Footer onOpenProducts={openProducts} />
+
+            <BecomeFarmerDialog status={becomeFarmer.status} message={becomeFarmer.message} onClose={becomeFarmer.close} />
         </div>
     );
 }
