@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ApiService from '@/api/ApiService.js';
 
 const api = new ApiService();
 
 function FarmerSettingsPage() {
-    const navigate = useNavigate();
-
     // Profile Fields
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -25,7 +22,6 @@ function FarmerSettingsPage() {
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingPassword, setIsSavingPassword] = useState(false);
     const [isUploadingPic, setIsUploadingPic] = useState(false);
-    const [isSwitchingRole, setIsSwitchingRole] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -45,7 +41,7 @@ function FarmerSettingsPage() {
             }
         } catch (error) {
             console.error("Failed to load profile:", error);
-            const serverMsg = error.response?.data?.error || "Could not load profile from database.";
+            const serverMsg = error.response?.data?.error || "Could not load profile details.";
             setErrorMessage(serverMsg);
         } finally {
             setIsLoading(false);
@@ -153,7 +149,7 @@ function FarmerSettingsPage() {
 
         try {
             await api.request('PUT', '/me/password', payload);
-            setSuccessMessage("Password successfully changed in Database!");
+            setSuccessMessage("Password successfully changed!");
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
@@ -163,32 +159,6 @@ function FarmerSettingsPage() {
             setErrorMessage(serverMsg);
         } finally {
             setIsSavingPassword(false);
-        }
-    };
-
-    // 5. Remove Farmer Access and Switch to Buyer Profile
-    const handleRemoveFarmerAccess = async () => {
-        if (!window.confirm("Are you sure you want to remove Farmer access and switch your account back to Buyer mode?")) {
-            return;
-        }
-
-        setIsSwitchingRole(true);
-        setErrorMessage("");
-
-        try {
-            // Backend Role change to  BUYER
-            await api.request('PUT', '/me/role', { role: "BUYER" });
-
-            // LocalStorage එක BUYER ලෙස වෙනස් කිරීම
-            localStorage.setItem("user_role", "BUYER");
-
-            //  Buyer Profile
-            navigate("/buyer-profile", { replace: true });
-        } catch (error) {
-            console.error("Role switch error:", error);
-            const serverMsg = error.response?.data?.error || error.response?.data?.message || "Failed to switch account mode.";
-            setErrorMessage(serverMsg);
-            setIsSwitchingRole(false);
         }
     };
 
@@ -214,12 +184,12 @@ function FarmerSettingsPage() {
 
             {isLoading ? (
                 <div className="text-center py-12 text-gray-500 font-bold">
-                    Connecting to Database and loading account settings...
+                    Loading account settings...
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* Left Column: Profile Card, DP Upload & Role Demote Button */}
+                    {/* Left Column: Profile Card & DP Upload */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center h-fit">
                         <div className="relative group cursor-pointer w-32 h-32 mb-4">
                             {profilePictureUrl ? (
@@ -255,21 +225,6 @@ function FarmerSettingsPage() {
 
                         <div className="mt-4 px-3 py-1 bg-green-50 text-green-700 font-bold text-xs rounded-full border border-green-200">
                             Role: {role}
-                        </div>
-
-                        {/* Remove Farmer Access & Switch to Buyer Button */}
-                        <div className="w-full mt-6 pt-5 border-t border-gray-100">
-                            <button
-                                type="button"
-                                disabled={isSwitchingRole}
-                                onClick={handleRemoveFarmerAccess}
-                                className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer disabled:opacity-50"
-                            >
-                                {isSwitchingRole ? "Switching to Buyer..." : "Remove Farmer Access & Switch to Buyer"}
-                            </button>
-                            <p className="text-[11px] text-gray-400 mt-2">
-                                Leaves Farmer Mode and takes you back to Buyer Profile.
-                            </p>
                         </div>
                     </div>
 
@@ -335,7 +290,7 @@ function FarmerSettingsPage() {
                                         disabled={isSavingProfile}
                                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-sm text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                                     >
-                                        {isSavingProfile ? "Saving to Database..." : "Save Profile Details"}
+                                        {isSavingProfile ? "Saving Details..." : "Save Profile Details"}
                                     </button>
                                 </div>
                             </form>

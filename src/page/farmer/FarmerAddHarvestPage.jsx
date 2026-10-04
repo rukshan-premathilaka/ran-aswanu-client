@@ -15,7 +15,7 @@ function FarmerAddHarvestPage() {
     const [deliveryOption, setDeliveryOption] = useState("Pickup");
     const [description, setDescription] = useState("");
 
-    // Image file upload state
+    // Single Image Upload State
     const [selectedFile, setSelectedFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
@@ -24,17 +24,28 @@ function FarmerAddHarvestPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
+    // Handle Image Selection
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                setErrorMessage("The file is too big. The maximum size is 5 MB.");
+                setErrorMessage("The file is too large. Maximum size is 5 MB.");
                 return;
             }
             setSelectedFile(file);
             setImagePreview(URL.createObjectURL(file));
             setErrorMessage("");
         }
+    };
+
+    // Remove Selected Image
+    const handleRemoveImage = (e) => {
+        e.stopPropagation();
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        setSelectedFile(null);
+        setImagePreview(null);
     };
 
     const handleSubmit = async (e) => {
@@ -76,10 +87,11 @@ function FarmerAddHarvestPage() {
 
             let imageFailed = false;
 
-            // Step 2: Upload Product Image if selected
+            // Upload Product Image if selected
             if (selectedFile && listId) {
                 const formData = new FormData();
                 formData.append("file", selectedFile);
+
                 try {
                     await api.client.post(`/farmer/products/${listId}/image`, formData, {
                         headers: { "Content-Type": "multipart/form-data" }
@@ -90,11 +102,15 @@ function FarmerAddHarvestPage() {
                 }
             }
 
-            // F10 Fixed: Accurately reflect image upload status
+            // Success message without the word 'Database'
             if (imageFailed) {
-                setSuccessMessage("Product details saved, but the image upload failed. Please edit the product to attach the image.");
+                setSuccessMessage("Product details saved, but the image upload failed. Please edit the product to attach a photo.");
             } else {
-                setSuccessMessage("Harvest product successfully saved!");
+                setSuccessMessage("Harvest product successfully published!");
+            }
+
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
             }
 
             // Form Reset
@@ -109,7 +125,7 @@ function FarmerAddHarvestPage() {
 
         } catch (error) {
             console.error("Failed to save product:", error);
-            const serverMsg = error.response?.data?.error || error.response?.data?.message || "Failed to save product to database.";
+            const serverMsg = error.response?.data?.error || error.response?.data?.message || "Failed to save product.";
             setErrorMessage(serverMsg);
         } finally {
             setIsSubmitting(false);
@@ -120,7 +136,7 @@ function FarmerAddHarvestPage() {
         <div className="w-full h-full font-sans max-w-5xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Add Harvest</h1>
-                <p className="text-sm text-gray-500 mt-1">Enter the details of your harvest below..</p>
+                <p className="text-sm text-gray-500 mt-1">Publish fresh crop inventory directly to the marketplace.</p>
             </div>
 
             {/* Success and Error Alerts */}
@@ -137,30 +153,48 @@ function FarmerAddHarvestPage() {
 
             <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
 
-                {/* Left Side: Product Image Upload */}
+                {/* Left Side: Single Product Image Upload */}
                 <div className="w-full lg:w-1/3 flex flex-col gap-4">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center h-[300px] relative overflow-hidden group">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center h-[280px] relative overflow-hidden group">
                         {imagePreview ? (
-                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-xl" />
+                            <div className="relative w-full h-full">
+                                <img
+                                    src={imagePreview}
+                                    alt="Product Preview"
+                                    className="w-full h-full object-cover rounded-xl"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 bg-black/70 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                                    title="Remove photo"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center text-center p-4">
-                                <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mb-3 font-bold text-2xl">
+                                <div className="w-14 h-14 bg-green-100 text-green-700 rounded-full flex items-center justify-center mb-3 font-bold text-2xl">
                                     +
                                 </div>
-                                <p className="text-sm font-bold text-gray-700">Upload Product Image</p>
+                                <p className="text-sm font-bold text-gray-700">Upload Product Photo</p>
                                 <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 5MB</p>
                             </div>
                         )}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
+
+                        {!imagePreview && (
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                title="Click to upload photo"
+                            />
+                        )}
                     </div>
 
                     <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        <p className="text-xs text-blue-700 font-medium">Clear photos of fresh produce attract more customers and faster sales.</p>
+                        <p className="text-xs text-blue-700 font-medium">A clear photo of your fresh produce attracts more buyers and speeds up sales.</p>
                     </div>
                 </div>
 
@@ -290,7 +324,7 @@ function FarmerAddHarvestPage() {
                             disabled={isSubmitting}
                             className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-8 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50 text-sm"
                         >
-                            {isSubmitting ? "Publishing to Database..." : "Publish Product"}
+                            {isSubmitting ? "Publishing Product..." : "Publish Product"}
                         </button>
                     </div>
                 </div>

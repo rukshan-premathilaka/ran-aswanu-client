@@ -72,7 +72,7 @@ function FarmerLivestockPage() {
 
         try {
             await api.request('POST', '/farmer/livestock', payload);
-            setSuccessMessage("Livestock inventory saved successfully to Database!");
+            setSuccessMessage("Livestock inventory saved successfully!");
             setBreed("");
             setAmount("");
             await loadLivestock();
@@ -139,7 +139,7 @@ function FarmerLivestockPage() {
 
     // 5. Delete Livestock
     const handleDeleteLivestock = async (id) => {
-        if (!window.confirm("Are you sure you want to remove this livestock record from Database?")) {
+        if (!window.confirm("Are you sure you want to remove this livestock record?")) {
             return;
         }
 
@@ -148,7 +148,7 @@ function FarmerLivestockPage() {
 
         try {
             await api.request('DELETE', `/farmer/livestock/${id}`);
-            setSuccessMessage("Livestock entry removed from Database successfully!");
+            setSuccessMessage("Livestock entry removed successfully!");
             await loadLivestock();
         } catch (error) {
             console.error("Delete livestock error:", error);
@@ -161,7 +161,7 @@ function FarmerLivestockPage() {
 
     return (
         <div className="w-full h-full font-sans max-w-6xl mx-auto">
-            {/* Header (Refresh button අයින් කර ඇත) */}
+            {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Livestock Inventory</h1>
                 <p className="text-sm text-gray-500 mt-1">Manage cattle, dairy, poultry, and animal counts on your farm.</p>
@@ -179,8 +179,8 @@ function FarmerLivestockPage() {
                 </div>
             )}
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            {/* Summary Cards (Storage Sync කාඩ්පත ඉවත් කර තීරු 2ක් ලෙස සකසා ඇත) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Livestock Heads</p>
                     <h3 className="text-2xl md:text-3xl font-bold text-green-700 mt-1">
@@ -192,13 +192,6 @@ function FarmerLivestockPage() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Herds / Flocks</p>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
                         {livestockList.length} Categories
-                    </h3>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Storage Sync</p>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
-                        SQL Server Live
                     </h3>
                 </div>
             </div>
@@ -259,7 +252,7 @@ function FarmerLivestockPage() {
                             disabled={isSaving}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl shadow-sm text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 mt-2"
                         >
-                            {isSaving ? "Saving to Database..." : "Register Livestock"}
+                            {isSaving ? "Saving..." : "Register Livestock"}
                         </button>
                     </form>
                 </div>
@@ -271,7 +264,7 @@ function FarmerLivestockPage() {
                     </h3>
 
                     {isLoading ? (
-                        <div className="text-center py-12 text-gray-400 text-sm">Loading animals from database...</div>
+                        <div className="text-center py-12 text-gray-400 text-sm">Loading animals...</div>
                     ) : livestockList.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 text-sm">
                             No livestock records found. Add your animals using the form.

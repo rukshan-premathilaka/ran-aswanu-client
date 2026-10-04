@@ -202,7 +202,6 @@ function BuyerProfilePage() {
 
     // Become a Farmer / Go to Farmer Dashboard Action
     const handleFarmerButtonClick = async () => {
-        // දැනටමත් Farmer කෙනෙක් නම් සෘජුවම Farmer Dashboard වෙත යන්න
         if (role === "FARMER") {
             navigate("/farmer/home");
             return;
@@ -212,10 +211,7 @@ function BuyerProfilePage() {
         setIsSwitchingRole(true);
 
         try {
-            // Backend එකේ Role එක FARMER ලෙස update කිරීම
             await api.request('PUT', '/me/role', { role: "FARMER" });
-
-            // State සහ LocalStorage දෙකම FARMER බවට පත් කිරීම
             setRole("FARMER");
             localStorage.setItem("user_role", "FARMER");
 
@@ -224,7 +220,6 @@ function BuyerProfilePage() {
                 text: "Account switched to Farmer mode successfully. Redirecting to Farmer Dashboard..."
             });
 
-            // කිසිදු බාධාවකින් තොරව කෙලින්ම Farmer Dashboard වෙත යොමු කිරීම
             setTimeout(() => {
                 navigate("/farmer/home", { replace: true });
             }, 600);
@@ -252,9 +247,9 @@ function BuyerProfilePage() {
                 {/* Top Bar with Title, Home Button and Logout Button */}
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Buyer Profile</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Personal Profile</h1>
                         <p className="text-sm text-gray-500 mt-0.5">
-                            Ran Aswanna Crop Buying & Order Management Profile
+                            Ran Aswanna Personal Profile & Order Management
                         </p>
                     </div>
 
@@ -289,7 +284,7 @@ function BuyerProfilePage() {
                                 />
                             ) : (
                                 <div className="w-20 h-20 rounded-full bg-green-100 text-green-700 font-bold text-2xl flex items-center justify-center border-2 border-green-500">
-                                    {username ? username.charAt(0).toUpperCase() : "B"}
+                                    {username ? username.charAt(0).toUpperCase() : "U"}
                                 </div>
                             )}
                             <input
@@ -403,7 +398,7 @@ function BuyerProfilePage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none"
+                                        className="w-full border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none"
                                     />
                                 </div>
 

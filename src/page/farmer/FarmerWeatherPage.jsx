@@ -2,70 +2,94 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Sun, CloudRain, Cloud } from 'lucide-react';
 
 function FarmerWeatherPage() {
+    // 1. කාලගුණ දත්ත සහ තත්ත්වයන් තියාගන්න සරල variables (States)
     const [weather, setWeather] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // 2. Location සහ Search සඳහා variables
     const [cityInput, setCityInput] = useState("");
     const [currentCityName, setCurrentCityName] = useState("Uva Province, Sri Lanka");
-    const [coords, setCoords] = useState({ lat: 7.2906, lon: 80.6337 });
+    const [latitude, setLatitude] = useState(7.2906);
+    const [longitude, setLongitude] = useState(80.6337);
 
-    useEffect(() => {
-        const fetchWeather = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch(
-                    `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,surface_pressure&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
-                );
+    // 3. API එකෙන් කාලගුණ දත්ත ලබාගැනීම (Fetch Weather Data)
+    const fetchWeatherData = async () => {
+        setIsLoading(true);
+        setError(null);
 
-                if (!response.ok) {
-                    throw new Error("Failed to fetch weather data");
-                }
+        try {
+            // Open-Meteo නොමිලේ ලැබෙන API එකෙන් දත්ත ලබාගැනීම
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,surface_pressure&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`;
 
-                const data = await response.json();
-                setWeather(data);
-                setIsLoading(false);
-                setError(null);
-            } catch (err) {
-                setError(err.message);
-                setIsLoading(false);
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch weather data from server");
             }
-        };
 
-        fetchWeather();
-    }, [coords]);
+            const data = await response.json();
+            setWeather(data);
+            setIsLoading(false);
+        } catch (err) {
+            console.error("Weather error:", err);
+            setError("Could not load weather data. Please try again.");
+            setIsLoading(false);
+        }
+    };
 
-    const searchCity = async () => {
-        if (cityInput.trim() === "") return;
+    // Latitude හෝ Longitude වෙනස් වන විට ස්වයංක්‍රීයව දත්ත ලබාගැනීම
+    useEffect(() => {
+        fetchWeatherData();
+    }, [latitude, longitude]);
+
+    // 4. නගරයේ නම අනුව Latitude & Longitude සොයාගැනීම (Search City)
+    const handleSearchCity = async () => {
+        const trimmedCity = cityInput.trim();
+        if (trimmedCity === "") {
+            return;
+        }
 
         setIsLoading(true);
-        try {
-            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityInput}&count=1&language=en&format=json`);
-            const data = await res.json();
 
+        try {
+            const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${trimmedCity}&count=1&language=en&format=json`;
+            const response = await fetch(geocodeUrl);
+            const data = await response.json();
+
+            // නගරය හමුවුනාදැයි බැලීම
             if (data.results && data.results.length > 0) {
-                const locationInfo = data.results[0];
-                setCoords({ lat: locationInfo.latitude, lon: locationInfo.longitude });
-                setCurrentCityName(`${locationInfo.name}, ${locationInfo.country || ''}`);
+                const firstResult = data.results[0];
+                setLatitude(firstResult.latitude);
+                setLongitude(firstResult.longitude);
+                setCurrentCityName(`${firstResult.name}, ${firstResult.country || ''}`);
                 setCityInput("");
             } else {
                 alert("Location not found! Please check the spelling and try again.");
                 setIsLoading(false);
             }
         } catch (err) {
-            alert("Error finding location. Please try again.");
+            alert("Error finding location. Please check your internet connection.");
             setIsLoading(false);
         }
     };
 
+    // 5. Weather Code එක අනුව තත්ත්වය වචනයෙන් ලබාදීම
     const getWeatherCondition = (code) => {
-        if (code === 0) return "Clear Sky";
-        if (code === 1 || code === 2 || code === 3) return "Partly Cloudy";
-        if (code >= 51 && code <= 67) return "Rainy";
-        if (code >= 95) return "Thunderstorm";
-        return "Unknown";
+        if (code === 0) {
+            return "Clear Sky";
+        } else if (code === 1 || code === 2 || code === 3) {
+            return "Partly Cloudy";
+        } else if (code >= 51 && code <= 67) {
+            return "Rainy";
+        } else if (code >= 95) {
+            return "Thunderstorm";
+        } else {
+            return "Clear Sky";
+        }
     };
 
+    // Loading අවස්ථාවේදී පෙන්වන UI එක
     if (isLoading && !weather) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -75,27 +99,36 @@ function FarmerWeatherPage() {
         );
     }
 
+    // Error එකක් ආ විට පෙන්වන UI එක
     if (error && !weather) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-red-500">
                 <p>Error: {error}</p>
-                <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-100 rounded-lg">Try Again</button>
+                <button
+                    onClick={fetchWeatherData}
+                    className="mt-4 px-4 py-2 bg-red-100 rounded-lg font-bold text-red-700 cursor-pointer"
+                >
+                    Try Again
+                </button>
             </div>
         );
     }
 
-    let currentTemp = Math.round(weather.current.temperature_2m);
-    let humidity = weather.current.relative_humidity_2m;
-    let windSpeed = Math.round(weather.current.wind_speed_10m);
-    let pressure = Math.round(weather.current.surface_pressure);
+    // 6. ප්‍රධාන අගයන් සරල විචල්‍යයන්ට (Variables) වෙන් කරගැනීම
+    const currentTemp = Math.round(weather?.current?.temperature_2m || 0);
+    const humidity = weather?.current?.relative_humidity_2m || 0;
+    const windSpeed = Math.round(weather?.current?.wind_speed_10m || 0);
+    const pressure = Math.round(weather?.current?.surface_pressure || 0);
+    const weatherCondition = getWeatherCondition(weather?.current?.weather_code || 0);
 
-    let currentHourIndex = new Date().getHours();
-    let rainChance = weather.hourly.precipitation_probability[currentHourIndex] || 0;
-    let weatherCondition = getWeatherCondition(weather.current.weather_code);
+    // දැනට පවතින පැය සඳහා වැසි සම්භාවිතාව
+    const currentHourIndex = new Date().getHours();
+    const rainChance = weather?.hourly?.precipitation_probability?.[currentHourIndex] || 0;
 
-    let adviceText = "";
-    let adviceBgColor = "";
-    let adviceTextColor = "";
+    // 7. ගොවියාට සුදුසු උපදෙස තීරණය කිරීම (Beginner-friendly if/else)
+    let adviceText = "Good weather conditions! It is safe for planting and field work today.";
+    let adviceBgColor = "bg-[#D2E9C4] border-green-400";
+    let adviceTextColor = "text-green-900";
 
     if (rainChance > 50) {
         adviceText = "High chance of rain today. Do not apply fertilizer or chemicals to prevent washing away.";
@@ -105,29 +138,30 @@ function FarmerWeatherPage() {
         adviceText = "Strong winds detected. Avoid spraying pesticides today.";
         adviceBgColor = "bg-red-100 border-red-300";
         adviceTextColor = "text-red-800";
-    } else {
-        adviceText = "Good weather conditions! It is safe for planting and field work today.";
-        adviceBgColor = "bg-[#D2E9C4] border-green-400";
-        adviceTextColor = "text-green-900";
     }
 
-    let nextHoursData = [];
-
+    // 8. ඉදිරි පැය 8 සඳහා සරල For-Loop එකකින් දත්ත ලැයිස්තුව සැකසීම
+    const nextHoursData = [];
     for (let i = 0; i < 8; i++) {
-        let hourIndex = currentHourIndex + i;
+        const hourIndex = currentHourIndex + i;
 
-        let displayHour = hourIndex % 24;
-        let ampm = displayHour >= 12 ? 'PM' : 'AM';
+        // 12-hour AM/PM format එකට හැරවීම
+        const displayHour = hourIndex % 24;
+        const ampm = displayHour >= 12 ? 'PM' : 'AM';
         let simpleHour = displayHour % 12;
-        if (simpleHour === 0) simpleHour = 12;
+        if (simpleHour === 0) {
+            simpleHour = 12;
+        }
 
-        let timeString = simpleHour + " " + ampm;
-
-        let hrTemp = Math.round(weather.hourly.temperature_2m[hourIndex]);
-        let hrRain = weather.hourly.precipitation_probability[hourIndex];
+        const timeString = `${simpleHour} ${ampm}`;
+        const hrTemp = Math.round(weather?.hourly?.temperature_2m?.[hourIndex] || currentTemp);
+        const hrRain = weather?.hourly?.precipitation_probability?.[hourIndex] || 0;
 
         nextHoursData.push(
-            <div key={i} className="flex flex-col items-center bg-gray-50 p-4 rounded-xl border border-gray-100 w-full hover:bg-[#D2E9C4]/30 transition-colors">
+            <div
+                key={i}
+                className="flex flex-col items-center bg-gray-50 p-4 rounded-xl border border-gray-100 w-full hover:bg-[#D2E9C4]/30 transition-colors"
+            >
                 <p className="text-xs font-bold text-gray-500 whitespace-nowrap mb-1">{timeString}</p>
                 <p className="text-lg font-bold text-gray-900 my-1">{hrTemp}°C</p>
                 <p className="text-xs text-blue-600 font-semibold">
@@ -145,7 +179,7 @@ function FarmerWeatherPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Weather</h1>
                     <p className="text-gray-500 mt-2 font-medium">
-                         {currentCityName}
+                        📍 {currentCityName}
                     </p>
                 </div>
 
@@ -157,12 +191,13 @@ function FarmerWeatherPage() {
                             placeholder="Enter city name..."
                             value={cityInput}
                             onChange={(e) => setCityInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') searchCity(); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleSearchCity(); }}
                             className="w-full sm:w-64 border border-gray-200 rounded-l-xl px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#8dc63f] focus:ring-1 focus:ring-[#8dc63f]"
                         />
                         <button
-                            onClick={searchCity}
-                            className="bg-[#8dc63f] hover:bg-green-600 text-white px-4 py-2.5 rounded-r-xl transition-colors font-semibold text-sm border border-[#8dc63f]"
+                            type="button"
+                            onClick={handleSearchCity}
+                            className="bg-[#8dc63f] hover:bg-green-600 text-white px-4 py-2.5 rounded-r-xl transition-colors font-semibold text-sm border border-[#8dc63f] cursor-pointer"
                         >
                             Search
                         </button>
@@ -170,8 +205,8 @@ function FarmerWeatherPage() {
 
                     <div className="bg-white px-4 py-2.5 rounded-xl shadow-sm border border-gray-100 text-sm font-semibold text-green-700 flex items-center gap-2 whitespace-nowrap w-full sm:w-auto justify-center">
                         <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
                         Live System Active
                     </div>
@@ -191,6 +226,7 @@ function FarmerWeatherPage() {
                     <div className="absolute top-0 w-full h-2 bg-[#8dc63f]"></div>
                     <h3 className="text-gray-400 font-bold mb-6 text-xs tracking-widest uppercase">Current Status</h3>
 
+                    {/* Condition Icon */}
                     {weatherCondition === "Clear Sky" ? (
                         <Sun className="w-24 h-24 text-yellow-500 mb-6" />
                     ) : weatherCondition === "Rainy" ? (
@@ -255,16 +291,19 @@ function FarmerWeatherPage() {
                 {isLoading && <div className="absolute inset-0 bg-white/60 z-10"></div>}
 
                 {[1, 2, 3].map((dayIndex) => {
-                    const date = new Date(weather.daily.time[dayIndex]);
+                    const timeString = weather?.daily?.time?.[dayIndex];
+                    const date = timeString ? new Date(timeString) : new Date();
                     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-                    const maxTemp = Math.round(weather.daily.temperature_2m_max[dayIndex]);
-                    const minTemp = Math.round(weather.daily.temperature_2m_min[dayIndex]);
-                    const dailyCode = weather.daily.weather_code[dayIndex];
+                    const maxTemp = Math.round(weather?.daily?.temperature_2m_max?.[dayIndex] || 0);
+                    const minTemp = Math.round(weather?.daily?.temperature_2m_min?.[dayIndex] || 0);
+                    const dailyCode = weather?.daily?.weather_code?.[dayIndex] || 0;
                     const dailyCondition = getWeatherCondition(dailyCode);
 
                     return (
                         <div key={dayIndex} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                            <p className="font-bold text-gray-700 text-lg mb-2">{dayIndex === 1 ? 'Tomorrow' : dayName}</p>
+                            <p className="font-bold text-gray-700 text-lg mb-2">
+                                {dayIndex === 1 ? 'Tomorrow' : dayName}
+                            </p>
                             <div className="flex items-center gap-3 my-2">
                                 <p className="text-3xl font-bold text-gray-800">{maxTemp}°C</p>
                                 <p className="text-lg font-bold text-gray-400">{minTemp}°C</p>
