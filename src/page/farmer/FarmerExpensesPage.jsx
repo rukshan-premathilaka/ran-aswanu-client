@@ -139,7 +139,7 @@ function FarmerExpensesPage() {
 
         try {
             await api.request('PUT', `/farmer/expenses/${editingExpenseId}`, payload);
-            setSuccessMessage("Expense details updated successfully in Database!");
+            setSuccessMessage("Expense details updated successfully!");
             setEditingExpenseId(null);
             await loadExpenses();
         } catch (error) {

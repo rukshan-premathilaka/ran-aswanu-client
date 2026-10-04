@@ -122,7 +122,7 @@ function FarmerCalenderPage() {
             {/* Page Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">My Calendar</h1>
-                <p className="text-sm text-gray-500 mt-1">Schedule and track daily farming reminders stored directly in the database.</p>
+                <p className="text-sm text-gray-500 mt-1">Organize your farm tasks and never miss an important date.</p>
             </div>
 
             {/* Success and Error Alerts */}
@@ -196,7 +196,7 @@ function FarmerCalenderPage() {
                                 disabled={isSaving || isDeleting || isLoading}
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-xl shadow-sm text-xs cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                             >
-                                {isSaving ? "Saving to Database..." : "Save Details"}
+                                {isSaving ? "Saving..." : "Save Details"}
                             </button>
                         </div>
                     </div>

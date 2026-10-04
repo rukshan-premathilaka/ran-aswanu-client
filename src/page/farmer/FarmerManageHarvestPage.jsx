@@ -3,6 +3,13 @@ import ApiService from '@/api/ApiService.js';
 
 const api = new ApiService();
 
+// Helper to resolve product image URL
+const resolveFileUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return 'http://localhost:8080' + (path.startsWith('/files/') ? path : '/files/' + path);
+};
+
 function FarmerManageHarvestPage() {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +27,12 @@ function FarmerManageHarvestPage() {
     const [editDeliveryOption, setEditDeliveryOption] = useState("Pickup");
     const [editDescription, setEditDescription] = useState("");
 
-    // 1. Database එකෙන් තමන්ගේ සියලුම Products Load කිරීම (GET /api/farmer/products)
+    // Single photo edit states
+    const [editSelectedFile, setEditSelectedFile] = useState(null);
+    const [editImagePreview, setEditImagePreview] = useState(null);
+    const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
+
+    // 1. Load all products (GET /api/farmer/products)[cite: 5]
     const loadProductsFromDb = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -36,8 +48,8 @@ function FarmerManageHarvestPage() {
 
             setProducts(list);
         } catch (error) {
-            console.error("Failed to load products from database:", error);
-            setErrorMessage("Could not load products from Database. Check backend connection.");
+            console.error("Failed to load products:", error);
+            setErrorMessage("Could not load products. Please check connection.");
             setProducts([]);
         } finally {
             setIsLoading(false);
@@ -48,11 +60,10 @@ function FarmerManageHarvestPage() {
         loadProductsFromDb();
     }, []);
 
-    // 2. Publish / Unpublish Toggle කිරීම (PATCH /api/farmer/products/{listId}/status)
+    // 2. Publish / Unpublish Toggle (PATCH /api/farmer/products/{listId}/status)[cite: 5]
     const handleTogglePublish = async (listId, currentStatus) => {
         setSuccessMessage("");
         setErrorMessage("");
-
         const newStatus = !currentStatus;
 
         try {
@@ -66,7 +77,7 @@ function FarmerManageHarvestPage() {
         }
     };
 
-    // 3. Product Delete කිරීම (DELETE /api/farmer/products/{listId})
+    // 3. Product Delete (DELETE /api/farmer/products/{listId})[cite: 5]
     const handleDeleteProduct = async (listId) => {
         if (!window.confirm("Are you sure you want to permanently delete this product?")) {
             return;
@@ -77,7 +88,7 @@ function FarmerManageHarvestPage() {
 
         try {
             await api.request('DELETE', `/farmer/products/${listId}`);
-            setSuccessMessage("Product removed from Database successfully!");
+            setSuccessMessage("Product removed successfully!");
             await loadProductsFromDb();
         } catch (error) {
             console.error("Delete product error:", error);
@@ -86,9 +97,39 @@ function FarmerManageHarvestPage() {
         }
     };
 
-    // Start Editing
+    // 4. Quick Direct Photo Upload[cite: 5]
+    const handleDirectPhotoUpload = async (listId, file) => {
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            setErrorMessage("The image file is too large. Maximum size is 5 MB.");
+            return;
+        }
+
+        setIsUpdatingPhoto(true);
+        setSuccessMessage("");
+        setErrorMessage("");
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            await api.client.post(`/farmer/products/${listId}/image`, formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+            setSuccessMessage("Product photo updated successfully!");
+            await loadProductsFromDb();
+        } catch (error) {
+            console.error("Upload error:", error);
+            setErrorMessage("Failed to upload new product photo.");
+        } finally {
+            setIsUpdatingPhoto(false);
+        }
+    };
+
+    // 5. Start Editing
     const handleStartEdit = (item) => {
-        setEditingListId(item.listId || item.id);
+        const id = item.listId || item.id;
+        setEditingListId(id);
         setEditProductName(item.productName || item.name || "");
         setEditPricePerUnit(item.pricePerUnit || item.price || "");
         setEditAvailableStock(item.availableStock || item.stock || "");
@@ -97,13 +138,38 @@ function FarmerManageHarvestPage() {
         setEditMinimumOrderQuantity(item.minimumOrderQuantity || item.minOrder || "1");
         setEditDeliveryOption(item.deliveryOption || "Pickup");
         setEditDescription(item.description || "");
+
+        // Set current image preview
+        setEditSelectedFile(null);
+        setEditImagePreview(item.productImage ? resolveFileUrl(item.productImage) : null);
+        setErrorMessage("");
+        setSuccessMessage("");
     };
 
     const handleCancelEdit = () => {
+        if (editImagePreview && editSelectedFile) {
+            URL.revokeObjectURL(editImagePreview);
+        }
         setEditingListId(null);
+        setEditSelectedFile(null);
+        setEditImagePreview(null);
     };
 
-    // 4. Save Edited Product (PUT /api/farmer/products/{listId})
+    // Choose photo inside edit modal
+    const handleEditPhotoSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setErrorMessage("The image file is too large. Maximum size is 5 MB.");
+                return;
+            }
+            setEditSelectedFile(file);
+            setEditImagePreview(URL.createObjectURL(file));
+            setErrorMessage("");
+        }
+    };
+
+    // 6. Save Edited Product & Photo (PUT /api/farmer/products/{listId})[cite: 5]
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -122,8 +188,27 @@ function FarmerManageHarvestPage() {
 
         try {
             await api.request('PUT', `/farmer/products/${editingListId}`, updatedPayload);
-            setSuccessMessage("Product details successfully updated in Database!");
+
+            // Upload new photo if selected during edit[cite: 5]
+            if (editSelectedFile) {
+                const formData = new FormData();
+                formData.append("file", editSelectedFile);
+                try {
+                    await api.client.post(`/farmer/products/${editingListId}/image`, formData, {
+                        headers: { "Content-Type": "multipart/form-data" }
+                    });
+                } catch (imgErr) {
+                    console.warn("Image upload failed during product edit:", imgErr);
+                }
+            }
+
+            setSuccessMessage("Product details and photo successfully updated!");
+            if (editImagePreview && editSelectedFile) {
+                URL.revokeObjectURL(editImagePreview);
+            }
             setEditingListId(null);
+            setEditSelectedFile(null);
+            setEditImagePreview(null);
             await loadProductsFromDb();
         } catch (error) {
             console.error("Update product error:", error);
@@ -137,11 +222,11 @@ function FarmerManageHarvestPage() {
             <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Manage Harvest</h1>
-                    <p className="text-sm text-gray-500 mt-1">Review, edit, publish or remove active market catalog items.</p>
+                    <p className="text-sm text-gray-500 mt-1">Review produce details, change photos, or publish directly to the marketplace.</p>
                 </div>
                 <button
                     onClick={loadProductsFromDb}
-                    className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer"
+                    className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2 px-4 rounded-xl text-sm transition-all cursor-pointer shadow-sm"
                 >
                     Refresh List
                 </button>
@@ -161,27 +246,53 @@ function FarmerManageHarvestPage() {
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                 <div className="mb-5 border-b border-gray-100 pb-3 flex justify-between items-center">
-                    <h3 className="text-base font-bold text-gray-700">My Database Listings ({products.length})</h3>
+                    <h3 className="text-base font-bold text-gray-700">My Product Listings ({products.length})</h3>
+                    {isUpdatingPhoto && (
+                        <span className="text-xs font-semibold text-green-600 animate-pulse">
+                            Updating product photo...
+                        </span>
+                    )}
                 </div>
 
                 {isLoading ? (
                     <div className="text-center py-12 text-gray-500 font-semibold">
-                        Connecting to database and loading inventory...
+                        Loading inventory...
                     </div>
                 ) : products.length === 0 ? (
                     <div className="text-center py-12 text-gray-400 text-sm">
-                        No product listings found in Database. Publish your first produce using "Add Harvest".
+                        No product listings found. Publish your first produce using "Add Harvest".
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {products.map((item) => {
                             const listId = item.listId || item.id;
                             const isEditing = editingListId === listId;
+                            const imgUrl = item.productImage ? resolveFileUrl(item.productImage) : null;
 
                             return (
-                                <div key={listId} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <div key={listId} className="p-4 sm:p-5 bg-gray-50 rounded-xl border border-gray-100">
                                     {isEditing ? (
+                                        /* Edit Form */
                                         <form onSubmit={handleSaveEdit} className="space-y-4">
+                                            {/* Photo Edit Section */}
+                                            <div className="flex flex-col sm:flex-row items-center gap-4 p-3.5 bg-white rounded-xl border border-gray-200">
+                                                <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+                                                    {editImagePreview ? (
+                                                        <img src={editImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Photo</div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 text-center sm:text-left">
+                                                    <label className="text-xs font-bold text-gray-700 block mb-1">Product Photo</label>
+                                                    <p className="text-xs text-gray-400 mb-2">Upload a single fresh image (PNG, JPG, WEBP up to 5MB)</p>
+                                                    <label className="inline-block px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-lg cursor-pointer border border-gray-300 transition-colors">
+                                                        Change Photo
+                                                        <input type="file" accept="image/*" onChange={handleEditPhotoSelect} className="hidden" />
+                                                    </label>
+                                                </div>
+                                            </div>
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="text-xs font-bold text-gray-600 block mb-1">Product Name</label>
@@ -258,47 +369,87 @@ function FarmerManageHarvestPage() {
                                                 </div>
                                             </div>
 
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-600 block mb-1">Delivery Option</label>
+                                                <select
+                                                    value={editDeliveryOption}
+                                                    onChange={(e) => setEditDeliveryOption(e.target.value)}
+                                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                                                >
+                                                    <option value="Pickup">Buyer must pick up from farm</option>
+                                                    <option value="Delivery">Seller provides delivery</option>
+                                                    <option value="Both">Both pickup and delivery available</option>
+                                                </select>
+                                            </div>
+
                                             <div className="flex gap-2 pt-1">
                                                 <button
                                                     type="submit"
-                                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg text-xs cursor-pointer"
+                                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg text-xs cursor-pointer shadow-sm transition-all"
                                                 >
                                                     Save Updates
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={handleCancelEdit}
-                                                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg text-xs cursor-pointer"
+                                                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-5 rounded-lg text-xs cursor-pointer transition-all"
                                                 >
                                                     Cancel
                                                 </button>
                                             </div>
                                         </form>
                                     ) : (
+                                        /* Normal Product Card View */
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h4 className="font-bold text-gray-800 text-base">{item.productName}</h4>
-                                                    <span className="bg-gray-200 text-gray-700 font-bold px-2 py-0.5 rounded text-xs">
-                                                        {item.category}
-                                                    </span>
-                                                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                                                        item.listingStatus ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                                    }`}>
-                                                        {item.listingStatus ? 'Published' : 'Draft / Unpublished'}
-                                                    </span>
+                                            <div className="flex items-start gap-4">
+                                                {/* Single Photo with Quick Direct Change Button */}
+                                                <div className="relative group w-20 h-20 rounded-xl overflow-hidden bg-gray-200 border border-gray-200 flex-shrink-0">
+                                                    {imgUrl ? (
+                                                        <img src={imgUrl} alt={item.productName} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-semibold text-center p-1">
+                                                            No Photo
+                                                        </div>
+                                                    )}
+
+                                                    {/* Quick Hover Overlay to Change Photo directly */}
+                                                    <label
+                                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[10px] text-white font-bold cursor-pointer text-center px-1"
+                                                        title="Click to change photo"
+                                                    >
+                                                        Change Photo
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => handleDirectPhotoUpload(listId, e.target.files[0])}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
                                                 </div>
 
-                                                <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-gray-600">
-                                                    <p>Price: <span className="font-bold text-green-700">LKR {item.pricePerUnit} / {item.unitOfMeasurement}</span></p>
-                                                    <p>Available: <span className="font-bold text-gray-800">{item.availableStock} {item.unitOfMeasurement}</span></p>
-                                                    <p>Min Order: <span className="font-bold text-gray-800">{item.minimumOrderQuantity} {item.unitOfMeasurement}</span></p>
-                                                    <p>Logistics: <span className="font-medium text-gray-700">{item.deliveryOption}</span></p>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="font-bold text-gray-800 text-base">{item.productName}</h4>
+                                                        <span className="bg-gray-200 text-gray-700 font-bold px-2 py-0.5 rounded text-xs">
+                                                            {item.category}
+                                                        </span>
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                                            item.listingStatus ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                                        }`}>
+                                                            {item.listingStatus ? 'Published' : 'Draft / Unpublished'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-gray-600">
+                                                        <p>Price: <span className="font-bold text-green-700">LKR {item.pricePerUnit} / {item.unitOfMeasurement}</span></p>
+                                                        <p>Available: <span className="font-bold text-gray-800">{item.availableStock} {item.unitOfMeasurement}</span></p>
+                                                        <p>Min Order: <span className="font-bold text-gray-800">{item.minimumOrderQuantity} {item.unitOfMeasurement}</span></p>
+                                                        <p>Logistics: <span className="font-medium text-gray-700">{item.deliveryOption}</span></p>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
-                                                {/* Publish / Unpublish Status Toggle */}
+                                            <div className="flex items-center gap-2 self-end md:self-center">
                                                 <button
                                                     onClick={() => handleTogglePublish(listId, item.listingStatus)}
                                                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer border ${
@@ -310,18 +461,16 @@ function FarmerManageHarvestPage() {
                                                     {item.listingStatus ? 'Unpublish' : 'Publish'}
                                                 </button>
 
-                                                {/* Edit Button */}
                                                 <button
                                                     onClick={() => handleStartEdit(item)}
-                                                    className="px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 rounded-lg cursor-pointer"
+                                                    className="px-3 py-1.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
                                                 >
                                                     Edit
                                                 </button>
 
-                                                {/* Delete Button */}
                                                 <button
                                                     onClick={() => handleDeleteProduct(listId)}
-                                                    className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg cursor-pointer border border-red-100"
+                                                    className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg cursor-pointer border border-red-100 transition-colors"
                                                 >
                                                     Delete
                                                 </button>

@@ -56,6 +56,11 @@ function BuyerProfilePage() {
                 setAddress(data.address || "");
                 setRole(data.role || "BUYER");
                 setProfilePictureUrl(data.profilePictureUrl || null);
+
+                // LocalStorage එකත් Backend Role එක සමඟ sync කරගැනීම
+                if (data.role) {
+                    localStorage.setItem("user_role", data.role);
+                }
             }
         } catch (error) {
             const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to load profile details.";
@@ -65,7 +70,7 @@ function BuyerProfilePage() {
         }
     };
 
-    // Load Orders from Backend (F3 Fixed: Real Error Handling)
+    // Load Orders from Backend
     const fetchOrders = async () => {
         setIsLoadingOrders(true);
         setOrdersError("");
@@ -209,14 +214,15 @@ function BuyerProfilePage() {
             await api.request('PUT', '/me/role', { role: "FARMER" });
             setRole("FARMER");
             localStorage.setItem("user_role", "FARMER");
+
             setFarmerMessage({
                 type: "success",
-                text: "Account switched to Farmer mode successfully. Redirecting..."
+                text: "Account switched to Farmer mode successfully. Redirecting to Farmer Dashboard..."
             });
 
             setTimeout(() => {
-                navigate("/farmer/home");
-            }, 800);
+                navigate("/farmer/home", { replace: true });
+            }, 600);
         } catch (error) {
             const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to switch role.";
             setFarmerMessage({ type: "error", text: errorText });
@@ -241,14 +247,13 @@ function BuyerProfilePage() {
                 {/* Top Bar with Title, Home Button and Logout Button */}
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Buyer Profile</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Personal Profile</h1>
                         <p className="text-sm text-gray-500 mt-0.5">
-                            Ran Aswanna Crop Buying & Order Management Profile
+                            Ran Aswanna Personal Profile & Order Management
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3 self-start sm:self-auto">
-                        {/* Go to Home Button */}
                         <button
                             type="button"
                             onClick={() => navigate('/home')}
@@ -257,7 +262,6 @@ function BuyerProfilePage() {
                             Home
                         </button>
 
-                        {/* Logout Button */}
                         <button
                             type="button"
                             onClick={handleLogout}
@@ -280,7 +284,7 @@ function BuyerProfilePage() {
                                 />
                             ) : (
                                 <div className="w-20 h-20 rounded-full bg-green-100 text-green-700 font-bold text-2xl flex items-center justify-center border-2 border-green-500">
-                                    {username ? username.charAt(0).toUpperCase() : "B"}
+                                    {username ? username.charAt(0).toUpperCase() : "U"}
                                 </div>
                             )}
                             <input
@@ -394,7 +398,7 @@ function BuyerProfilePage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none"
+                                        className="w-full border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none"
                                     />
                                 </div>
 

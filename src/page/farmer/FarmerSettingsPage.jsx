@@ -4,7 +4,7 @@ import ApiService from '@/api/ApiService.js';
 const api = new ApiService();
 
 function FarmerSettingsPage() {
-    // Profile Fields (Exact Backend DTO keys)
+    // Profile Fields
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -25,7 +25,7 @@ function FarmerSettingsPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    // 1. Database එකෙන් User Profile තොරතුරු Load කිරීම (GET /api/me)
+    // 1. Load User Profile from Database
     const loadProfile = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -41,7 +41,7 @@ function FarmerSettingsPage() {
             }
         } catch (error) {
             console.error("Failed to load profile:", error);
-            const serverMsg = error.response?.data?.error || "Could not load profile from database.";
+            const serverMsg = error.response?.data?.error || "Could not load profile details.";
             setErrorMessage(serverMsg);
         } finally {
             setIsLoading(false);
@@ -52,7 +52,7 @@ function FarmerSettingsPage() {
         loadProfile();
     }, []);
 
-    // 2. Profile Details Database එකේ Save කිරීම (PUT /api/me)
+    // 2. Save Profile Details
     const handleSaveProfile = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -68,7 +68,7 @@ function FarmerSettingsPage() {
 
         try {
             const updated = await api.request('PUT', '/me', payload);
-            setSuccessMessage("Profile details successfully updated in Database!");
+            setSuccessMessage("Profile details successfully updated!");
             if (updated) {
                 setUsername(updated.username || username);
                 setEmail(updated.email || email);
@@ -84,7 +84,7 @@ function FarmerSettingsPage() {
         }
     };
 
-    // 3. Profile Picture එක Upload කිරීම (POST /api/me/picture)
+    // 3. Upload Profile Picture
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -119,7 +119,7 @@ function FarmerSettingsPage() {
         }
     };
 
-    // 4. Password එක වෙනස් කිරීම (PUT /api/me/password)
+    // 4. Change Password
     const handleChangePassword = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -149,7 +149,7 @@ function FarmerSettingsPage() {
 
         try {
             await api.request('PUT', '/me/password', payload);
-            setSuccessMessage("Password successfully changed in Database!");
+            setSuccessMessage("Password successfully changed!");
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
@@ -184,7 +184,7 @@ function FarmerSettingsPage() {
 
             {isLoading ? (
                 <div className="text-center py-12 text-gray-500 font-bold">
-                    Connecting to Database and loading account settings...
+                    Loading account settings...
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -226,10 +226,6 @@ function FarmerSettingsPage() {
                         <div className="mt-4 px-3 py-1 bg-green-50 text-green-700 font-bold text-xs rounded-full border border-green-200">
                             Role: {role}
                         </div>
-
-                        <p className="text-xs text-gray-400 mt-6 text-center">
-                            Click on photo to upload a fresh image (JPG, PNG or WEBP up to 5MB).
-                        </p>
                     </div>
 
                     {/* Right Column: Profile Form & Password Change */}
@@ -294,7 +290,7 @@ function FarmerSettingsPage() {
                                         disabled={isSavingProfile}
                                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-sm text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                                     >
-                                        {isSavingProfile ? "Saving to Database..." : "Save Profile Details"}
+                                        {isSavingProfile ? "Saving Details..." : "Save Profile Details"}
                                     </button>
                                 </div>
                             </form>
@@ -325,7 +321,7 @@ function FarmerSettingsPage() {
                                         <input
                                             type="password"
                                             required
-                                            minLength="8"
+                                            minLength={8}
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             placeholder="At least 8 characters"
@@ -338,7 +334,7 @@ function FarmerSettingsPage() {
                                         <input
                                             type="password"
                                             required
-                                            minLength="8"
+                                            minLength={8}
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="Re-type new password"
