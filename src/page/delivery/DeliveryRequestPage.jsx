@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Users, ArrowRight } from "lucide-react";
+import { Users, ArrowRight } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/apiError.js";
@@ -24,11 +24,10 @@ function Field({ label, error, children }) {
 export default function DeliveryRequestPage() {
     const navigate = useNavigate();
 
-    // The role is NOT picked by hand: GET /me -> FARMER = farmer form, TRANSPORT = deliverer form.
+    // role: "farmer" (asks for a vehicle) or "deliverer" (offers a vehicle)
     // weight: farmer = weight of the goods, deliverer = weight the vehicle can carry (both sent as estimatedWeight)
-    const [myRole, setMyRole] = useState(null);
-    const [isLoadingRole, setIsLoadingRole] = useState(true);
     const [form, setForm] = useState({
+        role: "farmer",
         goods: "",
         pickupLocation: "",
         destination: "",
@@ -42,24 +41,19 @@ export default function DeliveryRequestPage() {
     const [isSaving, setIsSaving] = useState(false);
 
     const setValue = (key) => (e) => setForm({ ...form, [key]: e.target.value });
-    const isFarmer = myRole === "FARMER";
-    const canCreate = myRole === "FARMER" || myRole === "TRANSPORT";
+    const isFarmer = form.role === "farmer";
 
+    // Start on the tab that matches the account (TRANSPORT = deliverer); the user can still switch.
     useEffect(() => {
         const loadRole = async () => {
             try {
                 const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
-                setMyRole(me.role);
+                if (me.role === "TRANSPORT") setForm((f) => ({ ...f, role: "deliverer" }));
             } catch (error) {
-                const err = getApiError(error);
-                if (err.status === 401) {
+                if (getApiError(error).status === 401) {
                     localStorage.removeItem("my_app_token");
                     navigate("/login");
-                    return;
                 }
-                setFormError(err.message);
-            } finally {
-                setIsLoadingRole(false);
             }
         };
         loadRole();
@@ -76,7 +70,7 @@ export default function DeliveryRequestPage() {
             return;
         }
 
-        // The backend names win: requestType, estimatedWeight (both roles), description, size
+        // The backend names win: requestType, estimatedWeight (both types), description, size
         const body = {
             requestType: isFarmer ? "FARMER_REQUEST" : "VEHICLE_OFFER",
             pickupLocation: form.pickupLocation,
@@ -91,8 +85,9 @@ export default function DeliveryRequestPage() {
         setIsSaving(true);
         try {
             await api.call(ENDPOINTS.DELIVERY.CREATE_REQUEST, body);
-            // Farmer goes to the vehicles list, deliverer goes to the farmer requests list
-            navigate(`/MatchineDeliveries?tab=${isFarmer ? "vehicles" : "requests"}`);
+            // Open the Matching Deliveries tab where the new entry is listed:
+            // a farmer request shows under "Farmer requests", a vehicle offer under "Available vehicles"
+            navigate(`/MatchineDeliveries?tab=${isFarmer ? "requests" : "vehicles"}`);
         } catch (error) {
             const err = getApiError(error);
             if (err.status === 401) {
@@ -101,29 +96,11 @@ export default function DeliveryRequestPage() {
                 return;
             }
             setFieldErrors(err.fieldErrors);
-            setFormError(err.message);
+            setFormError(err.message); // e.g. 403 when the account role does not match the chosen type
         } finally {
             setIsSaving(false);
         }
     };
-
-    if (isLoadingRole || !canCreate) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex">
-                <Sidebar active="request" />
-                <div className="flex-1 px-8 pt-8 max-w-6xl w-full mx-auto">
-                    <h1 className="text-2xl font-bold text-gray-800">Create Request</h1>
-                    <div className="mt-4 space-y-3">
-                        {isLoadingRole && <p className="text-sm text-gray-500">Loading...</p>}
-                        <MessageBox type="error" text={formError} />
-                        {!isLoadingRole && !formError && (
-                            <p className="text-sm text-gray-500">Only farmers and transport users can create requests.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
@@ -137,18 +114,24 @@ export default function DeliveryRequestPage() {
                     </p>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="flex-1 px-8 pb-10 max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start"
-                >
+                <form onSubmit={handleSubmit} className="flex-1 px-8 pb-10 max-w-3xl w-full mx-auto">
                     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 space-y-6">
                         <MessageBox type="error" text={formError} />
 
-                        {/* Your role (from your account, not chosen by hand) */}
-                        <div className="bg-gray-100 p-1 rounded-xl">
-                            <div className="py-2 rounded-lg text-sm font-medium text-center bg-white text-green-700 shadow-sm">
-                                {isFarmer ? "Farmer" : "Deliverer"}
-                            </div>
+                        {/* Farmer / Deliverer */}
+                        <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-xl">
+                            {["farmer", "deliverer"].map((r) => (
+                                <button
+                                    type="button"
+                                    key={r}
+                                    onClick={() => setForm({ ...form, role: r })}
+                                    className={`py-2 rounded-lg text-sm font-medium capitalize ${
+                                        form.role === r ? "bg-white text-green-700 shadow-sm" : "text-gray-600"
+                                    }`}
+                                >
+                                    {r}
+                                </button>
+                            ))}
                         </div>
 
                         <Field label={isFarmer ? "Goods (optional)" : "Vehicle name (optional)"} error={fieldErrors.description}>
@@ -194,8 +177,8 @@ export default function DeliveryRequestPage() {
                             <Users size={20} className="text-green-600 mt-0.5 shrink-0" />
                             <p className="text-sm text-gray-700">
                                 {isFarmer
-                                    ? "We'll show you the vehicles available for your delivery."
-                                    : "Farmers who need a vehicle like yours will see your offer."}
+                                    ? "Your request will be listed under Farmer requests in Matching Deliveries."
+                                    : "Your vehicle will be listed under Available vehicles in Matching Deliveries."}
                             </p>
                         </div>
 
@@ -207,15 +190,6 @@ export default function DeliveryRequestPage() {
                             {isSaving ? "Saving..." : "Create request"}
                             {!isSaving && <ArrowRight size={18} />}
                         </button>
-                    </div>
-
-                    {/* Decorative route picture only. TODO: replace with a real map later */}
-                    <div className="lg:sticky lg:top-8 rounded-2xl overflow-hidden h-[420px] relative bg-gradient-to-br from-green-50 via-gray-50 to-green-50 border border-gray-100">
-                        <svg viewBox="0 0 400 420" className="w-full h-full">
-                            <path d="M 60 60 C 140 120, 180 60, 230 180 S 320 320, 340 380" fill="none" stroke="#16a34a" strokeWidth="4" strokeLinecap="round" />
-                        </svg>
-                        <MapPin size={28} className="absolute top-8 left-12 text-green-600 fill-green-600" strokeWidth={1.5} />
-                        <MapPin size={28} className="absolute bottom-8 right-12 text-gray-700 fill-gray-700" strokeWidth={1.5} />
                     </div>
                 </form>
             </div>

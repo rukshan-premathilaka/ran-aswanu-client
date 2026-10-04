@@ -6,6 +6,17 @@ import ProductTile from "@/component/ProductTile.jsx";
 import ProductsPage from "./ProductsPage.jsx";
 import ProductDetailView from "@/component/ProductDetailView.jsx";
 import logoImg from "@/assets/farmerImg/logo.png";
+import { PERSONAL_PROFILE_PATH, useCurrentUser } from "@/utils/useCurrentUser.js";
+
+// One place for the site name, used everywhere on this page
+const BRAND_NAME = "Ran Aswanu";
+const [BRAND_FIRST, ...BRAND_REST] = BRAND_NAME.split(" ");
+
+// Same look as the side panel menu items
+const NAV_ITEM =
+	"px-5 py-3 rounded-xl text-sm font-medium transition-colors text-gray-500 hover:bg-gray-50 hover:text-gray-800";
+// Register and Login share this one style
+const AUTH_BUTTON = "px-5 py-3 rounded-xl text-sm font-medium transition-colors bg-green-50 text-green-900 shadow-sm";
 
 // Short explanations shown in a pop-up when a feature is clicked
 const FEATURES = [
@@ -14,7 +25,7 @@ const FEATURES = [
 		label: "Farmers",
 		text: "Direct from the field",
 		details:
-			"Farmers list their harvest directly on Ran Aswanu and set their own prices. With no middlemen, they earn a fairer share and you know exactly who grew your food.",
+			`Farmers list their harvest directly on ${BRAND_NAME} and set their own prices. With no middlemen, they earn a fairer share and you know exactly who grew your food.`,
 	},
 	{
 		icon: Leaf,
@@ -38,13 +49,13 @@ const MENU_ITEMS = [
 	{ label: "Home", path: "/home" },
 	{ label: "Products", path: "/products", action: "products" },
 	{ label: "Chat", path: "/chat" },
-	{ label: "Delivery ", path: "/MatchineDeliveries" },
-	{ label: "Farmer Home", path: "/farmer/home" },
-	{ label: "Buyer Profile", path: "/buyer-profile" },
+	{ label: "Delivery", path: "/MatchineDeliveries" },
+	// Shown only after login. The path comes from PERSONAL_PROFILE_PATH in src/utils/useCurrentUser.js
+	{ label: "Personal Profile", path: PERSONAL_PROFILE_PATH, requiresLogin: true },
 ];
 
 // Side panel (slides in from the left)
-function SidePanel({ open, onClose, onProducts }) {
+function SidePanel({ open, onClose, onProducts, isLoggedIn }) {
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
 
@@ -92,9 +103,9 @@ function SidePanel({ open, onClose, onProducts }) {
 			>
 				<div className="flex items-center justify-between px-6 pt-8 pb-6">
 					<div className="flex items-center gap-3">
-						<img src={logoImg} alt="Ran Aswanu logo" className="w-9 h-9 object-contain" />
+						<img src={logoImg} alt={`${BRAND_NAME} logo`} className="w-9 h-9 object-contain" />
 						<span className="text-2xl font-bold text-green-600 leading-tight">
-							Ran<br />Aswanna
+							{BRAND_FIRST}<br />{BRAND_REST.join(" ")}
 						</span>
 					</div>
 					<button onClick={onClose} aria-label="Close menu" className="p-1 rounded-lg hover:bg-gray-100 self-start">
@@ -102,7 +113,7 @@ function SidePanel({ open, onClose, onProducts }) {
 					</button>
 				</div>
 
-				<nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.map(item)}</nav>
+				<nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.filter((m) => !m.requiresLogin || isLoggedIn).map(item)}</nav>
 			</aside>
 		</>
 	);
@@ -129,19 +140,20 @@ function FeaturePopup({ feature, onClose }) {
 				aria-label={feature.label}
 			>
 				<button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 p-1 rounded-lg hover:bg-stone-100">
-					<X className="w-4 h-4 text-stone-500" />
+					<X className="w-4 h-4 text-gray-500" />
 				</button>
 				<div className="w-11 h-11 rounded-xl bg-green-50 flex items-center justify-center mb-4">
 					<Icon className="w-5 h-5 text-green-700" />
 				</div>
-				<h3 className="text-lg font-bold text-stone-900">{feature.label}</h3>
-				<p className="text-sm text-stone-600 leading-relaxed mt-2">{feature.details}</p>
+				<h3 className="text-lg font-bold text-gray-800">{feature.label}</h3>
+				<p className="text-sm text-gray-500 leading-relaxed mt-2">{feature.details}</p>
 			</div>
 		</div>
 	);
 }
 
 export function Home() {
+	const { isLoggedIn, username, picture } = useCurrentUser();
 	const [panelOpen, setPanelOpen] = useState(false);
 	const [activeFeature, setActiveFeature] = useState(null);
 	// "See more" opens the full products page right here (no router route needed)
@@ -193,7 +205,7 @@ export function Home() {
 
 	return (
 		<div className="min-h-screen bg-stone-50">
-			<SidePanel open={panelOpen} onClose={() => setPanelOpen(false)} onProducts={() => setShowAll(true)} />
+			<SidePanel open={panelOpen} onClose={() => setPanelOpen(false)} onProducts={() => setShowAll(true)} isLoggedIn={isLoggedIn} />
 			<FeaturePopup feature={activeFeature} onClose={() => setActiveFeature(null)} />
 
 			<header className="sticky top-0 z-30 bg-stone-50/90 backdrop-blur flex items-center justify-between px-6 md:px-10 py-4">
@@ -203,15 +215,31 @@ export function Home() {
 						aria-label="Open menu"
 						className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
 					>
-						<Menu className="w-5 h-5 text-stone-700" />
+						<Menu className="w-5 h-5 text-gray-700" />
 					</button>
-					<Link to="/home" className="flex items-center gap-2 font-extrabold text-stone-900">
-						<img src={logoImg} alt="Ran Aswanu logo" className="w-5 h-5 object-contain" /> RAN ASWANU
+					<Link to="/home" className="flex items-center gap-2 text-xl font-bold text-green-600 tracking-tight">
+						<img src={logoImg} alt={`${BRAND_NAME} logo`} className="w-7 h-7 object-contain" /> {BRAND_NAME}
 					</Link>
 				</div>
-				<nav className="flex items-center gap-6 text-sm font-medium text-stone-600">
-					<button onClick={() => setShowAll(true)} className="hover:text-green-700">Products</button>
-					<Link to="/login" className="hover:text-green-700">Login</Link>
+				<nav className="flex items-center gap-2">
+					{isLoggedIn ? (
+						// After login: the user profile replaces Register and Login
+						<Link to={PERSONAL_PROFILE_PATH} className={`${NAV_ITEM} flex items-center gap-2.5`}>
+							{picture ? (
+								<img src={picture} alt={username || "Profile"} className="w-8 h-8 rounded-full object-cover" />
+							) : (
+								<span className="w-8 h-8 rounded-full bg-green-100 text-green-700 text-xs font-semibold flex items-center justify-center">
+									{(username || "?").slice(0, 2).toUpperCase()}
+								</span>
+							)}
+							{username && <span className="max-w-[10rem] truncate">{username}</span>}
+						</Link>
+					) : (
+						<>
+							<Link to="/register" className={AUTH_BUTTON}>Register</Link>
+							<Link to="/login" className={AUTH_BUTTON}>Login</Link>
+						</>
+					)}
 				</nav>
 			</header>
 
@@ -222,10 +250,10 @@ export function Home() {
 						<p className="flex items-center gap-2 text-xs font-semibold tracking-widest text-green-700 uppercase mb-4">
 							<span className="w-1.5 h-1.5 rounded-full bg-green-600" /> Farm to table, direct from Sri Lanka
 						</p>
-						<h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-stone-900 leading-none">
-							RAN ASWANU
+						<h1 className="text-5xl md:text-6xl font-bold tracking-tight text-green-600 leading-none">
+							{BRAND_NAME.toUpperCase()}
 						</h1>
-						<p className="text-stone-500 mt-5 max-w-md leading-relaxed">
+						<p className="text-gray-500 mt-5 max-w-md leading-relaxed">
 							The marketplace that connects farmers, buyers and trusted transport partners — fresher
 							harvests, fairer prices, and delivery you can actually track.
 						</p>
@@ -247,8 +275,8 @@ export function Home() {
 									>
 										<Icon className="w-5 h-5 text-green-700 mt-0.5" />
 										<div>
-											<p className="text-sm font-semibold text-stone-900">{f.label}</p>
-											<p className="text-xs text-stone-500">{f.text}</p>
+											<p className="text-sm font-semibold text-gray-800">{f.label}</p>
+											<p className="text-xs text-gray-500">{f.text}</p>
 										</div>
 									</button>
 								);
@@ -265,7 +293,7 @@ export function Home() {
 						/>
 						<div className="absolute -bottom-5 -left-5 bg-white rounded-2xl shadow-lg px-4 py-3 flex items-center gap-2">
 							<Leaf className="w-4 h-4 text-green-700" />
-							<span className="text-xs font-semibold text-stone-700">Harvested today</span>
+							<span className="text-xs font-semibold text-gray-700">Harvested today</span>
 						</div>
 					</div>
 				</div>
@@ -274,8 +302,8 @@ export function Home() {
 				<section id="fresh-picks" className="mt-24 scroll-mt-20">
 					<div className="flex items-center justify-between mb-5">
 						<div>
-							<h2 className="text-2xl font-bold text-stone-900">Fresh Picks</h2>
-							<p className="text-sm text-stone-500">
+							<h2 className="text-2xl font-bold text-gray-800">Fresh Picks</h2>
+							<p className="text-sm text-gray-500">
 								Listings from farmers across Sri Lanka.
 							</p>
 						</div>
@@ -287,9 +315,9 @@ export function Home() {
 					{errorText && (
 						<p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2 mb-3">{errorText}</p>
 					)}
-					{isLoading && <p className="text-sm text-stone-500">Loading...</p>}
+					{isLoading && <p className="text-sm text-gray-500">Loading...</p>}
 					{!isLoading && !errorText && picks.length === 0 && (
-						<p className="text-sm text-stone-500">No produce listed yet. Check back soon.</p>
+						<p className="text-sm text-gray-500">No produce listed yet. Check back soon.</p>
 					)}
 
 					<style>{`

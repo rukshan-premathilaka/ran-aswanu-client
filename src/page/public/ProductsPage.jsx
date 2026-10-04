@@ -5,15 +5,16 @@ import { useProducts } from "@/api/fetchProducts.js";
 import ProductTile from "@/component/ProductTile.jsx";
 import ProductDetailView from "@/component/ProductDetailView.jsx";
 import logoImg from "@/assets/farmerImg/logo.png";
+import { PERSONAL_PROFILE_PATH, useCurrentUser } from "@/utils/useCurrentUser.js";
 
 // Sidebar menu. Change the paths here if your routes are named differently.
 const MENU_ITEMS = [
     { label: "Home", path: "/home" },
     { label: "Products", path: "/products" },
     { label: "Chat", path: "/chat" },
-    { label: "Delivery Request", path: "/DeliveryRequest" },
-    { label: "Farmer Home", path: "/farmer/home" },
-    { label: "Buyer Profile", path: "/buyer-profile" },
+    { label: "Delivery ", path: "/DeliveryRequest" },
+    // Shown only after login. The path comes from PERSONAL_PROFILE_PATH in src/utils/useCurrentUser.js
+    { label: "Personal Profile", path: PERSONAL_PROFILE_PATH, requiresLogin: true },
 ];
 
 const SORT_TABS = [
@@ -22,10 +23,14 @@ const SORT_TABS = [
     { id: "za", label: "Z to A" },
 ];
 
+// Same look as the sidebar menu items (used for the logged-in profile in the top bar)
+const NAV_ITEM =
+    "px-5 py-3 rounded-xl text-sm font-medium transition-colors text-gray-500 hover:bg-gray-50 hover:text-gray-800";
+
 const getName = (p) => p.productName ?? "Product";
 
 // Sidebar: hidden until the menu (three lines) button is clicked, like on Home
-function Sidebar({ open, onClose, onBack }) {
+function Sidebar({ open, onClose, onBack, isLoggedIn }) {
     const navigate = useNavigate();
     const { pathname } = useLocation();
 
@@ -70,7 +75,7 @@ function Sidebar({ open, onClose, onBack }) {
                     <Link to="/home" className="flex items-center gap-3">
                         <img src={logoImg} alt="Ran Aswanu logo" className="w-9 h-9 object-contain" />
                         <span className="text-2xl font-bold text-green-600 leading-tight">
-							Ran<br />Aswanna
+							Ran<br />Aswanu
 						</span>
                     </Link>
                     <button onClick={onClose} aria-label="Close menu" className="p-1 rounded-lg hover:bg-gray-100 self-start">
@@ -78,7 +83,7 @@ function Sidebar({ open, onClose, onBack }) {
                     </button>
                 </div>
 
-                <nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.map(item)}</nav>			</aside>
+                <nav className="px-4 flex-1 space-y-1 overflow-y-auto">{MENU_ITEMS.filter((m) => !m.requiresLogin || isLoggedIn).map(item)}</nav>			</aside>
         </>
     );
 }
@@ -86,6 +91,7 @@ function Sidebar({ open, onClose, onBack }) {
 export function ProductsPage({ onBack } = {}) {
     const navigate = useNavigate();
     const { products, isLoading, errorText } = useProducts();
+    const { isLoggedIn, username, picture } = useCurrentUser();
     const [searchParams] = useSearchParams();
     const [search, setSearch] = useState(searchParams.get("keyword") ?? ""); // /products?keyword=tomato from the Navbar search
     const [sort, setSort] = useState("all");
@@ -112,7 +118,7 @@ export function ProductsPage({ onBack } = {}) {
 
     return (
         <div className="min-h-screen bg-stone-50">
-            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onBack={onBack} />
+            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onBack={onBack} isLoggedIn={isLoggedIn} />
 
             <div>
                 {/* Top bar */}
@@ -154,13 +160,28 @@ export function ProductsPage({ onBack } = {}) {
                         ))}
                     </nav>
 
-                    <Link
-                        to="/login"
-                        aria-label="Account"
-                        className="ml-auto w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
-                    >
-                        <User className="w-5 h-5" />
-                    </Link>
+                    <div className="ml-auto">
+                        {isLoggedIn ? (
+                            <Link to={PERSONAL_PROFILE_PATH} className={`${NAV_ITEM} flex items-center gap-2.5`}>
+                                {picture ? (
+                                    <img src={picture} alt={username || "Profile"} className="w-8 h-8 rounded-full object-cover" />
+                                ) : (
+                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 text-xs font-semibold flex items-center justify-center">
+                                        {(username || "?").slice(0, 2).toUpperCase()}
+                                    </span>
+                                )}
+                                {username && <span className="max-w-[10rem] truncate">{username}</span>}
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/login"
+                                aria-label="Account"
+                                className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center hover:bg-green-700 transition-colors"
+                            >
+                                <User className="w-5 h-5" />
+                            </Link>
+                        )}
+                    </div>
                 </header>
 
                 {/* Product grid */}
