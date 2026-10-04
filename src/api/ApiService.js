@@ -53,6 +53,14 @@ class ApiService {
 			throw error;
 		}
 	}
+
+	// endpoint = { method: "POST", url: "/delivery/requests" }
+	async call(endpoint, data = {}) {
+		return this.request(endpoint.method, endpoint.url, data);
+	}
 }
 
 export default ApiService;
+
+// Ready-to-use instance: import { api } from "@/api/ApiService.js"
+export const api = new ApiService();

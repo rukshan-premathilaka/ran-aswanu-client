@@ -16,6 +16,10 @@ const Home = lazy(() =>
 	import("@/page/public/Home.jsx").then((m) => ({ default: m.Home }))
 );
 const ProductClick = lazy(() => import("@/page/public/ProductClick.jsx"));
+const ProductsPage = lazy(() =>
+	import("@/page/public/ProductsPage.jsx").then((m) => ({ default: m.ProductsPage }))
+);
+const CartPage = lazy(() => import("@/page/public/CartPage.jsx"));
 
 // Settings
 const UserProfileSettings = lazy(() => import("@/page/settings/UserProfileSettings.jsx"));
@@ -27,7 +31,9 @@ const routes = [
 	// ---------------- Public ----------------
 	{ path: "/", label: "Welcome", group: "Public", element: Welcome },
 	{ path: "/home", label: "Home", group: "Public", element: Home },
-	{ path: "/product-click", label: "Product Click", group: "Public", element: ProductClick },
+	{ path: "/products", label: "Products", group: "Public", element: ProductsPage },
+	{ path: "/product/:listId", devLink: "/product/1", label: "Product Detail", group: "Public", element: ProductClick },
+	{ path: "/cart", label: "Cart", group: "Public", element: CartPage },
 
 	// ---------------- Auth ----------------
 	{ path: "/register", label: "Register", group: "Auth", element: RegisterPage },
