@@ -61,12 +61,6 @@ const ENDPOINTS = {
         LIST_MY_MESSAGES: { url: "/support/messages", method: "GET" },
     },
 
-    // ---------- ORDERS (the cart stays in the browser; POST /buyer/orders sends it once) ----------
-    BUYER_ORDERS: {
-        PLACE_ORDER: { url: "/buyer/orders", method: "POST" },
-        LIST_MINE: { url: "/buyer/orders", method: "GET" },
-    },
-
     // ---------- ORDERS (cart stays in the browser) ----------
     BUYER_ORDERS: {
         PLACE_ORDER: { url: "/buyer/orders", method: "POST" },

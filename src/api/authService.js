@@ -1,11 +1,6 @@
-import axiosInstance from "./axiosInstance.js";
+import { api } from "@/api/ApiService.js";
+import ENDPOINTS from "@/api/endpoints.js";
 
-export const registerUser = async (userData) => {
-	const response = await axiosInstance.post("/users/register", userData);
-	return response.data;
-};
+export const registerUser = (userData) => api.call(ENDPOINTS.AUTH.REGISTER, userData);
 
-export const loginUser = async (credentials) => {
-	const response = await axiosInstance.post("/users/login", credentials);
-	return response.data;
-};
+export const loginUser = (credentials) => api.call(ENDPOINTS.AUTH.LOGIN, credentials);

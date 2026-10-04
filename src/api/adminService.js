@@ -1,10 +1,11 @@
 import ApiService from '@/api/ApiService.js';
+import { FILES_BASE_URL } from '@/api/config.js';
 
 // Same ApiService the farmer / buyer pages use (base URL + Bearer token are handled inside it).
 const api = new ApiService();
 
 // Backend root without "/api" -> used to build image links like  baseUrl + "/files/profile-pics/abc.png"
-export const FILES_BASE_URL = api.baseURL.replace(/\/api\/?$/, '');
+export { FILES_BASE_URL };
 
 export const fileUrl = (path) => (path ? `${FILES_BASE_URL}${path}` : null);
 

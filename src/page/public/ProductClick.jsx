@@ -12,8 +12,8 @@ import CheckoutModal from "@/component/CheckoutModal.jsx";
 import ReviewForm from "@/component/ReviewForm.jsx";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
-import { fileUrl } from "@/api/fileUrl.js";
+import { getApiError } from "@/api/Apierror.js";
+import { fileUrl } from "@/api/fileurl.js";
 import { fetchProductById, fetchRelatedProducts } from "@/api/fetchProducts.js";
 import { addToCart } from "@/utils/cart.js";
 

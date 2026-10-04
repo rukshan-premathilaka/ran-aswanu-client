@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '@/api/ApiService.js';
+import { toFileUrl } from '@/api/config.js';
 
 const api = new ApiService();
 
@@ -194,7 +195,7 @@ function FarmerSettingsPage() {
                         <div className="relative group cursor-pointer w-32 h-32 mb-4">
                             {profilePictureUrl ? (
                                 <img
-                                    src={profilePictureUrl.startsWith('http') ? profilePictureUrl : `http://localhost:8080${profilePictureUrl.startsWith('/files/') ? profilePictureUrl : '/files/' + profilePictureUrl}`}
+                                    src={toFileUrl(profilePictureUrl)}
                                     alt="Profile"
                                     className="w-full h-full rounded-full object-cover border-4 border-green-100 shadow-sm"
                                 />

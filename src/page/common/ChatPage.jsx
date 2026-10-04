@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/apiError.js";
+import { getApiError } from "@/api/Apierror.js";
 import {
     createChatClient,
     subscribeToChat,
     subscribeToChatErrors,
     sendChatMessage,
     closeChatClient,
-} from "@/api/chatSocket.js";
+} from "@/api/chatsocket.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import NotificationBell from "@/component/NotificationBell.jsx";
 import ChatWindow from "@/component/ChatWindow.jsx";

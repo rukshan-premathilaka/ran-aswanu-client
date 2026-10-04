@@ -1,7 +1,8 @@
 // ResetPasswordPage.jsx
 import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "@/api/ApiService.js";
+import ENDPOINTS from "@/api/endpoints.js";
 import { Eye, EyeOff, Lock, CheckCircle2, Sprout } from "lucide-react";
 
 function getPasswordStrength(password) {
@@ -48,7 +49,7 @@ function ResetPasswordPage() {
 
 		setLoading(true);
 		try {
-			await axios.post("http://localhost:8080/api/auth/reset-password", {
+			await api.call(ENDPOINTS.AUTH.RESET_PASSWORD, {
 				token,
 				newPassword,
 			});

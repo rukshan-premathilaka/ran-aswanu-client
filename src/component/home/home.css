@@ -1,0 +1,71 @@
+/* Home page animations. Everything here is plain CSS (no animation library). */
+
+/* ---- Hero staged entrance: starts after the loader, each step uses --d as its delay ---- */
+.home-root .stage { opacity: 0; }
+.home-root.is-ready .stage {
+    animation: homeFadeUp 600ms ease-out both;
+    animation-delay: var(--d, 0ms);
+}
+.home-root.is-ready .stage-image {
+    animation: homeScaleIn 800ms ease-out both;
+    animation-delay: var(--d, 0ms);
+}
+@keyframes homeFadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes homeScaleIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ---- Scroll reveal (RevealOnScroll adds .is-visible) ---- */
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 600ms ease-out, transform 600ms ease-out; }
+.reveal.is-visible { opacity: 1; transform: none; }
+.reveal-image { opacity: 0; transform: scale(0.97); transition: opacity 700ms ease-out, transform 700ms ease-out; }
+.reveal-image.is-visible { opacity: 1; transform: none; }
+
+/* ---- Hover effects ---- */
+.lift { transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease; }
+.lift:hover { transform: translateY(-6px); }
+.btn-lift { transition: transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease; }
+.btn-lift:hover { transform: translateY(-2px); }
+.zoom-img { transition: transform 500ms ease; }
+.group:hover .zoom-img { transform: scale(1.04); }
+.icon-pop { transition: transform 300ms ease, background-color 300ms ease, color 300ms ease; }
+.group:hover .icon-pop { transform: scale(1.1) rotate(-4deg); }
+
+/* ---- Loader ---- */
+.home-loader { transition: opacity 400ms ease; }
+.home-loader.is-leaving { opacity: 0; pointer-events: none; }
+.loader-bar { animation: loaderSlide 1.1s ease-in-out infinite; }
+@keyframes loaderSlide {
+    0% { transform: translateX(-110%); }
+    100% { transform: translateX(260%); }
+}
+.loader-leaf { animation: loaderSway 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes loaderSway {
+    0%, 100% { transform: rotate(-6deg); }
+    50% { transform: rotate(6deg); }
+}
+
+/* ---- Shared delivery route lines ---- */
+.route-line { stroke-dasharray: 6 8; animation: routeFlow 1.4s linear infinite; }
+@keyframes routeFlow { to { stroke-dashoffset: -28; } }
+
+/* ---- Reduced motion: no big movement, content is readable straight away ---- */
+@media (prefers-reduced-motion: reduce) {
+    .home-root .stage,
+    .home-root .stage-image,
+    .reveal,
+    .reveal-image { opacity: 1 !important; transform: none !important; animation: none !important; transition: none !important; }
+    .lift:hover, .btn-lift:hover { transform: none; }
+    .group:hover .zoom-img, .group:hover .icon-pop { transform: none; }
+    .loader-bar, .loader-leaf, .route-line { animation: none; }
+    .home-root * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---- Fresh Picks page change ---- */
+.picks-fade { animation: picksFade 600ms ease; }
+@keyframes picksFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .picks-fade { animation: none; } }
