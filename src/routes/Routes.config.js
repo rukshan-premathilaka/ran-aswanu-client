@@ -4,6 +4,7 @@ import DeliveryRequestPage from "@/page/delivery/DeliveryRequestPage.jsx";
 import DeliveryTrackingPage from "@/page/delivery/DeliveryTrackingPage.jsx";
 import FarmerRoutes from "@/routes/FarmerRoutes.jsx";
 import BuyerProfilePage from "@/page/buyer/BuyerProfilePage.jsx";
+
 // Auth pages
 const Login = lazy(() => import("@/page/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("@/page/auth/RegisterPage.jsx"));
@@ -16,13 +17,6 @@ const Home = lazy(() =>
 	import("@/page/public/Home.jsx").then((m) => ({ default: m.Home }))
 );
 const ProductClick = lazy(() => import("@/page/public/ProductClick.jsx"));
-const ProductsPage = lazy(() =>
-	import("@/page/public/ProductsPage.jsx").then((m) => ({ default: m.ProductsPage }))
-);
-const CartPage = lazy(() => import("@/page/public/CartPage.jsx"));
-
-// Admin
-const AdminRoutes = lazy(() => import("@/routes/AdminRoutes.jsx"));
 
 // Settings
 const UserProfileSettings = lazy(() => import("@/page/settings/UserProfileSettings.jsx"));
@@ -31,51 +25,55 @@ const UserProfileSettings = lazy(() => import("@/page/settings/UserProfileSettin
 const ChatPage = lazy(() => import("@/page/common/ChatPage.jsx"));
 
 const routes = [
-	// ---------------- Public ----------------
+	// ---------------- Public Routes ----------------
 	{ path: "/", label: "Welcome", group: "Public", element: Welcome },
 	{ path: "/home", label: "Home", group: "Public", element: Home },
-	{ path: "/products", label: "Products", group: "Public", element: ProductsPage },
-	{ path: "/product/:listId", devLink: "/product/1", label: "Product Detail", group: "Public", element: ProductClick },
-	{ path: "/cart", label: "Cart", group: "Public", element: CartPage },
+	{ path: "/product-click", label: "Product Click", group: "Public", element: ProductClick },
 
-	// ---------------- Auth ----------------
+	// ---------------- Auth Routes ----------------
 	{ path: "/register", label: "Register", group: "Auth", element: RegisterPage },
 	{ path: "/login", label: "Login", group: "Auth", element: Login },
 	{ path: "/forgot-password", label: "Forgot Password", group: "Auth", element: ForgotPasswordPage },
 	{ path: "/reset-password", label: "Reset Password", group: "Auth", element: ResetPasswordPage },
 
-	// ---------------- Settings ----------------
-	{ path: "/user-setting", label: "User Profile Settings", group: "Settings", element: UserProfileSettings },
+	// ---------------- Settings Routes ----------------
+	{
+		path: "/user-setting",
+		label: "User Profile Settings",
+		group: "Settings",
+		element: UserProfileSettings,
+		protectedRole: "AUTHENTICATED"
+	},
 
-	// ---------------- Farmer ----------------
+	// ---------------- Farmer Routes (FARMER Role එක පමණක් අවශ්‍යයි) ----------------
 	{
 		path: "/farmer/*",
 		devLink: "/farmer/home",
 		label: "Farmer Dashboard",
 		group: "Farmer",
 		element: FarmerRoutes,
+		protectedRole: "FARMER"
 	},
 
+	// ---------------- Buyer Profile Route (Login වූ ඕනෑම කෙනෙකුට විවෘතයි) ----------------
 	{
 		path: "/buyer-profile",
 		label: "Buyer Profile",
-		group: "Public",
-		element: BuyerProfilePage
+		group: "Buyer",
+		element: BuyerProfilePage,
+		protectedRole: "AUTHENTICATED"
 	},
 
-	// ---------------- Admin ----------------
+	// ---------------- Common Routes ----------------
 	{
-		path: "/admin/*",
-		devLink: "/admin",
-		label: "Admin Dashboard",
-		group: "Admin",
-		element: AdminRoutes,
+		path: "/chat",
+		label: "Chat",
+		group: "Common",
+		element: ChatPage,
+		protectedRole: "AUTHENTICATED"
 	},
 
-	// ---------------- Common ----------------
-	{ path: "/chat", label: "Chat", group: "Common", element: ChatPage },
-
-	// ---------------- Deliveries ----------------
+	// ---------------- Deliveries Routes ----------------
 	{ path: "/MatchineDeliveries", label: "Matchine Deliveries", group: "Deliveries", element: MatchingDeliveriesPage },
 	{ path: "/DeliveryRequest", label: "Delivery Request", group: "Deliveries", element: DeliveryRequestPage },
 	{ path: "/DeliveryTracking", label: "Delivery Tracking", group: "Deliveries", element: DeliveryTrackingPage },
