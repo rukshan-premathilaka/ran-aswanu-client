@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart } from 'lucide-react';
 import ProfileMenu from '@/component/ProfileMenu.jsx';
 import { cartCount, onCartChange } from '@/utils/cart.js';
+import logoImg from "@/assets/farmerImg/logo.png";
 
 function Navbar() {
     const navigate = useNavigate();
@@ -35,12 +36,16 @@ function Navbar() {
                 onKeyDown={(e) => e.key === 'Enter' && navigate('/home')}
             >
                 {/*logo*/}
-                <div className="w-9 h-9 bg-[#54B435] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                    R
+                <div className="w-9 h-9  rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    <img
+                        src={logoImg}
+                        alt="Ran Aswanna Logo"
+                        className="w-8 h-8 object-contain"
+                    />
                 </div>
                 {/* Site Name  */}
                 <span className="text-xl font-bold text-gray-800 tracking-wide">
-                    Ran <span className="text-[#54B435]">Aswanna</span>
+                     <span className="text-[#54B435]">Ran Aswanna</span>
                 </span>
             </div>
 
@@ -52,7 +57,7 @@ function Navbar() {
                         value={keyword}
                         onChange={(e) => setKeyword(e.target.value)}
                         aria-label="Search fresh items"
-                        placeholder="සොයන්න / Search fresh items..."
+                        placeholder="Search fresh items..."
                         className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#54B435] focus:bg-white transition-all placeholder:text-gray-400"
                     />
                     {/* Search bar */}
