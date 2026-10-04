@@ -1,44 +1,40 @@
-
 import logoImg from "@/assets/farmerImg/logo.png";
+import showcaseImg from "@/assets/farmerImg/loginimg.png";
 
 /**
  * Left panel shown on the register/login pages.
- * Pure CSS + SVG, no external image requests, so it always loads.
+ * Shows the photo src/assets/farmerImg/loginimg.png as the background.
  * Hidden on small screens (form takes over the full viewport there).
  */
 function AuthShowcase() {
     return (
         <div className="relative hidden h-screen w-1/2 overflow-hidden bg-lime-600 lg:flex lg:flex-col lg:justify-between">
-            {/* soft background texture */}
-            <div className="pointer-events-none absolute inset-0 opacity-20">
-                <div className="absolute -left-16 -top-16 h-72 w-72 rounded-full bg-lime-300 blur-3xl" />
-                <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-emerald-800 blur-3xl" />
-            </div>
+            {/* background photo (the green colour above shows while it loads) */}
+            <img
+                src={showcaseImg}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            {/* green shade so the logo (top) and the white text (bottom) stay easy to read */}
+            <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                    backgroundImage:
+                        "linear-gradient(to bottom, rgba(54,83,20,0.4) 0%, rgba(54,83,20,0) 40%, rgba(26,46,5,0.8) 100%)",
+                }}
+            />
 
             <div className="relative z-10 px-12 pt-12">
                 <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white backdrop-blur-sm">
                         <img src={logoImg} alt="Ran Aswanu logo" className="h-7 w-7 object-contain" />
                     </div>
-                    <span className="text-lg font-semibold tracking-tight text-white">Ranaswanu</span>
+                    <span className="text-lg font-semibold tracking-tight text-white">Ran aswanu</span>
                 </div>
             </div>
 
-            {/* center illustration: simple crop field scene */}
-            <div className="relative z-10 flex flex-1 items-center justify-center px-10">
-                <svg viewBox="0 0 360 300" className="w-full max-w-sm">
-                    <ellipse cx="180" cy="255" rx="150" ry="18" fill="#3f6212" opacity="0.35" />
-                    {[40, 90, 140, 190, 240, 290, 320].map((x, i) => (
-                        <g key={x} transform={`translate(${x}, ${230 - (i % 2 === 0 ? 10 : 0)})`}>
-                            <line x1="0" y1="0" x2="0" y2="-55" stroke="#ecfccb" strokeWidth="3" strokeLinecap="round" />
-                            <path d="M0,-55 C-14,-48 -16,-30 -2,-24" fill="none" stroke="#ecfccb" strokeWidth="3" strokeLinecap="round" />
-                            <path d="M0,-45 C14,-38 16,-22 2,-16" fill="none" stroke="#ecfccb" strokeWidth="3" strokeLinecap="round" />
-                            <circle cx="0" cy="-58" r="5" fill="#fef9c3" />
-                        </g>
-                    ))}
-                    <path d="M20,238 Q180,205 340,238 L340,255 Q180,225 20,255 Z" fill="#4d7c0f" />
-                </svg>
-            </div>
+            {/* empty space in the middle so the heading stays at the bottom */}
+            <div className="relative z-10 flex-1" />
 
             <div className="relative z-10 px-12 pb-12">
                 <h2 className="max-w-sm text-2xl font-semibold leading-snug text-white">
