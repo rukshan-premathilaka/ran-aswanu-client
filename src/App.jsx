@@ -1,6 +1,7 @@
 import './index.css';
 import AppCopy from "@/routes/AppCopy.jsx";
-import Test from "@/test/Test.jsx";
+import Navbar from "@/component/Navbar.jsx";
+
 
 
 
@@ -12,6 +13,7 @@ function App() {
 
 	return (
 		<AppCopy/>
+		/*<Navbar/>*/
 
 	);
 }

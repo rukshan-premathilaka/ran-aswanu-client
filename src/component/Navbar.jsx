@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Search, User, ShoppingCart } from 'lucide-react';
+import logoImg from "@/assets/farmerImg/logo.png";
 
 function Navbar() {
     return (
@@ -9,12 +10,16 @@ function Navbar() {
             {/* 🌿 1. Logo & Site Name */}
             <div className="flex items-center gap-2.5 cursor-pointer">
                 {/*logo*/}
-                <div className="w-9 h-9 bg-[#54B435] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                    R
+                <div className="w-9 h-9  rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    <img
+                        src={logoImg}
+                        alt="Ran Aswanna Logo"
+                        className="w-8 h-8 object-contain"
+                    />
                 </div>
                 {/* Site Name  */}
                 <span className="text-xl font-bold text-gray-800 tracking-wide">
-                    Ran <span className="text-[#54B435]">Aswanna</span>
+                    <span className="text-[#54B435]"> RanAswanu</span>
                 </span>
             </div>
 
@@ -41,11 +46,6 @@ function Navbar() {
                     <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         0
                     </span>
-                </button>
-
-                {/* 👤 User Profile Icon */}
-                <button className="flex items-center justify-center p-2 rounded-xl bg-gray-50 text-gray-600 hover:text-[#54B435] hover:bg-green-50 border border-gray-100 transition-all shadow-sm">
-                    <User size={20} />
                 </button>
 
             </div>

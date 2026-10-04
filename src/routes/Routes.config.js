@@ -17,6 +17,9 @@ const Home = lazy(() =>
 );
 const ProductClick = lazy(() => import("@/page/public/ProductClick.jsx"));
 
+// Admin
+const AdminRoutes = lazy(() => import("@/routes/AdminRoutes.jsx"));
+
 // Settings
 const UserProfileSettings = lazy(() => import("@/page/settings/UserProfileSettings.jsx"));
 
@@ -52,6 +55,15 @@ const routes = [
 		label: "Buyer Profile",
 		group: "Public",
 		element: BuyerProfilePage
+	},
+
+	// ---------------- Admin ----------------
+	{
+		path: "/admin/*",
+		devLink: "/admin",
+		label: "Admin Dashboard",
+		group: "Admin",
+		element: AdminRoutes,
 	},
 
 	// ---------------- Common ----------------
