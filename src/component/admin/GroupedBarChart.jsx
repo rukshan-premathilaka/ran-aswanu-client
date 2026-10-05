@@ -1,10 +1,7 @@
 import React from 'react';
 
-/**
- * Small dependency-free SVG bar chart (the project has no chart library, so none was added).
- * props:
- *   labels = ['Jan', 'Feb', ...]
- *   series = [{ name, color, values: [..] }, ...]   (values.length === labels.length)
+/*
+ series = [{ name, color, values: [..] }, ...]   (values.length === labels.length)
  */
 function GroupedBarChart({ labels, series, height = 240 }) {
     const width = 640;

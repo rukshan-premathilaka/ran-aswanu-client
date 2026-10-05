@@ -1,7 +1,7 @@
 import React from 'react';
 import { labelCls } from '@/component/admin/adminStyles.js';
 
-// Label + control wrapper used by the filter bars.
+//  filter bars.
 function FilterField({ label, children, className = '' }) {
     return (
         <div className={className}>

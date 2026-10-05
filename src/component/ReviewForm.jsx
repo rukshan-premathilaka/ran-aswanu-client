@@ -8,9 +8,9 @@ import { getApiError } from "@/api/apiError.js";
 
 const MAX_COMMENT = 500;
 
-// "Write a review" box: 5 stars (lime when selected, like the Play Store) + a comment.
-// The backend rates an ORDER: POST /api/orders/{orderId}/rating (COMPLETED orders only, one rating per order).
-// So the review is sent to the buyer's latest completed order from this seller that is not rated yet.
+
+//  POST /api/orders/{orderId}/rating
+
 function ReviewForm({ farmerId, onSubmitted }) {
     const navigate = useNavigate();
     const [score, setScore] = useState(0);
@@ -37,7 +37,7 @@ function ReviewForm({ farmerId, onSubmitted }) {
 
         setIsSubmitting(true);
         try {
-            // completed orders of this buyer from this seller, newest first
+            // completed orders
             const orders = await api.call(ENDPOINTS.BUYER_ORDERS.LIST_MINE);
             const candidates = orders
                 .filter((o) => o.orderStatus === "COMPLETED" && Number(o.farmerId) === Number(farmerId))
@@ -72,7 +72,7 @@ function ReviewForm({ farmerId, onSubmitted }) {
         } catch (error) {
             const err = getApiError(error);
             if (err.status === 401) {
-                localStorage.removeItem("my_app_token"); // token expired or invalid
+                localStorage.removeItem("my_app_token");
                 setNeedLogin(true);
                 return;
             }

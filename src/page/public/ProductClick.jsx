@@ -63,7 +63,7 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
         };
     }, [listId]);
 
-    // 2. Reviews of the seller and related products
+    // 2. Reviews of the seller and related products (after the product is known)
     useEffect(() => {
         if (!product?.farmerId) return;
         let cancelled = false;
@@ -76,7 +76,7 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
             } catch (error) {
                 if (cancelled) return;
                 const err = getApiError(error);
-
+                // Visitors get 401 until the backend opens this call: show a hint, do not crash
                 setReviewsNote(err.status === 401 ? "Log in to see reviews." : err.message);
             }
         };
@@ -93,10 +93,10 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
         return () => {
             cancelled = true;
         };
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [product?.listId, product?.farmerId]);
 
-
+    // Check quantity against the minimum order and the stock before add-to-cart / buy
     const validQuantity = () => {
         const qty = Number(quantity);
         if (!(qty > 0)) {
@@ -144,7 +144,7 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
         }
     };
 
-    // After a new review is saved
+    // After a new review is saved, load the seller's reviews again
     const refreshReviews = async () => {
         try {
             setReviewData(await api.call(ENDPOINTS.RATINGS.LIST_FOR_USER(product.farmerId)));
@@ -177,7 +177,7 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
     const images = [fileUrl(product.productImage)].filter(Boolean); // the backend stores ONE image per product
     const outOfStock = !(Number(product.availableStock) > 0);
 
-    // Map the backend review keys
+    // Map the backend review keys to what the components read
     const reviews = (reviewData.reviews ?? []).map((r) => ({
         id: r.ratingId,
         userName: r.reviewerName,
@@ -187,8 +187,8 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
     }));
     const seller = {
         name: product.farmerName,
-        image: fileUrl(product.farmerProfilePicture),
-        location: product.location ?? "",
+        image: fileUrl(product.farmerProfilePicture), // 🔧 backend to-do; letter avatar until it arrives
+        location: product.location ?? "", // 🔧 backend to-do
     };
     const relatedCards = related.map((p) => ({
         id: p.listId,
@@ -266,7 +266,7 @@ function ProductClick({ listId: listIdProp, initialProduct = null }) {
                     <ReviewsList reviews={reviews} />
                 )}
 
-                {/* rate the seller:*/}
+                {/* rate the seller: stars + comment (below the reviews) */}
                 <div className="mt-8">
                     <ReviewForm farmerId={product.farmerId} onSubmitted={refreshReviews} />
                 </div>

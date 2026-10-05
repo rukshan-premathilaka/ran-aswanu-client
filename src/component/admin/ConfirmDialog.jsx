@@ -1,10 +1,10 @@
 import React from 'react';
 import { btnDanger, btnPrimary, btnSecondary } from '@/component/admin/adminStyles.js';
 
-/**
- * Confirmation modal. Disable / enable always asks first (guide section 9).
- * `danger` = red confirm button (disable), otherwise green (enable).
- */
+
+
+ /* `danger` =  confirm (disable), green (enable).*/
+
 function ConfirmDialog({
     open,
     title,

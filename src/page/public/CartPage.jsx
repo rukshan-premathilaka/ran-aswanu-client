@@ -8,12 +8,11 @@ import { getCart, onCartChange, removeFromCart, removeManyFromCart, updateCartQu
 
 const UNKNOWN_SELLER = "unknown"; // items added before the cart stored the farmer
 
-// Never prints "NaN" when a price or quantity is missing
+
 const num = (n) => Number(n) || 0;
 const money = (n) => num(n).toFixed(2);
 const lineTotal = (i) => num(i.pricePerUnit) * num(i.quantity);
 
-// Same rules the backend checks when the order is placed
 function quantityProblem(i) {
     const qty = Number(i.quantity);
     if (!(qty > 0)) return "Enter a quantity above 0.";
@@ -26,14 +25,14 @@ function quantityProblem(i) {
     return "";
 }
 
-// The cart is kept in the browser (localStorage). "Buy now" sends it to POST /buyer/orders,
-// and the backend creates ONE ORDER PER FARMER.
+//  "Buy now" sends it to POST /buyer/orders,
+
 export default function CartPage() {
-    const [items, setItems] = useState(() => getCart()); // lazy: reads localStorage once, not on every render
+    const [items, setItems] = useState(() => getCart()); // reads localStorage
     const [showCheckout, setShowCheckout] = useState(false);
 
     useEffect(() => {
-        setItems(getCart()); // catches a change that happened before this effect ran
+        setItems(getCart());
         return onCartChange(() => setItems(getCart()));
     }, []);
 
@@ -183,7 +182,7 @@ export default function CartPage() {
                 <CheckoutModal
                     items={items}
                     onClose={() => setShowCheckout(false)}
-                    // The modal shows its own "Order placed" screen, so removing the items here is safe
+                    // Order placed" screen,
                     onSuccess={() => removeManyFromCart(items.map((i) => i.listId))}
                 />
             )}

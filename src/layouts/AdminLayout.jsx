@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import logoImg from '../assets/farmerImg/logo.png';
 import { useAdminMe } from '@/component/admin/AdminContext.js';
 
-// Same structure as FarmerDashboard.jsx (white sidebar + scrolling main), plus a small header.
+//white sidebar + scrolling main
 const AdminLayout = () => {
     const navigate = useNavigate();
     const me = useAdminMe();

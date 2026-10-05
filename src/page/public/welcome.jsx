@@ -5,10 +5,10 @@ import Leftimg from "@/assets/LeftImg.jpg";
 import logoImg from "@/assets/farmerImg/logo.png";
 
 const Welcome = () => {
-    // 2. Initialize the navigate function
+
     const navigate = useNavigate();
 
-    // 3. The language is saved in the browser only (there is no backend endpoint for it)
+
     const handleLanguageSelection = (language) => {
         localStorage.setItem("app_language", language);
         navigate("/login");

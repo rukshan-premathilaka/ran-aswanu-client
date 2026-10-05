@@ -69,10 +69,10 @@ function LoginPage() {
                     return;
                 }
             } catch {
-                // If profile call fails, proceed to default redirect
+
             }
 
-            // කලින් පිවිසීමට උත්සාහ කළ ආරක්ෂිත පිටුවක් ඇත්නම් එතැනට යොමු කිරීම
+
             const redirectTo = location.state?.from?.pathname || "/home";
             navigate(redirectTo, { replace: true });
 

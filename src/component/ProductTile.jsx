@@ -2,17 +2,16 @@ import { useState } from "react";
 import { Leaf, MapPin } from "lucide-react";
 import { fileUrl } from "@/api/fileurl.js";
 
-// Product card used on the Home page and the Products page. No price is shown.
-// Keys come straight from the backend (GET /products): productName, farmerName, category, productImage.
-// tall = taller picture (used on the Products page)
+// Product card used on the Home page and the Products page
+
 export default function ProductTile({ product, tall = false, onClick }) {
     const [imageBroken, setImageBroken] = useState(false);
 
     const name = product.productName ?? "Product";
     const label = product.category ?? "Fresh Produce";
     const farmer = product.farmerName;
-    const location = product.location; // not sent yet (backend to-do); hidden until it arrives
-    const image = fileUrl(product.productImage); // null when the product has no picture -> leaf placeholder
+    const location = product.location;
+    const image = fileUrl(product.productImage);
     const sub = [farmer, location].filter(Boolean).join(", ");
 
     return (

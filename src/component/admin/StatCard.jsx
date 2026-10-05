@@ -8,7 +8,7 @@ const VALUE_TONES = {
     red: 'text-red-600',
 };
 
-// Number card (same look as the farmer dashboard metric cards). `to` makes the card a link.
+// Number card
 function StatCard({ label, value, tone = 'default', to, loading = false }) {
     const body = (
         <>

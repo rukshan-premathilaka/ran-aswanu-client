@@ -39,14 +39,14 @@ function AdminProductsPage() {
     const debouncedSearch = useDebouncedValue(searchText, 400);
     useEffect(() => {
         if (debouncedSearch.trim() !== q) setFilter('q', debouncedSearch.trim());
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [debouncedSearch]);
 
     const [categoryText, setCategoryText] = useState(category);
     const debouncedCategory = useDebouncedValue(categoryText, 400);
     useEffect(() => {
         if (debouncedCategory.trim() !== category) setFilter('category', debouncedCategory.trim());
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [debouncedCategory]);
 
     const [farmerText, setFarmerText] = useState(farmerId);

@@ -4,9 +4,8 @@ import adminService from '@/api/adminService.js';
 import { useAdminErrorHandler } from '@/component/admin/adminHooks.js';
 import { formatDateTime, roleLabel } from '@/component/admin/adminHelpers.js';
 import { btnSecondary, cardCls, labelCls } from '@/component/admin/adminStyles.js';
-import ErrorAlert from '@/component/admin/ErrorAlert.jsx';
+import ErrorAlert from '@/component/admin/ErrorAlert.jsx'
 
-// Read only: no reply, delete or status buttons
 function AdminSupportDetailPage() {
     const { messageId } = useParams();
     const navigate = useNavigate();

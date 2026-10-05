@@ -8,8 +8,8 @@ import { fileUrl } from "@/api/fileurl.js";
 import { roleLabels, clearRoleStorage, syncRoleStorage } from "@/utils/roleUtils.js";
 import BecomeTransportButton from "@/component/BecomeTransportButton.jsx";
 
-// Profile icon for the navbar. Click it to open a small popup with the logged-in user's profile and a Logout button.
-// Not logged in: the popup asks the user to log in or create an account.
+
+// Not logged in:  popup & user to log in / create an account.
 function ProfileMenu() {
     const navigate = useNavigate();
     const boxRef = useRef(null);
@@ -19,7 +19,7 @@ function ProfileMenu() {
     const [isLoading, setIsLoading] = useState(false);
     const [errorText, setErrorText] = useState("");
 
-    // Load the profile every time the popup opens
+
     useEffect(() => {
         if (!open || !loggedIn) return;
         let cancelled = false;
@@ -51,7 +51,7 @@ function ProfileMenu() {
         };
     }, [open, loggedIn]);
 
-    // Close with a click outside or the Escape key
+
     useEffect(() => {
         if (!open) return;
         const onClick = (e) => boxRef.current && !boxRef.current.contains(e.target) && setOpen(false);
@@ -65,7 +65,7 @@ function ProfileMenu() {
     }, [open]);
 
     const toggle = () => {
-        if (!open) setLoggedIn(!!localStorage.getItem("my_app_token")); // check again each time it opens
+        if (!open) setLoggedIn(!!localStorage.getItem("my_app_token"));
         setOpen((o) => !o);
     };
 
