@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Floating success / error message (top right). `toast` = { type: 'success' | 'error', text }
+// Floating success / error message
 function Toast({ toast }) {
     if (!toast) return null;
     const isError = toast.type === 'error';

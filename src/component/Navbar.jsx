@@ -17,7 +17,7 @@ function Navbar() {
         return onCartChange(() => setCount(cartCount()));
     }, []);
 
-    // Enter in the search box opens the products page with the keyword (ProductsPage reads ?keyword=)
+    // search box opens
     const handleSearch = (e) => {
         e.preventDefault();
         const q = keyword.trim();

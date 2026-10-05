@@ -9,7 +9,7 @@ import NotificationPanel from "@/component/NotificationPanel.jsx";
 const PANEL_WIDTH = 320;
 
 // useOwnSocket=false: the host page (ChatPage) already has a live socket and forwards
-// notifications through the 'ranaswanu:notification' window event, so no 2nd connection is opened.
+
 function NotificationBell({ onNewNotification, useOwnSocket = true }) {
     const navigate = useNavigate();
     const bellRef = useRef(null);
@@ -95,7 +95,7 @@ function NotificationBell({ onNewNotification, useOwnSocket = true }) {
                         });
                     },
                     onError: () => {
-                        // REST polling remains the fallback when live notifications cannot connect.
+                        // REST polling remains the fallback > live notifications cannot connect.
                     },
                 });
                 notificationClientRef.current = client;

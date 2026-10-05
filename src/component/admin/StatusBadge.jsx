@@ -8,7 +8,7 @@ const TONES = {
     blue: 'bg-blue-100 text-blue-800',
 };
 
-// Same badge look as the farmer pages: small rounded label with soft colour.
+//  small rounded label with soft colour.
 function StatusBadge({ tone = 'gray', children }) {
     return (
         <span

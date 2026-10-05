@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { parseApiError } from '@/component/admin/adminHelpers.js';
 
-// Returns `value` only after it has stopped changing for `delay` ms (search boxes wait ~400 ms).
+// search boxes wait ~400 ms
 export function useDebouncedValue(value, delay = 400) {
     const [debounced, setDebounced] = useState(value);
     useEffect(() => {
@@ -13,10 +13,10 @@ export function useDebouncedValue(value, delay = 400) {
 }
 
 /**
- * Central error handling from the guide (section 3.2):
+
  *  401 -> delete token, go to login
  *  403 -> go to home
- * Always returns the parsed error ({ status, message, fields }) so the page can show it.
+
  */
 export function useAdminErrorHandler() {
     const navigate = useNavigate();
@@ -35,7 +35,7 @@ export function useAdminErrorHandler() {
     );
 }
 
-// Success / error toast (auto hides)
+// Success / error (hides)
 export function useToast() {
     const [toast, setToast] = useState(null);
     useEffect(() => {
@@ -49,8 +49,7 @@ export function useToast() {
 
 /**
  * Keeps list filters in the URL (so a refresh keeps them).
- *  - empty values are removed from the URL
- *  - changing any filter resets `page` to 0
+
  */
 export function useUrlFilters() {
     const [searchParams, setSearchParams] = useSearchParams();

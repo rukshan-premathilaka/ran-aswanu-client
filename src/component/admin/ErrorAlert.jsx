@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Red alert with an optional Retry button (every list / page has an error state).
+// Red alert >  error
 function ErrorAlert({ message, onRetry }) {
     if (!message) return null;
     return (

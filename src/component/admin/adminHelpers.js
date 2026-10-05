@@ -1,4 +1,4 @@
-// Small shared helpers for the admin pages (formatting + error reading).
+// formatting + error reading
 
 export const formatDate = (value) => {
     if (!value) return '-';

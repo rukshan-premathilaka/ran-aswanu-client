@@ -15,7 +15,7 @@ function timeAgo(isoString) {
     return then.toLocaleDateString();
 }
 
-// Only shows the list. NotificationBell loads the data and decides what happens on click.
+// . NotificationBell loads the data and decides  on click.
 function NotificationPanel({ notifications, isLoading, errorText, onMarkRead, onClose }) {
     return (
         <div className="w-80 bg-white rounded-2xl border border-gray-100 shadow-lg p-4">

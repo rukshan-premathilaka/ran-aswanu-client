@@ -2,9 +2,7 @@ import { useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import ProductClick from "@/page/public/ProductClick.jsx";
 
-// Opens the product detail page (ProductClick) for one product, with a back bar on top.
-// onBack = go back to the list the user came from.
-// ProductClick loads the full product by listId itself; `product` is only shown while it loads.
+
 export default function ProductDetailView({ product, onBack }) {
     useEffect(() => {
         window.scrollTo(0, 0);

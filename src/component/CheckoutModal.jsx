@@ -8,7 +8,7 @@ import MessageBox from "@/component/MessageBox.jsx";
 const INPUT_CLASS =
     "w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-green-600 focus:ring-2 focus:ring-green-100 outline-none";
 
-// Only these two values are accepted by the backend. Never ask for or send card numbers.
+
 const PAYMENT_METHODS = [
     { value: "CASH_ON_DELIVERY", label: "Cash on delivery" },
     { value: "BANK_TRANSFER", label: "Bank transfer" },
@@ -24,8 +24,8 @@ function Field({ label, error, children }) {
     );
 }
 
-// items: [{ listId, productName, pricePerUnit, unitOfMeasurement, minimumOrderQuantity, availableStock, quantity }]
-// POST /buyer/orders. Success returns { orders: [...] } (one order per farmer).
+//
+// POST /buyer/orders
 export default function CheckoutModal({ items, onClose, onSuccess }) {
     const navigate = useNavigate();
     const [form, setForm] = useState({
@@ -47,7 +47,7 @@ export default function CheckoutModal({ items, onClose, onSuccess }) {
         setFieldErrors({});
         setFormError("");
 
-        // Same rules the backend checks: at least the minimum order and not above the stock
+        // Same rules the backend checks
         for (const item of items) {
             const qty = Number(item.quantity);
             if (!(qty > 0)) return setFormError(`Enter a quantity for ${item.productName}.`);
@@ -78,7 +78,7 @@ export default function CheckoutModal({ items, onClose, onSuccess }) {
                 navigate("/login");
                 return;
             }
-            // 403 "Only buyers can place orders" and 409/400 stock messages arrive here as readable text
+            // 403 "Only buyers can place orders"
             setFieldErrors(err.fieldErrors);
             setFormError(err.message);
         } finally {

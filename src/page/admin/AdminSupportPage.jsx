@@ -8,7 +8,7 @@ import FilterField from '@/component/admin/FilterField.jsx';
 import Pagination from '@/component/admin/Pagination.jsx';
 import ErrorAlert from '@/component/admin/ErrorAlert.jsx';
 
-// Read only area: no reply / delete / status buttons (guide 4.7)
+// Read only area
 function AdminSupportPage() {
     const handleError = useAdminErrorHandler();
     const { get, setFilter, setPage, clearAll } = useUrlFilters();
@@ -24,7 +24,7 @@ function AdminSupportPage() {
     const debouncedSearch = useDebouncedValue(searchText, 400);
     useEffect(() => {
         if (debouncedSearch.trim() !== q) setFilter('q', debouncedSearch.trim());
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [debouncedSearch]);
 
     const [data, setData] = useState(null);

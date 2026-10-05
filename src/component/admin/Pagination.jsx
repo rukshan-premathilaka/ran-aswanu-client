@@ -3,10 +3,7 @@ import { btnSecondary } from '@/component/admin/adminStyles.js';
 
 const SIZES = [10, 20, 50, 100];
 
-/**
- * Pagination bar. `page` starts at 0 (same as the backend).
- * props: data = the page wrapper { page, size, totalElements, totalPages }
- */
+/* props: data = the page wrapper */
 function Pagination({ data, onPageChange, onSizeChange }) {
     if (!data) return null;
     const { page, size, totalElements, totalPages } = data;

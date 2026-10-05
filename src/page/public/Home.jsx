@@ -26,17 +26,17 @@ import Footer from "@/component/home/Footer.jsx";
 import BecomeFarmerDialog from "@/component/home/BecomeFarmerDialog.jsx";
 
 // Landing page (route: /home).
-// "Products" opens the real /products page, and a product opens /product/:listId (separate pages with their own URL).
+
 export function Home() {
     const navigate = useNavigate();
     const { products, isLoading, errorText } = useProducts();
     const { isLoggedIn, username, picture } = useCurrentUser();
 
-    // The branded loader plays once per tab session. The hero animation starts when it finishes.
+    // animation starts
     const [showLoader] = useState(() => shouldShowLoader());
     const [ready, setReady] = useState(!showLoader);
 
-    // Must be stable: HomeLoader has it in a useEffect dependency list
+    //  HomeLoader> useEffect dependency list
     const handleLoaderFinish = useCallback(() => {
         markLoaderSeen();
         setReady(true);
@@ -45,10 +45,7 @@ export function Home() {
     const openProducts = useCallback(() => navigate("/products"), [navigate]);
     const openProduct = useCallback((product) => navigate(`/product/${product.listId}`), [navigate]);
 
-    // Farmer buttons: change the user's role to FARMER in the database, then open the farmer dashboard.
-    // The buttons live inside their sections, so the click is caught here. Only buttons/links whose text
-    // matches `pattern` are caught, so other buttons in the same section keep working.
-    // keepActionWhenLoggedOut: visitors who are not logged in keep the button's normal action (e.g. open sign up).
+    // Farmer buttons: change the user's role to FARMER i
     const becomeFarmer = useBecomeFarmer();
     const startBecomeFarmer = becomeFarmer.start;
     const interceptFarmerClick = useCallback(

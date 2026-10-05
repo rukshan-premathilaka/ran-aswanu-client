@@ -27,7 +27,7 @@ function AdminDashboardPage() {
             setIsLoading(false);
         }
 
-        // Optional small chart: if it fails the rest of the dashboard still works
+        // Optional small chart
         try {
             setMonthly(await adminService.getMonthlyStats());
         } catch {

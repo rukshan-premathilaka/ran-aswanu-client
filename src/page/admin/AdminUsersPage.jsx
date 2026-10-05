@@ -23,7 +23,7 @@ function AdminUsersPage() {
     const { toast, showToast } = useToast();
     const { get, setFilter, setPage, clearAll } = useUrlFilters();
 
-    // Filters live in the URL, so a refresh keeps them
+
     const q = get('q');
     const role = get('role');
     const active = get('active');
@@ -32,12 +32,12 @@ function AdminUsersPage() {
     const page = Number(get('page', '0')) || 0;
     const size = Number(get('size', '20')) || 20;
 
-    // Search box: wait ~400 ms after typing before it goes to the URL
+
     const [searchText, setSearchText] = useState(q);
     const debouncedSearch = useDebouncedValue(searchText, 400);
     useEffect(() => {
         if (debouncedSearch.trim() !== q) setFilter('q', debouncedSearch.trim());
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [debouncedSearch]);
 
     const [data, setData] = useState(null);
