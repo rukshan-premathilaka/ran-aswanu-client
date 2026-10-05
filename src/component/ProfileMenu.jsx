@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, User } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/Apierror.js";
+import { getApiError } from "@/api/apiError.js";
 import { fileUrl } from "@/api/fileurl.js";
 import { roleLabels, clearRoleStorage, syncRoleStorage } from "@/utils/roleUtils.js";
 import BecomeTransportButton from "@/component/BecomeTransportButton.jsx";

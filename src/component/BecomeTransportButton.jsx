@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Truck } from "lucide-react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/Apierror.js";
+import { getApiError } from "@/api/apiError.js";
 import { hasRole, normalizeRoles, roleLabels, syncRoleStorage } from "@/utils/roleUtils.js";
 
 /**
