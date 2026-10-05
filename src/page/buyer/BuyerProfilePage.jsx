@@ -213,8 +213,6 @@ function BuyerProfilePage() {
         try {
             const updated = await api.request('PUT', '/me/role', { role: "FARMER" });
             const nextRoles = normalizeRoles(updated);
-            setRoles(normalizeRoles(updated));
-            syncRoleStorage(updated);
             setRoles(nextRoles);
             syncRoleStorage(updated);
 
@@ -253,7 +251,7 @@ function BuyerProfilePage() {
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Personal Profile</h1>
                         <p className="text-sm text-gray-500 mt-0.5">
-                            Ran Aswanna Personal Profile & Order Management
+                            Ran Aswanu Personal Profile & Order Management
                         </p>
                     </div>
 
@@ -429,13 +427,68 @@ function BuyerProfilePage() {
                             </form>
                         </div>
 
-                        {/* Right Column: Security Card & Farmer Mode Action Card */}
+                        {/* Right Column: 1. Farmer Mode, 2. Delivery Partner, 3. Change Password */}
                         <div className="space-y-6">
 
-                            {/* 1. Security Card */}
+                            {/* 1. Farmer Mode Card (ඉහළින්ම) */}
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="text-base font-bold text-gray-800 mb-2 border-b border-gray-100 pb-3">
+                                    Farmer Mode
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-4">
+                                    {hasRole(roles, "FARMER")
+                                        ? "Your account has the Farmer capability. Access your farm plots, crops, and sales management."
+                                        : hasRole(roles, "TRANSPORT")
+                                            ? "Delivery partners cannot become farmers."
+                                            : "Sell your harvest on Ran Aswanu and manage your farm."}
+                                </p>
+
+                                {farmerMessage.text && (
+                                    <div className={`mb-4 p-3 rounded-lg text-xs font-semibold ${
+                                        farmerMessage.type === "success"
+                                            ? "bg-green-50 text-green-700 border border-green-200"
+                                            : "bg-red-50 text-red-700 border border-red-200"
+                                    }`}>
+                                        {farmerMessage.text}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={handleFarmerButtonClick}
+                                    disabled={isSwitchingRole || hasRole(roles, "TRANSPORT")}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition cursor-pointer disabled:opacity-50"
+                                >
+                                    {isSwitchingRole
+                                        ? "Updating to Farmer..."
+                                        : hasRole(roles, "FARMER")
+                                            ? "Go to Farmer Dashboard"
+                                            : "Become a Farmer"}
+                                </button>
+                            </div>
+
+                            {/* 2. Delivery Partner Card (දෙවනුව) */}
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="text-base font-bold text-gray-800 mb-2 border-b border-gray-100 pb-3">
+                                    Delivery Partner
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-4">
+                                    Keep your Buyer capability and add Delivery Partner access to manage vehicles and accept deliveries.
+                                </p>
+
+                                <BecomeTransportButton
+                                    onSuccess={(updated) => {
+                                        const nextRoles = normalizeRoles(updated);
+                                        setRoles(nextRoles);
+                                        syncRoleStorage(updated);
+                                    }}
+                                />
+                            </div>
+
+                            {/* 3. Change Password Card (Security වෙනුවට යටින්ම) */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                                 <h3 className="text-base font-bold text-gray-800 mb-4 border-b border-gray-100 pb-3">
-                                    Security
+                                    Change Password
                                 </h3>
 
                                 {securityMessage.text && (
@@ -495,58 +548,6 @@ function BuyerProfilePage() {
                                         {isSavingPassword ? "Updating Password..." : "Update Password"}
                                     </button>
                                 </form>
-                            </div>
-
-                            {/* 2. Farmer Mode Card */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                <h3 className="text-base font-bold text-gray-800 mb-2 border-b border-gray-100 pb-3">
-                                    Farmer Mode
-                                </h3>
-                                <p className="text-xs text-gray-500 mb-4">
-                                    {hasRole(roles, "FARMER")
-                                        ? "Your account has the Farmer capability. Access your farm plots, crops, and sales management."
-                                        : hasRole(roles, "TRANSPORT")
-                                            ? "Delivery partners cannot add the Farmer capability."
-                                            : "Want to sell your harvest on Ran Aswanna? Add the Farmer capability to your account."}
-                                </p>
-
-                                {farmerMessage.text && (
-                                    <div className={`mb-4 p-3 rounded-lg text-xs font-semibold ${
-                                        farmerMessage.type === "success"
-                                            ? "bg-green-50 text-green-700 border border-green-200"
-                                            : "bg-red-50 text-red-700 border border-red-200"
-                                    }`}>
-                                        {farmerMessage.text}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="button"
-                                    onClick={handleFarmerButtonClick}
-                                    disabled={isSwitchingRole || hasRole(roles, "TRANSPORT")}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition cursor-pointer disabled:opacity-50"
-                                >
-                                    {isSwitchingRole
-                                        ? "Adding Farmer..."
-                                        : hasRole(roles, "FARMER")
-                                            ? "Go to Farmer Dashboard"
-                                            : hasRole(roles, "TRANSPORT")
-                                                ? "Farmer unavailable"
-                                                : "Become a Farmer"}
-                                </button>
-                            </div>
-
-                            {/* 3. Delivery Partner Card */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                <h3 className="text-base font-bold text-gray-800 mb-2 border-b border-gray-100 pb-3">
-                                    Delivery Partner
-                                </h3>
-                                <p className="text-xs text-gray-500 mb-4">
-                                    Keep your Buyer capability and add Delivery Partner access to manage vehicles and accept deliveries.
-                                </p>
-                                <BecomeTransportButton onSuccess={(updated) => {
-                                    setRoles(normalizeRoles(updated));
-                                }} />
                             </div>
 
                         </div>

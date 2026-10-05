@@ -85,7 +85,7 @@ function FarmerCropManagementPage() {
 
         try {
             await api.request('POST', '/farmer/crops', payload);
-            setStatusMessage("New crop successfully saved to Database!");
+            setStatusMessage("New crop successfully saved!");
 
             // Clear input fields
             setNewCropName("");
@@ -97,7 +97,7 @@ function FarmerCropManagementPage() {
             await loadCropsFromDatabase();
         } catch (error) {
             console.error("Backend add crop error:", error);
-            const serverMsg = error.response?.data?.error || error.response?.data?.message || "Failed to save crop to database.";
+            const serverMsg = error.response?.data?.error || error.response?.data?.message || "Failed to save crop";
             setErrorMessage(serverMsg);
         } finally {
             setIsSaving(false);
@@ -107,7 +107,7 @@ function FarmerCropManagementPage() {
     // 3. Delete Crop Plot from Database (DELETE /api/farmer/crops/{cropId})
     const handleDeleteCrop = async (cropId, e) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure you want to delete this crop plot from Database?")) {
+        if (!window.confirm("Are you sure you want to delete this crop plot ?")) {
             return;
         }
 
