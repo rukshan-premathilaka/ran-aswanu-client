@@ -71,9 +71,9 @@ function AdminDashboardPage() {
                 <StatCard label="New This Year" value={formatNumber(users?.newThisYear)} loading={isLoading} />
             </div>
 
-            {/* Users by role */}
+            {/* Users by capability: M:M roles may overlap (e.g. Buyer + Delivery Partner). */}
             <div className={`${cardCls} mb-8`}>
-                <h3 className="text-lg font-bold text-gray-700 mb-4">Users by Role</h3>
+                <h3 className="text-lg font-bold text-gray-700 mb-4">Users by Capability</h3>
                 {isLoading ? (
                     <div className="h-24 animate-pulse rounded-xl bg-gray-100" />
                 ) : !users?.byRole?.length ? (

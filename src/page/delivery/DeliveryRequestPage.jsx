@@ -6,6 +6,7 @@ import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
+import { hasRole, normalizeRoles, syncRoleStorage } from "@/utils/roleUtils.js";
 
 const INPUT_CLASS = "w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100";
 
@@ -22,7 +23,6 @@ const emptyForm = {
 
 export default function DeliveryRequestPage() {
     const navigate = useNavigate();
-    const [role, setRole] = useState(null);
     const [profile, setProfile] = useState(null);
     const [orders, setOrders] = useState([]);
     const [form, setForm] = useState(emptyForm);
@@ -48,14 +48,12 @@ export default function DeliveryRequestPage() {
                 const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
                 if (cancelled) return;
                 setProfile(me);
-                setRole(me.role);
-
-                if (me.role === "TRANSPORT") return;
+                syncRoleStorage(me);
 
                 const purchaseOrders = await api.call(ENDPOINTS.BUYER_ORDERS.LIST_MINE);
                 let combined = (Array.isArray(purchaseOrders) ? purchaseOrders : []).map((o) => ({ ...o, source: "purchase" }));
 
-                if (me.role === "FARMER") {
+                if (hasRole(me, "FARMER")) {
                     const sellerOrders = await api.call({ url: "/farmer/orders", method: "GET" });
                     combined = combined.concat((Array.isArray(sellerOrders) ? sellerOrders : []).map((o) => ({ ...o, source: "seller" })));
                 }
@@ -70,7 +68,7 @@ export default function DeliveryRequestPage() {
                         ...prev,
                         orderId: String(first.orderId),
                         destination: first.deliveryAddress ?? "",
-                        pickupLocation: me.role === "FARMER" ? (me.address ?? "") : (prev.pickupLocation ?? ""),
+                        pickupLocation: hasRole(me, "FARMER") ? (me.address ?? "") : (prev.pickupLocation ?? ""),
                     }));
                 }
             } catch (error) {
@@ -126,7 +124,7 @@ export default function DeliveryRequestPage() {
                 description: selectedOrder?.firstItemName ? `Order #${form.orderId} - ${selectedOrder.firstItemName}` : `Order #${form.orderId}`,
                 specialInstructions: form.specialInstructions || undefined,
             });
-            navigate(`/delivery/matches?requestId=${result.requestId}`);
+            navigate(`/delivery/matches?view=customer&requestId=${result.requestId}`);
         } catch (error) {
             handleError(error);
         } finally {
@@ -134,23 +132,6 @@ export default function DeliveryRequestPage() {
         }
     };
 
-    if (role === "TRANSPORT") {
-        return (
-            <div className="min-h-screen bg-gray-50 flex">
-                <Sidebar active="vehicles" />
-                <main className="flex-1">
-                    <div className="max-w-4xl mx-auto px-8 py-12">
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center mb-4"><Truck /></div>
-                            <h1 className="text-2xl font-bold text-gray-900">Delivery partner area</h1>
-                            <p className="text-sm text-gray-500 mt-2">Transport accounts manage vehicles and accept customer delivery requests instead of creating customer requests.</p>
-                            <button onClick={() => navigate("/delivery/vehicles")} className="mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm">Manage my vehicles</button>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
@@ -190,7 +171,7 @@ export default function DeliveryRequestPage() {
                                 )}
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="text-sm text-gray-700">Pickup road / area<input className={`${INPUT_CLASS} mt-1.5`} value={form.pickupLocation} onChange={(e) => set("pickupLocation", e.target.value)} required placeholder={profile?.role === "FARMER" ? "Your farm / pickup area" : "Seller or collection road"} /></label>
+                                    <label className="text-sm text-gray-700">Pickup road / area<input className={`${INPUT_CLASS} mt-1.5`} value={form.pickupLocation} onChange={(e) => set("pickupLocation", e.target.value)} required placeholder={hasRole(profile, "FARMER") ? "Your farm / pickup area" : "Seller or collection road"} /></label>
                                     <label className="text-sm text-gray-700">Destination road / area<input className={`${INPUT_CLASS} mt-1.5`} value={form.destination} onChange={(e) => set("destination", e.target.value)} required placeholder="e.g. Main Road, Negombo" /></label>
                                     <label className="text-sm text-gray-700">Vehicle type<input className={`${INPUT_CLASS} mt-1.5`} value={form.vehicleType} onChange={(e) => set("vehicleType", e.target.value)} required placeholder="Lorry / Van / Pickup" /></label>
                                     <label className="text-sm text-gray-700">Estimated weight (kg)<input className={`${INPUT_CLASS} mt-1.5`} type="number" min="1" step="1" value={form.weight} onChange={(e) => set("weight", e.target.value)} required placeholder="500" /></label>

@@ -5,8 +5,8 @@ import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import { fileUrl } from "@/api/fileurl.js";
-
-const roleLabel = (role) => (!role || role === "UNASSIGNED" ? "No role yet" : role.charAt(0) + role.slice(1).toLowerCase());
+import { roleLabels, clearRoleStorage, syncRoleStorage } from "@/utils/roleUtils.js";
+import BecomeTransportButton from "@/component/BecomeTransportButton.jsx";
 
 // Profile icon for the navbar. Click it to open a small popup with the logged-in user's profile and a Logout button.
 // Not logged in: the popup asks the user to log in or create an account.
@@ -28,7 +28,10 @@ function ProfileMenu() {
             setErrorText("");
             try {
                 const data = await api.call(ENDPOINTS.ME.GET_PROFILE);
-                if (!cancelled) setProfile(data);
+                if (!cancelled) {
+                    setProfile(data);
+                    syncRoleStorage(data);
+                }
             } catch (error) {
                 if (cancelled) return;
                 const err = getApiError(error);
@@ -68,7 +71,7 @@ function ProfileMenu() {
 
     const handleLogout = () => {
         localStorage.removeItem("my_app_token");
-        localStorage.removeItem("user_role");
+        clearRoleStorage();
         localStorage.removeItem("user");
         setLoggedIn(false);
         setProfile(null);
@@ -124,13 +127,20 @@ function ProfileMenu() {
                                     )}
                                     <p className="mt-2 font-semibold text-gray-900">{profile.username}</p>
                                     <p className="text-sm text-gray-500 break-all">{profile.email}</p>
-                                    <span className="mt-1 rounded-full border border-green-200 bg-green-50 px-3 py-0.5 text-xs font-semibold text-green-700">
-                                        {roleLabel(profile.role)}
-                                    </span>
+                                    <div className="mt-1 flex flex-wrap justify-center gap-1.5">
+                                        {roleLabels(profile).map((label) => (
+                                            <span key={label} className="rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">{label}</span>
+                                        ))}
+                                    </div>
                                     {profile.phoneNumber && <p className="mt-2 text-sm text-gray-600">{profile.phoneNumber}</p>}
                                     {profile.address && <p className="text-sm text-gray-600">{profile.address}</p>}
                                 </div>
                             )}
+
+                            <BecomeTransportButton
+                                className="mb-3"
+                                onSuccess={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
+                            />
 
                             <button
                                 type="button"

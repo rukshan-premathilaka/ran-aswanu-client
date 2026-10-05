@@ -11,6 +11,7 @@ import { UserStatusBadge } from '@/component/admin/StatusBadge.jsx';
 import ErrorAlert from '@/component/admin/ErrorAlert.jsx';
 import ConfirmDialog from '@/component/admin/ConfirmDialog.jsx';
 import Toast from '@/component/admin/Toast.jsx';
+import { hasRole, roleLabels } from '@/utils/roleUtils.js';
 
 function Row({ label, children }) {
     return (
@@ -70,7 +71,7 @@ function AdminUserDetailPage() {
     };
 
     // Hide the button for ADMIN users and for the logged-in admin (the server refuses these too)
-    const canToggle = user && user.role !== 'ADMIN' && user.userId !== me?.userId;
+    const canToggle = user && !hasRole(user, 'ADMIN') && user.userId !== me?.userId;
     const avatar = fileUrl(user?.profilePictureUrl);
 
     return (
@@ -124,7 +125,7 @@ function AdminUserDetailPage() {
                         <Row label="ID">{user.userId}</Row>
                         <Row label="Username">{user.username}</Row>
                         <Row label="Email">{user.email}</Row>
-                        <Row label="Role">{roleLabel(user.role)}</Row>
+                        <Row label="Roles">{roleLabels(user).join(' + ') || roleLabel(user.role)}</Row>
                         <Row label="Phone">{user.phoneNumber || '-'}</Row>
                         <Row label="Address">{user.address || '-'}</Row>
                         <Row label="Registered">{formatDateTime(user.createdAt)}</Row>

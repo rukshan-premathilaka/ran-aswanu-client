@@ -19,6 +19,7 @@ const AdminLayout = () => {
     const handleLogout = () => {
         localStorage.removeItem('my_app_token');
         localStorage.removeItem('user_role');
+        localStorage.removeItem('user_roles');
         localStorage.removeItem('user');
         navigate('/login');
     };

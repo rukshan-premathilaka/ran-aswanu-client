@@ -6,6 +6,7 @@ import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
+import { hasRole, syncRoleStorage } from "@/utils/roleUtils.js";
 
 const STATUS_LABEL = {
     PENDING: "Scheduled",
@@ -27,7 +28,7 @@ export default function DeliveryTrackingPage() {
     const [searchParams] = useSearchParams();
     const deliveryId = searchParams.get("deliveryId");
     const [delivery, setDelivery] = useState(null);
-    const [myRole, setMyRole] = useState(null);
+    const [myRole, setMyRole] = useState(false);
     const [myDeliveries, setMyDeliveries] = useState([]);
     const [isLoading, setIsLoading] = useState(Boolean(deliveryId));
     const [isUpdating, setIsUpdating] = useState(false);
@@ -45,8 +46,11 @@ export default function DeliveryTrackingPage() {
 
     useEffect(() => {
         api.call(ENDPOINTS.ME.GET_PROFILE)
-            .then((me) => setMyRole(me.role))
-            .catch(() => setMyRole(null));
+.then((me) => {
+                setMyRole(hasRole(me, "TRANSPORT"));
+                syncRoleStorage(me);
+            })
+            .catch(() => setMyRole(false));
     }, []);
 
     const loadDelivery = useCallback(async () => {
@@ -157,7 +161,7 @@ export default function DeliveryTrackingPage() {
                             {delivery.vehicleId && <div className="mt-5 rounded-xl bg-green-50 border border-green-100 p-4"><p className="text-xs font-semibold text-green-800">Assigned vehicle</p><p className="text-sm font-semibold text-gray-900 mt-1">{delivery.vehicleName}</p><p className="text-xs text-gray-600 mt-1">{delivery.registrationNumber} · Capacity {delivery.vehicleCapacityKg} kg</p></div>}
                             {delivery.partnerName && <p className="text-xs text-gray-500 mt-4">Shared with {delivery.partnerName}</p>}
 
-                            {myRole === "TRANSPORT" && delivery.status !== "DELIVERED" && delivery.status !== "CANCELLED" && <div className="flex flex-wrap gap-2 mt-5">{TRANSPORT_ACTIONS.map(([status, text]) => <button key={status} onClick={() => handleUpdateStatus(status)} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold rounded-xl px-4 py-2 text-xs">{text}</button>)}</div>}
+                            {myRole && delivery.status !== "DELIVERED" && delivery.status !== "CANCELLED" && <div className="flex flex-wrap gap-2 mt-5">{TRANSPORT_ACTIONS.map(([status, text]) => <button key={status} onClick={() => handleUpdateStatus(status)} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold rounded-xl px-4 py-2 text-xs">{text}</button>)}</div>}
                         </div>
                     )}
                 </div>

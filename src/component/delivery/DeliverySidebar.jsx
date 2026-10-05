@@ -4,6 +4,7 @@ import { Users, Truck, PlusCircle, MessageCircle, Settings2 } from "lucide-react
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import logoImg from "@/assets/farmerImg/logo.png";
+import { hasRole, roleLabels } from "@/utils/roleUtils.js";
 
 const CUSTOMER_NAV = [
     { key: "request", label: "Request Delivery", icon: PlusCircle, path: "/delivery/request" },
@@ -15,6 +16,8 @@ const CUSTOMER_NAV = [
 const TRANSPORT_NAV = [
     { key: "vehicles", label: "My Vehicles", icon: Truck, path: "/delivery/vehicles" },
     { key: "incoming", label: "Delivery Requests", icon: Users, path: "/delivery/incoming" },
+    { key: "request", label: "My Delivery Request", icon: PlusCircle, path: "/delivery/request" },
+    { key: "matches", label: "Shared Matches", icon: Users, path: "/delivery/matches?view=customer" },
     { key: "tracking", label: "Active Deliveries", icon: Settings2, path: "/delivery/tracking" },
     { key: "chat", label: "Chat", icon: MessageCircle, path: "/chat" },
 ];
@@ -32,7 +35,7 @@ export default function DeliverySidebar({ active, minimal = false }) {
         return () => { cancelled = true; };
     }, [minimal]);
 
-    const items = me?.role === "TRANSPORT" ? TRANSPORT_NAV : CUSTOMER_NAV;
+    const items = hasRole(me, "TRANSPORT") ? TRANSPORT_NAV : CUSTOMER_NAV;
 
     return (
         <aside className="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-gray-100 bg-white h-screen sticky top-0">
@@ -66,7 +69,7 @@ export default function DeliverySidebar({ active, minimal = false }) {
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{me.username ?? ""}</p>
-                            <p className="text-xs text-gray-400 truncate">{me.role ?? ""}</p>
+                            <p className="text-xs text-gray-400 truncate">{roleLabels(me).join(" + ")}</p>
                         </div>
                     </div>
                 </div>

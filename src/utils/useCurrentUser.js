@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
 import { fileUrl } from "@/api/fileurl.js";
+import { normalizeRoles, syncRoleStorage, clearRoleStorage } from "@/utils/roleUtils.js";
 
-// >>> Personal profile page path (BuyerProfilePage route in Routes.config.js). Home and Products both read it from this one place. <<<
 export const PERSONAL_PROFILE_PATH = "/buyer-profile";
 
-// Who is logged in? Visitors (no token) never call the backend.
-// Returns { isLoggedIn, username, picture }.
+// Returns the current profile plus normalized multi-role information.
 export function useCurrentUser() {
     const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem("my_app_token")));
     const [me, setMe] = useState(null);
@@ -18,24 +17,34 @@ export function useCurrentUser() {
         const loadMe = async () => {
             try {
                 const data = await api.call(ENDPOINTS.ME.GET_PROFILE);
-                if (!cancelled) setMe(data);
+                if (!cancelled) {
+                    setMe(data);
+                    syncRoleStorage(data);
+                }
             } catch (error) {
-                // Expired or invalid login -> treat as a visitor
                 if (error?.response?.status === 401) {
                     localStorage.removeItem("my_app_token");
-                    if (!cancelled) setIsLoggedIn(false);
+                    clearRoleStorage();
+                    localStorage.removeItem("user");
+                    if (!cancelled) {
+                        setMe(null);
+                        setIsLoggedIn(false);
+                    }
                 }
             }
         };
         loadMe();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, []);
+
+    const roles = normalizeRoles(me);
 
     return {
         isLoggedIn,
+        me,
         username: me?.username ?? "",
+        role: me?.role ?? roles[0] ?? "",
+        roles,
         picture: fileUrl(me?.profilePictureUrl),
     };
 }

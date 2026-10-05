@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '@/api/ApiService.js';
 import { toFileUrl } from '@/api/config.js';
+import { normalizeRoles, roleLabels, syncRoleStorage } from "@/utils/roleUtils.js";
 
 const api = new ApiService();
 
@@ -10,7 +11,7 @@ function FarmerSettingsPage() {
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [address, setAddress] = useState("");
-    const [role, setRole] = useState("FARMER");
+    const [roles, setRoles] = useState(["FARMER"]);
     const [profilePictureUrl, setProfilePictureUrl] = useState(null);
 
     // Password Change Fields
@@ -37,7 +38,9 @@ function FarmerSettingsPage() {
                 setEmail(data.email || "");
                 setPhoneNumber(data.phoneNumber || "");
                 setAddress(data.address || "");
-                setRole(data.role || "FARMER");
+                const normalizedRoles = normalizeRoles(data);
+                setRoles(normalizedRoles);
+                syncRoleStorage(data);
                 setProfilePictureUrl(data.profilePictureUrl || null);
             }
         } catch (error) {
@@ -225,7 +228,7 @@ function FarmerSettingsPage() {
                         <p className="text-xs text-gray-400 mt-0.5">{email}</p>
 
                         <div className="mt-4 px-3 py-1 bg-green-50 text-green-700 font-bold text-xs rounded-full border border-green-200">
-                            Role: {role}
+                            Roles: {roleLabels(roles).join(" + ")}
                         </div>
                     </div>
 

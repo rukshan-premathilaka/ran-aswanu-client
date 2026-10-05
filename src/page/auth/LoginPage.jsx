@@ -4,6 +4,7 @@ import FormInput from "@/component/FormInput";
 import AuthShowcase from "@/component/AuthShowcase";
 import ApiService from "@/api/ApiService";
 import ENDPOINTS from "@/api/endpoints.js";
+import { hasRole, syncRoleStorage } from "@/utils/roleUtils.js";
 
 const apiService = new ApiService();
 
@@ -59,11 +60,11 @@ function LoginPage() {
                     ENDPOINTS.ME.GET_PROFILE.url
                 );
 
-                if (me?.role) {
-                    localStorage.setItem("user_role", me.role);
+                if (me) {
+                    syncRoleStorage(me);
                 }
 
-                if (me?.role === "ADMIN") {
+                if (hasRole(me, "ADMIN")) {
                     navigate("/admin", { replace: true });
                     return;
                 }

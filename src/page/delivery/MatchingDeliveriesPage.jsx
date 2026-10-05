@@ -6,11 +6,12 @@ import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import MessageBox from "@/component/MessageBox.jsx";
 import Sidebar from "./Sidebar.jsx";
+import { hasRole, syncRoleStorage } from "@/utils/roleUtils.js";
 
 export default function MatchingDeliveriesPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [role, setRole] = useState(null);
+    const [isTransport, setIsTransport] = useState(false);
     const [requests, setRequests] = useState([]);
     const [matches, setMatches] = useState([]);
     const [transportBoard, setTransportBoard] = useState([]);
@@ -62,8 +63,10 @@ export default function MatchingDeliveriesPage() {
         setErrorText("");
         try {
             const me = await api.call(ENDPOINTS.ME.GET_PROFILE);
-            setRole(me.role);
-            if (me.role === "TRANSPORT") await loadTransport();
+            setIsTransport(hasRole(me, "TRANSPORT"));
+            syncRoleStorage(me);
+            const customerView = searchParams.get("view") === "customer";
+            if (hasRole(me, "TRANSPORT") && !customerView) await loadTransport();
             else await loadCustomer(Number(searchParams.get("requestId")) || selectedRequestId);
         } catch (error) {
             handleError(error);
@@ -121,10 +124,10 @@ export default function MatchingDeliveriesPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
-            <Sidebar active={role === "TRANSPORT" ? "incoming" : "matches"} />
+            <Sidebar active={isTransport && searchParams.get("view") !== "customer" ? "incoming" : "matches"} />
             <main className="flex-1 min-w-0">
                 <div className="max-w-7xl mx-auto px-8 py-8">
-                    {role === "TRANSPORT" ? (
+                    {isTransport && searchParams.get("view") !== "customer" ? (
                         <>
                             <div className="flex items-start justify-between gap-4 flex-wrap">
                                 <div>

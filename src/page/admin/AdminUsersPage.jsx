@@ -13,6 +13,7 @@ import Pagination from '@/component/admin/Pagination.jsx';
 import ErrorAlert from '@/component/admin/ErrorAlert.jsx';
 import ConfirmDialog from '@/component/admin/ConfirmDialog.jsx';
 import Toast from '@/component/admin/Toast.jsx';
+import { hasRole, roleLabels } from '@/utils/roleUtils.js';
 
 const ROLES = ['FARMER', 'BUYER', 'TRANSPORT', 'ADMIN'];
 
@@ -64,7 +65,7 @@ function AdminUsersPage() {
         load();
     }, [load]);
 
-    const canToggle = (u) => u.role !== 'ADMIN' && u.userId !== me?.userId;
+    const canToggle = (u) => !hasRole(u, 'ADMIN') && u.userId !== me?.userId;
 
     const confirmToggle = async () => {
         if (!target) return;
@@ -156,7 +157,7 @@ function AdminUsersPage() {
                     <table className="min-w-full divide-y divide-gray-100">
                         <thead className="bg-gray-50">
                             <tr>
-                                {['ID', 'Username', 'Email', 'Role', 'Phone', 'Registered', 'Status', 'Actions'].map((h) => (
+                                {['ID', 'Username', 'Email', 'Roles', 'Phone', 'Registered', 'Status', 'Actions'].map((h) => (
                                     <th key={h} className={thCls}>{h}</th>
                                 ))}
                             </tr>
@@ -172,7 +173,7 @@ function AdminUsersPage() {
                                         <td className={tdCls}>{u.userId}</td>
                                         <td className={`${tdCls} font-semibold text-gray-800`}>{u.username}</td>
                                         <td className={tdCls}>{u.email}</td>
-                                        <td className={tdCls}>{roleLabel(u.role)}</td>
+                                        <td className={tdCls}>{roleLabels(u).join(' + ') || roleLabel(u.role)}</td>
                                         <td className={tdCls}>{u.phoneNumber || '-'}</td>
                                         <td className={tdCls}>{formatDate(u.createdAt)}</td>
                                         <td className={tdCls}><UserStatusBadge active={u.active} /></td>

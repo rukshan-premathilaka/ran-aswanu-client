@@ -10,6 +10,7 @@ const ENDPOINTS = {
         GET_PROFILE: { url: "/me", method: "GET" },
         UPDATE_PROFILE: { url: "/me", method: "PUT" },
         UPDATE_ROLE: { url: "/me/role", method: "PUT" },
+        BECOME_TRANSPORT: { url: "/me/roles/transport", method: "POST" },
         UPLOAD_PICTURE: { url: "/me/picture", method: "POST" },
     },
 

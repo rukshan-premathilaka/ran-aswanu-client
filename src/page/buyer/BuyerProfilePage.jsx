@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '@/api/ApiService.js';
 import { toFileUrl } from '@/api/config.js';
+import BecomeTransportButton from '@/component/BecomeTransportButton.jsx';
+import { hasRole, normalizeRoles, roleLabels, syncRoleStorage, clearRoleStorage } from '@/utils/roleUtils.js';
 
 const api = new ApiService();
 
@@ -16,7 +18,7 @@ function BuyerProfilePage() {
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [address, setAddress] = useState("");
-    const [role, setRole] = useState("BUYER");
+    const [roles, setRoles] = useState(["BUYER"]);
     const [profilePictureUrl, setProfilePictureUrl] = useState(null);
 
     // Password States
@@ -51,13 +53,10 @@ function BuyerProfilePage() {
                 setEmail(data.email || "");
                 setPhoneNumber(data.phoneNumber || "");
                 setAddress(data.address || "");
-                setRole(data.role || "BUYER");
+                const normalizedRoles = normalizeRoles(data);
+                setRoles(normalizedRoles);
                 setProfilePictureUrl(data.profilePictureUrl || null);
-
-                // LocalStorage එකත් Backend Role එක සමඟ sync කරගැනීම
-                if (data.role) {
-                    localStorage.setItem("user_role", data.role);
-                }
+                syncRoleStorage(data);
             }
         } catch (error) {
             const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to load profile details.";
@@ -96,7 +95,7 @@ function BuyerProfilePage() {
     // Logout Action
     const handleLogout = () => {
         localStorage.removeItem("my_app_token");
-        localStorage.removeItem("user_role");
+        clearRoleStorage();
         localStorage.removeItem("user");
         navigate("/");
     };
@@ -199,8 +198,12 @@ function BuyerProfilePage() {
 
     // Become a Farmer / Go to Farmer Dashboard Action
     const handleFarmerButtonClick = async () => {
-        if (role === "FARMER") {
+        if (hasRole(roles, "FARMER")) {
             navigate("/farmer/home");
+            return;
+        }
+        if (hasRole(roles, "TRANSPORT")) {
+            setFarmerMessage({ type: "error", text: "Delivery partners cannot become farmers." });
             return;
         }
 
@@ -208,21 +211,25 @@ function BuyerProfilePage() {
         setIsSwitchingRole(true);
 
         try {
-            await api.request('PUT', '/me/role', { role: "FARMER" });
-            setRole("FARMER");
-            localStorage.setItem("user_role", "FARMER");
+            const updated = await api.request('PUT', '/me/role', { role: "FARMER" });
+            const nextRoles = normalizeRoles(updated);
+            setRoles(normalizeRoles(updated));
+            syncRoleStorage(updated);
+            setRoles(nextRoles);
+            syncRoleStorage(updated);
 
             setFarmerMessage({
                 type: "success",
-                text: "Account switched to Farmer mode successfully. Redirecting to Farmer Dashboard..."
+                text: "Farmer capability added. Redirecting to Farmer Dashboard..."
             });
 
             setTimeout(() => {
                 navigate("/farmer/home", { replace: true });
             }, 600);
         } catch (error) {
-            const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to switch role.";
+            const errorText = error.response?.data?.error || error.response?.data?.message || "Failed to become a farmer.";
             setFarmerMessage({ type: "error", text: errorText });
+        } finally {
             setIsSwitchingRole(false);
         }
     };
@@ -298,7 +305,7 @@ function BuyerProfilePage() {
                             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                                 <h2 className="text-xl font-bold text-gray-900">{username || "User"}</h2>
                                 <span className="bg-green-100 text-green-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">
-                                    Role: {role}
+                                    Roles: {roleLabels(roles).join(" + ")}
                                 </span>
                             </div>
                             <p className="text-sm text-gray-500 mt-1">{email}</p>
@@ -496,9 +503,11 @@ function BuyerProfilePage() {
                                     Farmer Mode
                                 </h3>
                                 <p className="text-xs text-gray-500 mb-4">
-                                    {role === "FARMER"
-                                        ? "Your account is in Farmer mode. Access your farm plots, crops, and sales management."
-                                        : "Want to sell your harvest on Ran Aswanna? Switch your account to Farmer mode."}
+                                    {hasRole(roles, "FARMER")
+                                        ? "Your account has the Farmer capability. Access your farm plots, crops, and sales management."
+                                        : hasRole(roles, "TRANSPORT")
+                                            ? "Delivery partners cannot add the Farmer capability."
+                                            : "Want to sell your harvest on Ran Aswanna? Add the Farmer capability to your account."}
                                 </p>
 
                                 {farmerMessage.text && (
@@ -514,15 +523,30 @@ function BuyerProfilePage() {
                                 <button
                                     type="button"
                                     onClick={handleFarmerButtonClick}
-                                    disabled={isSwitchingRole}
+                                    disabled={isSwitchingRole || hasRole(roles, "TRANSPORT")}
                                     className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition cursor-pointer disabled:opacity-50"
                                 >
                                     {isSwitchingRole
-                                        ? "Updating to Farmer..."
-                                        : role === "FARMER"
+                                        ? "Adding Farmer..."
+                                        : hasRole(roles, "FARMER")
                                             ? "Go to Farmer Dashboard"
-                                            : "Become a Farmer"}
+                                            : hasRole(roles, "TRANSPORT")
+                                                ? "Farmer unavailable"
+                                                : "Become a Farmer"}
                                 </button>
+                            </div>
+
+                            {/* 3. Delivery Partner Card */}
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="text-base font-bold text-gray-800 mb-2 border-b border-gray-100 pb-3">
+                                    Delivery Partner
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-4">
+                                    Keep your Buyer capability and add Delivery Partner access to manage vehicles and accept deliveries.
+                                </p>
+                                <BecomeTransportButton onSuccess={(updated) => {
+                                    setRoles(normalizeRoles(updated));
+                                }} />
                             </div>
 
                         </div>
