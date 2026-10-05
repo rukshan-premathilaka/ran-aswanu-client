@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/ApiService.js";
 import ENDPOINTS from "@/api/endpoints.js";
-import { getApiError } from "@/api/Apierror.js";
+import { getApiError } from "@/api/apiError.js";
 import { createChatClient, subscribeToNotifications, closeChatClient } from "@/api/chatsocket.js";
 import NotificationPanel from "@/component/NotificationPanel.jsx";
 
