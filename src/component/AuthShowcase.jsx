@@ -1,21 +1,16 @@
 import logoImg from "@/assets/farmerImg/logo.png";
 import showcaseImg from "@/assets/farmerImg/loginimg.png";
 
-/**
- * Left panel shown on the register/login pages.
- * Shows the photo src/assets/farmerImg/loginimg.png as the background.
- * Hidden on small screens (form takes over the full viewport there).
- */
 function AuthShowcase() {
     return (
         <div className="relative hidden h-screen w-1/2 overflow-hidden bg-lime-600 lg:flex lg:flex-col lg:justify-between">
-            {/* background photo (the green colour above shows while it loads) */}
+            {/* background photo */}
             <img
                 src={showcaseImg}
                 alt=""
                 className="absolute inset-0 h-full w-full object-cover object-center"
             />
-            {/* green shade so the logo (top) and the white text (bottom) stay easy to read */}
+            {/* green shade so the logo */}
             <div
                 className="pointer-events-none absolute inset-0"
                 style={{
@@ -33,7 +28,7 @@ function AuthShowcase() {
                 </div>
             </div>
 
-            {/* empty space in the middle so the heading stays at the bottom */}
+            {/* empty space in the middle  */}
             <div className="relative z-10 flex-1" />
 
             <div className="relative z-10 px-12 pb-12">

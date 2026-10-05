@@ -5,11 +5,7 @@ import ENDPOINTS from "@/api/endpoints.js";
 import { getApiError } from "@/api/Apierror.js";
 import { hasRole, normalizeRoles, roleLabels, syncRoleStorage } from "@/utils/roleUtils.js";
 
-/**
- * Reusable self-service control for adding the TRANSPORT capability.
- * It never removes BUYER. The backend remains the authority for the business rule
- * that FARMER accounts cannot become delivery partners.
- */
+
 export default function BecomeTransportButton({ onSuccess, className = "" }) {
     const [profile, setProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);

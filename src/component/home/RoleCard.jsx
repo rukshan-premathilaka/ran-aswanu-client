@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Check, ArrowRight } from "lucide-react";
 
-// One public user role (Farmer / Buyer / Transport Provider). Admin is never shown here.
-// CTA: pass `ctaTo` (router link) or `onCta` (action).
+
 export default function RoleCard({ icon: Icon, role, title, benefits, ctaLabel, ctaTo, onCta }) {
     const ctaClasses =
         "btn-lift mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-green-600 px-6 py-3.5 text-base font-semibold text-green-700 transition-colors group-hover:bg-green-600 group-hover:text-white group-hover:shadow-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-green-300";

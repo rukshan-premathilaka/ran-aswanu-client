@@ -4,6 +4,7 @@ import MatchingDeliveriesPage from "@/page/delivery/MatchingDeliveriesPage.jsx";
 import DeliveryRequestPage from "@/page/delivery/DeliveryRequestPage.jsx";
 import DeliveryTrackingPage from "@/page/delivery/DeliveryTrackingPage.jsx";
 import FarmerRoutes from "@/routes/FarmerRoutes.jsx";
+import DeliveryRoutes from "@/routes/DeliveryRoutes.jsx";
 import BuyerProfilePage from "@/page/buyer/BuyerProfilePage.jsx";
 // Auth pages
 const Login = lazy(() => import("@/page/auth/LoginPage.jsx"));
@@ -84,6 +85,8 @@ const routes = [
 	{ path: "/MatchineDeliveries", label: "Matchine Deliveries", group: "Deliveries", element: MatchingDeliveriesPage },
 	{ path: "/DeliveryRequest", label: "Delivery Request", group: "Deliveries", element: DeliveryRequestPage },
 	{ path: "/DeliveryTracking", label: "Delivery Tracking", group: "Deliveries", element: DeliveryTrackingPage },
+	// Main delivery module: /delivery/request, /delivery/matches, /delivery/tracking, /delivery/vehicles, /delivery/incoming
+	{ path: "/delivery/*", devLink: "/delivery/request", label: "Delivery", group: "Deliveries", element: DeliveryRoutes },
 ];
 
 export default routes;

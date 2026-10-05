@@ -7,7 +7,7 @@ import logoImg from "@/assets/farmerImg/logo.png";
 import { PERSONAL_PROFILE_PATH, useCurrentUser } from "@/utils/useCurrentUser.js";
 import { cartCount, onCartChange } from "@/utils/cart.js";
 
-// Sidebar menu. Change the paths here if your routes are named differently.
+// Sidebar menu.
 const MENU_ITEMS = [
     { label: "Home", path: "/home" },
     { label: "Products", path: "/products" },
@@ -23,7 +23,7 @@ const SORT_TABS = [
     { id: "za", label: "Z to A" },
 ];
 
-// Same look as the sidebar menu items (used for the logged-in profile in the top bar)
+// Same look as the sidebar menu items
 const NAV_ITEM =
     "px-5 py-3 rounded-xl text-sm font-medium transition-colors text-gray-500 hover:bg-gray-50 hover:text-gray-800";
 
@@ -220,6 +220,7 @@ export function ProductsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                         {shown.map((p, i) => (
                             <ProductTile key={p.listId ?? p.id ?? i} product={p} tall onClick={() => navigate(`/product/${p.listId}`)} />
+
                         ))}
                     </div>
                 </main>

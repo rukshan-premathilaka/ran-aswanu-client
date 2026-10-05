@@ -311,7 +311,7 @@ function FarmerCropManagementPage() {
                                     disabled={isSaving}
                                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all sm:col-span-2 cursor-pointer disabled:opacity-50"
                                 >
-                                    {isSaving ? "Saving to Database..." : "Register Crop to Database"}
+                                    {isSaving ? "Saving to Database..." : "Register Crop"}
                                 </button>
                             </form>
                         </div>
@@ -356,7 +356,7 @@ function FarmerCropManagementPage() {
                                     type="submit"
                                     className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all cursor-pointer text-sm"
                                 >
-                                    Save Track Updates to Backend
+                                    Save
                                 </button>
                             </form>
                         </div>
