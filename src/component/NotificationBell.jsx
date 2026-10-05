@@ -8,7 +8,9 @@ import NotificationPanel from "@/component/NotificationPanel.jsx";
 
 const PANEL_WIDTH = 320;
 
-function NotificationBell({ onNewNotification }) {
+// useOwnSocket=false: the host page (ChatPage) already has a live socket and forwards
+// notifications through the 'ranaswanu:notification' window event, so no 2nd connection is opened.
+function NotificationBell({ onNewNotification, useOwnSocket = true }) {
     const navigate = useNavigate();
     const bellRef = useRef(null);
     const notificationClientRef = useRef(null);
@@ -49,7 +51,26 @@ function NotificationBell({ onNewNotification }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
 
+    const addNotification = (notification) => {
+        setNotifications((prev) => {
+            if (notification?.notificationId && prev.some((item) => item.notificationId === notification.notificationId)) {
+                return prev;
+            }
+            return notification ? [notification, ...prev] : prev;
+        });
+        onNewNotificationRef.current?.(notification);
+    };
+
     useEffect(() => {
+        if (useOwnSocket) return undefined;
+        const handler = (event) => addNotification(event.detail);
+        window.addEventListener("ranaswanu:notification", handler);
+        return () => window.removeEventListener("ranaswanu:notification", handler);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [useOwnSocket]);
+
+    useEffect(() => {
+        if (!useOwnSocket) return undefined;
         let client = null;
         let subscription = null;
         let cancelled = false;
@@ -94,7 +115,7 @@ function NotificationBell({ onNewNotification }) {
             closeChatClient(notificationClientRef.current);
             notificationClientRef.current = null;
         };
-    }, [navigate]);
+    }, [navigate, useOwnSocket]);
 
     const handleToggle = () => {
         if (!isOpen && bellRef.current) {
