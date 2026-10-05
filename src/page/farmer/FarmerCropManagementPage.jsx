@@ -11,7 +11,7 @@ function FarmerCropManagementPage() {
     const [statusMessage, setStatusMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    // Form inputs for new Crop (Exact keys required by Backend CropRequestDto)
+    // Form inputs for new Crop
     const [newCropName, setNewCropName] = useState("");
     const [newCategory, setNewCategory] = useState("Vegetables");
     const [newQuantity, setNewQuantity] = useState("");
@@ -24,7 +24,7 @@ function FarmerCropManagementPage() {
     const [editNotes, setEditNotes] = useState("");
     const [editQuantity, setEditQuantity] = useState("");
 
-    // 1. Load all crops from Database (GET /api/farmer/crops)
+    // Load all crops from Database
     const loadCropsFromDatabase = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -58,7 +58,7 @@ function FarmerCropManagementPage() {
         setEditQuantity(crops[index]?.harvestQuantity || "");
     };
 
-    // 2. Add New Crop to Database (POST /api/farmer/crops)
+    // Add New Crop to Database
     const handleAddCrop = async (e) => {
         e.preventDefault();
         setStatusMessage("");
@@ -71,7 +71,7 @@ function FarmerCropManagementPage() {
 
         setIsSaving(true);
 
-        // Convert user date to Full ISO Date-Time String (Required by Backend)
+        // Convert user date to Full ISO Date-Time String
         const dateObj = newCropDateToIso(newHarvestDate);
 
         const payload = {
@@ -104,7 +104,7 @@ function FarmerCropManagementPage() {
         }
     };
 
-    // 3. Delete Crop Plot from Database (DELETE /api/farmer/crops/{cropId})
+    // Delete Crop Plot from Database
     const handleDeleteCrop = async (cropId, e) => {
         e.stopPropagation();
         if (!window.confirm("Are you sure you want to delete this crop plot ?")) {
@@ -126,7 +126,7 @@ function FarmerCropManagementPage() {
         }
     };
 
-    // 4. Update Crop Details (PUT /api/farmer/crops/{cropId})
+    // Update Crop Details
     const handleUpdateCrop = async (e) => {
         e.preventDefault();
         const selectedCrop = crops[selectedIndex];
@@ -317,7 +317,7 @@ function FarmerCropManagementPage() {
                         </div>
                     </div>
 
-                    {/* Right Panel: Selected Crop Inspector */}
+                    {/* Right Panel Selected Crop Inspector */}
                     {crops.length > 0 && (
                         <div className="w-full lg:w-1/2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 lg:sticky lg:top-4">
                             <div className="border-b border-gray-100 pb-4 mb-6">

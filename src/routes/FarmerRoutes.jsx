@@ -26,8 +26,6 @@ function FarmerRoutes() {
                 <Route path="weather" element={<FarmerWeatherPage />} />
                 <Route path="settings" element={<FarmerSettingsPage />} />
                 <Route path="help" element={<FarmerHelpSupportPage />} />
-
-                {/* නිවැරදි කරන ලද Relative Paths */}
                 <Route path="expenses" element={<FarmerExpensesPage />} />
                 <Route path="livestock" element={<FarmerLivestockPage />} />
             </Route>

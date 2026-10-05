@@ -24,7 +24,7 @@ function FarmerExpensesPage() {
     const [editExpenseDate, setEditExpenseDate] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // 1. Load all expenses from Database
+    // Load all expenses from Database
     const loadExpenses = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -48,7 +48,7 @@ function FarmerExpensesPage() {
         loadExpenses();
     }, []);
 
-    // 2. Add New Expense
+    // Add New Expense
     const handleAddExpense = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -93,7 +93,7 @@ function FarmerExpensesPage() {
         }
     };
 
-    // 3. Start Edit Mode
+    // Start Edit Mode
     const handleStartEdit = (item) => {
         setEditingExpenseId(item.expenseId);
         setEditTitle(item.title || "");
@@ -108,7 +108,7 @@ function FarmerExpensesPage() {
         setEditingExpenseId(null);
     };
 
-    // 4. Save Edited Expense
+    // Save Edited Expense
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -151,7 +151,7 @@ function FarmerExpensesPage() {
         }
     };
 
-    // 5. Delete Expense
+    // Delete Expense
     const handleDeleteExpense = async (expenseId) => {
         if (!window.confirm("Are you sure you want to delete this expense record from Database?")) {
             return;
@@ -175,7 +175,7 @@ function FarmerExpensesPage() {
 
     return (
         <div className="w-full h-full font-sans max-w-6xl mx-auto">
-            {/* Header (Refresh button අයින් කර ඇත) */}
+
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Farm Expenses Tracker</h1>
                 <p className="text-sm text-gray-500 mt-1">Track financial investments, edit entries, and monitor expenses.</p>
@@ -211,7 +211,7 @@ function FarmerExpensesPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* Left Form: Add New Expense */}
+                {/* Left Form Add New Expense */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                         Record New Expense
@@ -282,7 +282,7 @@ function FarmerExpensesPage() {
                     </form>
                 </div>
 
-                {/* Right List: Expenses with Inline Edit & Delete */}
+                {/* Right List Expenses with Inline Edit & Delete */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                         Expense Logs ({expenses.length})

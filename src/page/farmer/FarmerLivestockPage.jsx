@@ -22,7 +22,7 @@ function FarmerLivestockPage() {
     const [editAmount, setEditAmount] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // 1. Load livestock from Database
+    // Load livestock from Database
     const loadLivestock = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -46,7 +46,7 @@ function FarmerLivestockPage() {
         loadLivestock();
     }, []);
 
-    // 2. Add New Livestock
+    // Add New Livestock
     const handleAddLivestock = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -85,7 +85,7 @@ function FarmerLivestockPage() {
         }
     };
 
-    // 3. Start Edit Mode
+    // Start Edit Mode
     const handleStartEdit = (item) => {
         setEditingLiveStockId(item.liveStockId);
         setEditCategory(item.category || "Cattle");
@@ -99,7 +99,7 @@ function FarmerLivestockPage() {
         setEditingLiveStockId(null);
     };
 
-    // 4. Save Edited Livestock
+    // Save Edited Livestock
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -137,7 +137,7 @@ function FarmerLivestockPage() {
         }
     };
 
-    // 5. Delete Livestock
+    // Delete Livestock
     const handleDeleteLivestock = async (id) => {
         if (!window.confirm("Are you sure you want to remove this livestock record?")) {
             return;
@@ -179,7 +179,7 @@ function FarmerLivestockPage() {
                 </div>
             )}
 
-            {/* Summary Cards (Storage Sync කාඩ්පත ඉවත් කර තීරු 2ක් ලෙස සකසා ඇත) */}
+            {/* Summary Cards  */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Livestock Heads</p>
@@ -197,7 +197,7 @@ function FarmerLivestockPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* Left Form: Add New Livestock */}
+                {/* Left Form:Add New Livestock */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                         Add Livestock Entry
@@ -257,7 +257,7 @@ function FarmerLivestockPage() {
                     </form>
                 </div>
 
-                {/* Right List: Livestock Holdings */}
+                {/* Right List Livestock Holdings */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                         Current Livestock Holdings ({livestockList.length})

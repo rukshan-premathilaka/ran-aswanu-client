@@ -5,24 +5,24 @@ import ApiService from '@/api/ApiService.js';
 const api = new ApiService();
 
 function FarmerHomePage() {
-    // 1. Dashboard Metrics
+    // Dashboard Metrics
     const [metrics, setMetrics] = useState({ plots: null, products: null, expenses: null });
     const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
 
-    // 2. Daily Farm Tasks
+    // Daily Farm Tasks
     const [tasks, setTasks] = useState([]);
     const [newTaskInput, setNewTaskInput] = useState("");
     const [isLoadingTasks, setIsLoadingTasks] = useState(true);
     const [tasksError, setTasksError] = useState("");
 
-    // 3. Customer Orders
+    // Customer Orders
     const [customerOrders, setCustomerOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const [ordersError, setOrdersError] = useState("");
     const [updatingOrderId, setUpdatingOrderId] = useState(null);
     const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
 
-    // 1. Load Live Metrics (Crops, Products, & Expenses)
+    // Load Live Metrics (Crops, Products, & Expenses)
     const loadDashboardMetrics = async () => {
         setIsLoadingMetrics(true);
         const [cropsRes, productsRes, expensesRes] = await Promise.allSettled([
@@ -52,7 +52,7 @@ function FarmerHomePage() {
         setIsLoadingMetrics(false);
     };
 
-    // 2. Load Daily Farm Tasks
+    // Load Daily Farm Tasks
     const loadTasks = async () => {
         setIsLoadingTasks(true);
         setTasksError("");
@@ -68,7 +68,7 @@ function FarmerHomePage() {
         }
     };
 
-    // 3. Load Customer Orders
+    // Load Customer Orders
     const loadOrders = async () => {
         setIsLoadingOrders(true);
         setOrdersError("");
@@ -90,7 +90,7 @@ function FarmerHomePage() {
         loadOrders();
     }, []);
 
-    // 4. Update Order Status
+    // Update Order Status
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         setUpdatingOrderId(orderId);
         setActionMessage({ type: "", text: "" });
@@ -216,10 +216,10 @@ function FarmerHomePage() {
                 </div>
             </div>
 
-            {/* 2-Column Content Grid */}
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
 
-                {/* 1. Daily Farm Tasks */}
+
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[520px]">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-bold text-gray-700">Daily Farm Tasks</h3>
@@ -288,7 +288,7 @@ function FarmerHomePage() {
                     </div>
                 </div>
 
-                {/* 2. Customer Orders */}
+                {/* Customer Orders */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[520px]">
                     <div className="flex justify-between items-center mb-4">
                         <div>
@@ -355,7 +355,7 @@ function FarmerHomePage() {
                                             </div>
                                         </div>
 
-                                        {/* Status Badge & Action Controls */}
+                                        {/* Status Badge and Action Controls */}
                                         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200/60">
                                             <div>
                                                 {status === 'PENDING' && (

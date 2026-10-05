@@ -60,7 +60,7 @@ function FarmerManageHarvestPage() {
         loadProductsFromDb();
     }, []);
 
-    // 2. Publish / Unpublish Toggle (PATCH /api/farmer/products/{listId}/status)[cite: 5]
+    // Publish
     const handleTogglePublish = async (listId, currentStatus) => {
         setSuccessMessage("");
         setErrorMessage("");
@@ -77,7 +77,7 @@ function FarmerManageHarvestPage() {
         }
     };
 
-    // 3. Product Delete (DELETE /api/farmer/products/{listId})[cite: 5]
+    // Product Delete
     const handleDeleteProduct = async (listId) => {
         if (!window.confirm("Are you sure you want to permanently delete this product?")) {
             return;
@@ -97,7 +97,7 @@ function FarmerManageHarvestPage() {
         }
     };
 
-    // 4. Quick Direct Photo Upload[cite: 5]
+    // Quick Direct Photo Upload
     const handleDirectPhotoUpload = async (listId, file) => {
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
@@ -126,7 +126,7 @@ function FarmerManageHarvestPage() {
         }
     };
 
-    // 5. Start Editing
+    // Start Editing
     const handleStartEdit = (item) => {
         const id = item.listId || item.id;
         setEditingListId(id);
@@ -169,7 +169,7 @@ function FarmerManageHarvestPage() {
         }
     };
 
-    // 6. Save Edited Product & Photo (PUT /api/farmer/products/{listId})[cite: 5]
+    // Save Edited Product & Photo
     const handleSaveEdit = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -189,7 +189,7 @@ function FarmerManageHarvestPage() {
         try {
             await api.request('PUT', `/farmer/products/${editingListId}`, updatedPayload);
 
-            // Upload new photo if selected during edit[cite: 5]
+            // Upload new photo if selected during edit
             if (editSelectedFile) {
                 const formData = new FormData();
                 formData.append("file", editSelectedFile);

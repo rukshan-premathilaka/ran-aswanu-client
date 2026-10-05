@@ -27,7 +27,7 @@ function FarmerSettingsPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    // 1. Load User Profile from Database
+    // Load User Profile from Database
     const loadProfile = async () => {
         setIsLoading(true);
         setErrorMessage("");
@@ -56,7 +56,7 @@ function FarmerSettingsPage() {
         loadProfile();
     }, []);
 
-    // 2. Save Profile Details
+    //  Save Profile Details
     const handleSaveProfile = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -88,7 +88,7 @@ function FarmerSettingsPage() {
         }
     };
 
-    // 3. Upload Profile Picture
+    //  Upload Profile Picture
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -193,7 +193,7 @@ function FarmerSettingsPage() {
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* Left Column: Profile Card & DP Upload */}
+                    {/* Left Column Profile Card & DP Upload */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center h-fit">
                         <div className="relative group cursor-pointer w-32 h-32 mb-4">
                             {profilePictureUrl ? (
@@ -232,10 +232,10 @@ function FarmerSettingsPage() {
                         </div>
                     </div>
 
-                    {/* Right Column: Profile Form & Password Change */}
+                    {/* Right Column Profile Form & Password Change */}
                     <div className="lg:col-span-2 flex flex-col gap-8">
 
-                        {/* 1. Personal Information Form */}
+                        {/* Personal Information Form */}
                         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                             <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                                 Personal Information
@@ -300,7 +300,7 @@ function FarmerSettingsPage() {
                             </form>
                         </div>
 
-                        {/* 2. Change Password Form */}
+                        {/* Change Password Form */}
                         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                             <h3 className="text-base font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
                                 Change Password

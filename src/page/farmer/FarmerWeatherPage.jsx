@@ -2,24 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Sun, CloudRain, Cloud } from 'lucide-react';
 
 function FarmerWeatherPage() {
-    // 1. කාලගුණ දත්ත සහ තත්ත්වයන් තියාගන්න සරල variables (States)
+
     const [weather, setWeather] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 2. Location සහ Search සඳහා variables
+
     const [cityInput, setCityInput] = useState("");
     const [currentCityName, setCurrentCityName] = useState("Uva Province, Sri Lanka");
     const [latitude, setLatitude] = useState(7.2906);
     const [longitude, setLongitude] = useState(80.6337);
 
-    // 3. API එකෙන් කාලගුණ දත්ත ලබාගැනීම (Fetch Weather Data)
+    // get weather information from API
     const fetchWeatherData = async () => {
         setIsLoading(true);
         setError(null);
 
         try {
-            // Open-Meteo නොමිලේ ලැබෙන API එකෙන් දත්ත ලබාගැනීම
+            // Get data from Open-Meteo API
             const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,surface_pressure&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`;
 
             const response = await fetch(apiUrl);
@@ -38,12 +38,12 @@ function FarmerWeatherPage() {
         }
     };
 
-    // Latitude හෝ Longitude වෙනස් වන විට ස්වයංක්‍රීයව දත්ත ලබාගැනීම
+    // Latitude or Longitude
     useEffect(() => {
         fetchWeatherData();
     }, [latitude, longitude]);
 
-    // 4. නගරයේ නම අනුව Latitude & Longitude සොයාගැනීම (Search City)
+    // Latitude and Longitude
     const handleSearchCity = async () => {
         const trimmedCity = cityInput.trim();
         if (trimmedCity === "") {
@@ -57,7 +57,7 @@ function FarmerWeatherPage() {
             const response = await fetch(geocodeUrl);
             const data = await response.json();
 
-            // නගරය හමුවුනාදැයි බැලීම
+            // check city
             if (data.results && data.results.length > 0) {
                 const firstResult = data.results[0];
                 setLatitude(firstResult.latitude);
@@ -74,7 +74,7 @@ function FarmerWeatherPage() {
         }
     };
 
-    // 5. Weather Code එක අනුව තත්ත්වය වචනයෙන් ලබාදීම
+    // Give condition accordin Weather Code
     const getWeatherCondition = (code) => {
         if (code === 0) {
             return "Clear Sky";
@@ -89,7 +89,7 @@ function FarmerWeatherPage() {
         }
     };
 
-    // Loading අවස්ථාවේදී පෙන්වන UI එක
+    // Loading UI
     if (isLoading && !weather) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -99,7 +99,7 @@ function FarmerWeatherPage() {
         );
     }
 
-    // Error එකක් ආ විට පෙන්වන UI එක
+    // Error UI
     if (error && !weather) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-red-500">
@@ -114,18 +114,18 @@ function FarmerWeatherPage() {
         );
     }
 
-    // 6. ප්‍රධාන අගයන් සරල විචල්‍යයන්ට (Variables) වෙන් කරගැනීම
+    // main valu convert Variables
     const currentTemp = Math.round(weather?.current?.temperature_2m || 0);
     const humidity = weather?.current?.relative_humidity_2m || 0;
     const windSpeed = Math.round(weather?.current?.wind_speed_10m || 0);
     const pressure = Math.round(weather?.current?.surface_pressure || 0);
     const weatherCondition = getWeatherCondition(weather?.current?.weather_code || 0);
 
-    // දැනට පවතින පැය සඳහා වැසි සම්භාවිතාව
+    // Rain posibility
     const currentHourIndex = new Date().getHours();
     const rainChance = weather?.hourly?.precipitation_probability?.[currentHourIndex] || 0;
 
-    // 7. ගොවියාට සුදුසු උපදෙස තීරණය කිරීම (Beginner-friendly if/else)
+    // deteermine farmer advice
     let adviceText = "Good weather conditions! It is safe for planting and field work today.";
     let adviceBgColor = "bg-[#D2E9C4] border-green-400";
     let adviceTextColor = "text-green-900";
@@ -140,12 +140,12 @@ function FarmerWeatherPage() {
         adviceTextColor = "text-red-800";
     }
 
-    // 8. ඉදිරි පැය 8 සඳහා සරල For-Loop එකකින් දත්ත ලැයිස්තුව සැකසීම
+    // next 8 hour
     const nextHoursData = [];
     for (let i = 0; i < 8; i++) {
         const hourIndex = currentHourIndex + i;
 
-        // 12-hour AM/PM format එකට හැරවීම
+        // 12 hour AM/PM format
         const displayHour = hourIndex % 24;
         const ampm = displayHour >= 12 ? 'PM' : 'AM';
         let simpleHour = displayHour % 12;
@@ -276,7 +276,7 @@ function FarmerWeatherPage() {
                 </div>
             </div>
 
-            {/* Middle Section: Hourly Forecast */}
+            {/* Hourly Forecast */}
             <h3 className="text-xl font-bold text-gray-800 mb-4">Hourly Forecast (Next 8 Hours)</h3>
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden relative">
                 {isLoading && <div className="absolute inset-0 bg-white/60 z-10 rounded-2xl"></div>}
@@ -285,7 +285,7 @@ function FarmerWeatherPage() {
                 </div>
             </div>
 
-            {/* Bottom Section: 3-Day Forecast */}
+            {/* 3 Day Forecast */}
             <h3 className="text-xl font-bold text-gray-800 mb-4">Next 3 Days Outlook</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
                 {isLoading && <div className="absolute inset-0 bg-white/60 z-10"></div>}

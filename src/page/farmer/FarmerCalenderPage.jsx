@@ -26,7 +26,7 @@ function FarmerCalenderPage() {
 
     const dateKey = formatDateKey(selectedDate);
 
-    // 1. Database එකෙන් තෝරාගත් දිනයට අදාළ Note එක Load කරගැනීම (GET /api/farmer/calendar/{date})
+    //Note Load
     const loadNoteForDate = async (dateStr) => {
         setIsLoading(true);
         setErrorMessage("");
@@ -49,19 +49,19 @@ function FarmerCalenderPage() {
         }
     };
 
-    // දිනය වෙනස් වන සෑම විටම Database එකෙන් අදාළ Note එක Load කිරීම
+    // change date load database
     useEffect(() => {
         loadNoteForDate(dateKey);
     }, [dateKey]);
 
-    // Calendar එකෙන් අලුත් දිනයක් Click කළ විට
+    // Calendar Click new date
     const handleDateSelect = (newDate) => {
         setSelectedDate(newDate);
         setSuccessMessage("");
         setErrorMessage("");
     };
 
-    // 2. Note එක Database එකේ Save කිරීම (PUT /api/farmer/calendar/{date})
+    // Note save in Database
     const handleSaveNote = async () => {
         setSuccessMessage("");
         setErrorMessage("");
@@ -90,7 +90,7 @@ function FarmerCalenderPage() {
         }
     };
 
-    // 3. Note එක Database එකෙන් Delete / Clear කිරීම (DELETE /api/farmer/calendar/{date})
+    // Note delete in database
     const handleDeleteNote = async () => {
         if (!currentNote.trim()) {
             return;

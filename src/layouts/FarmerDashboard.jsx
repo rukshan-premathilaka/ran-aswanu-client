@@ -6,7 +6,7 @@ const FarmerDashboard = () => {
     const navigate = useNavigate();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    // ප්‍රධාන Navigation Items
+    //Navigation Items
     const navItems = [
         { path: '/farmer/home', label: 'Home' },
         { path: '/farmer/add-harvest', label: 'Add Harvest' },
@@ -18,7 +18,7 @@ const FarmerDashboard = () => {
         { path: '/farmer/weather', label: 'Weather' },
     ];
 
-    // පහළ Settings සහ Help & Support
+    //Settings and Help & Support
     const bottomItems = [
         { path: '/farmer/settings', label: 'Settings' },
         { path: '/farmer/help', label: 'Help & Support' },
@@ -37,7 +37,7 @@ const FarmerDashboard = () => {
                 />
             )}
 
-            {/* Sidebar (Desktop සඳහා ස්ථිරව, Mobile වලදී drawer එකක් ලෙස) */}
+
             <aside
                 className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col justify-between p-6 flex-shrink-0 transform transition-transform duration-300 ease-in-out ${
                     isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
@@ -64,7 +64,7 @@ const FarmerDashboard = () => {
                         </button>
                     </div>
 
-                    {/* ප්‍රධාන මෙනු ලින්ක්ස් */}
+                    {/**/}
                     <nav className="space-y-1">
                         {navItems.map((item) => (
                             <NavLink
@@ -85,7 +85,7 @@ const FarmerDashboard = () => {
                     </nav>
                 </div>
 
-                {/* පහළ කොටස: Settings, Help & Support සහ Switch to Personal Profile බටනය */}
+                {/*Settings, Help & Support and Switch to Personal Profile button */}
                 <div className="space-y-1.5 border-t border-gray-100 pt-4 mt-4">
                     {bottomItems.map((item) => (
                         <NavLink

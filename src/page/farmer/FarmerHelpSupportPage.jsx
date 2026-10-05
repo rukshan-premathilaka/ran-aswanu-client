@@ -13,7 +13,7 @@ function FarmerHelpSupportPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    // Message Submit Handler (POST /api/support/messages)
+    // Message Submit Handler
     const handleSendMessage = async (e) => {
         e.preventDefault();
         setSuccessMessage("");
@@ -77,7 +77,7 @@ function FarmerHelpSupportPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 
-                {/* Left Side: Contact Numbers Only */}
+                {/* Left Side Contact Numbers Only */}
                 <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
                     <h3 className="text-base font-bold text-gray-700 mb-2 pb-2 border-b border-gray-100">
                         Direct Contact Numbers
@@ -102,7 +102,7 @@ function FarmerHelpSupportPage() {
                     </div>
                 </div>
 
-                {/* Right Side: Send Message Form */}
+                {/* Right Side Send Message Form */}
                 <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="text-base font-bold text-gray-700 mb-1">Send us a Message</h3>
                     <p className="text-xs text-gray-500 mb-5">Have a problem with your harvests, plots, or account? Write to us below.</p>
